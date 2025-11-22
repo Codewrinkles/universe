@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base styles */
+html,
+body {
+  @apply min-h-screen bg-surface-page text-text-primary text-sm;
+}
+
+/* Light theme overrides */
+.light-theme {
+  @apply bg-gray-100 text-slate-900;
+}
+
+.light-theme .bg-surface-page {
+  background-color: #F3F4F6 !important;
+}
+
+.light-theme .bg-surface-card1 {
+  background-color: #FFFFFF !important;
+}
+
+.light-theme .bg-surface-card2 {
+  background-color: #F9FAFB !important;
+}
+
+.light-theme .border-border {
+  border-color: #E2E8F0 !important;
+}
+
+.light-theme .border-border-deep {
+  border-color: #CBD5E1 !important;
+}
+
+.light-theme .text-text-primary {
+  color: #0F172A !important;
+}
+
+.light-theme .text-text-secondary {
+  color: #475569 !important;
+}
+
+.light-theme .text-text-tertiary {
+  color: #94A3B8 !important;
+}
+
+.light-theme .shadow-sm {
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.dark-theme .shadow-sm {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+/* Micro-interactions for buttons */
+@layer components {
+  .btn-primary {
+    @apply transition-all duration-150 ease-out;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-0.5px);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0.5px) scale(0.98);
+  }
+
+  /* Typing indicator dots */
+  .typing-dot {
+    animation: typingDots 1s infinite;
+  }
+
+  .typing-dot:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+
+  .typing-dot:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+}

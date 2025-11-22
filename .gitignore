@@ -416,3 +416,9 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Frontend (Vite + React) build artifacts
+apps/frontend/dist/
+apps/frontend/.vite/
+apps/frontend/dist-ssr/
+apps/frontend/*.local
