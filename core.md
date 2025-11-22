@@ -258,9 +258,9 @@ Colors:
 
 ## Creator Context
 
-**Who**: Daniel from Codewrinkles
+**Who**: Dan from Codewrinkles
 - Content: .NET architecture, clean code, agentic AI, ultra-running
-- Platforms: YouTube, LinkedIn, Substack
+- Platforms: YouTube, LinkedIn, Substack (architecttocto.substack.com)
 - Role: Startup CTO sharing journey
 
 **Distribution Strategy**:
