@@ -1,0 +1,6 @@
+@Codewrinkles.API_HostAddress = http://localhost:5062
+
+GET {{Codewrinkles.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

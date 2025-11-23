@@ -14,12 +14,55 @@
 - **Routing**: React Router DOM 7.1.1
 - **Node**: 20+
 
+### Backend (`apps/backend/`)
+- **Framework**: .NET 10, ASP.NET Core Minimal APIs
+- **Language**: C# 13
+- **Database**: SQL Server (latest)
+- **ORM**: Entity Framework Core 10
+- **Architecture**: Clean Architecture (layered monolith)
+- **API Docs**: Scalar
+- **Testing**: xUnit (plain assertions, no FluentAssertions)
+- **CQRS**: Kommand (https://github.com/Atherio-Ltd/Kommand)
+
 ### Package Manager
-- **npm** (not yarn or pnpm)
+- **npm** (not yarn or pnpm) for frontend
+- **dotnet CLI** for backend
 
 ---
 
 ## Code Standards - ENFORCE STRICTLY
+
+### 🚨 CRITICAL: Library Usage Policy
+
+**❌ NEVER USE LIBRARIES UNLESS IT'S THE ONLY FEASIBLE OPTION**
+
+This is a **fundamental principle** for both frontend and backend:
+
+- ❌ **NO FluentAssertions** - use plain xUnit assertions
+- ❌ **NO FluentValidation** - write validation logic ourselves
+- ❌ **NO popular convenience libraries** that save a few lines of code
+- ❌ **NO libraries for simple utilities** (string manipulation, mediation, validation, etc.)
+- ✅ **ALWAYS ASK BEFORE adding any new library or package**
+
+**When a library IS acceptable:**
+- Framework essentials (React, .NET, EF Core, etc.)
+- Complex, well-tested infrastructure (OpenTelemetry, BCrypt, JWT)
+- Features that would take weeks to build correctly (OAuth clients, etc.)
+
+**Why this matters:**
+- Keeps dependencies minimal
+- Forces us to understand the code we write
+- Reduces security surface area
+- Avoids bloat and version conflicts
+
+**BEFORE adding any package, ask yourself:**
+1. Can I build this in < 1 day?
+2. Does this require deep domain expertise?
+3. Is this a critical security feature?
+
+If all three are "no", **build it yourself**.
+
+---
 
 ### TypeScript
 - ✅ Strict mode enabled in `tsconfig.json`
@@ -323,19 +366,38 @@ npm install         # Install all dependencies
 
 ---
 
-## Future Technical Decisions (Not Implemented Yet)
+## Backend Architecture (Decided)
 
-### Backend
-- API framework: TBD (Node.js/Express, .NET, etc.)
-- Database: TBD (PostgreSQL for relational data)
-- Vector DB: TBD (Pinecone, Weaviate, Qdrant for Nova)
-- Graph DB: TBD (Neo4j for knowledge graphs)
-- Authentication: TBD (JWT, session-based, Auth0, Supabase)
+### Structure
+- **Location**: `apps/backend/`
+- **Solution**: `Codewrinkles.sln`
+- **Projects**:
+  - `Codewrinkles.API` - Minimal APIs, endpoints, middleware
+  - `Codewrinkles.Application` - Use cases, Kommand handlers
+  - `Codewrinkles.Domain` - Entities, value objects, domain events
+  - `Codewrinkles.Infrastructure` - EF Core, DbContext, external services
 
-### Testing
+### Patterns
+- ✅ Clean Architecture (layered monolith)
+- ✅ Single database with schema-per-module (`identity`, `pulse`, `nova`)
+- ✅ Single `ApplicationDbContext` with all DbSets
+- ✅ Modules as folders (not separate projects)
+- ✅ Feature-based organization (NOT convention-based like Commands/Queries folders)
+- ✅ CQRS with Kommand
+- ✅ OpenTelemetry instrumentation from the start
+- ✅ Custom authentication (no ASP.NET Core Identity)
+- ✅ JWT + refresh tokens with revocation
+
+### Future Decisions (Not Implemented Yet)
+
+#### Testing (Frontend)
 - Unit tests: TBD (Vitest or Jest)
 - Component tests: TBD (React Testing Library)
 - E2E tests: TBD (Playwright or Cypress)
+
+#### Databases (Future modules)
+- Vector DB: TBD (Pinecone, Weaviate, Qdrant for Nova)
+- Graph DB: TBD (Neo4j for knowledge graphs)
 
 ### CI/CD
 - TBD (GitHub Actions, Vercel, etc.)
@@ -365,28 +427,51 @@ npm install         # Install all dependencies
 
 1. **Always read `core.md` first** to understand product vision
 2. **Always read this file** to understand technical conventions
-3. **Run `npm run lint` before finishing** to ensure type safety
-4. **Test the build** with `npm run build` for production readiness
-5. **Keep strict TypeScript** - no `any`, no `@ts-ignore`
-6. **Feature folders** for new features, not flat component structure
-7. **Design tokens** - use custom Tailwind colors, don't hardcode hex values
-8. **Mobile-first** - always consider responsive design
-9. **Ask before over-engineering** - keep it simple until complexity is needed
-10. **Document decisions** - update this file if you make new technical decisions
+3. **🚨 ALWAYS ASK before adding any library/package** - see Library Usage Policy above
+4. **Run `npm run lint` before finishing** (frontend) to ensure type safety
+5. **Test the build** with `npm run build` (frontend) or `dotnet build` (backend) for production readiness
+6. **Keep strict TypeScript** - no `any`, no `@ts-ignore`
+7. **Feature folders** for new features, not flat component structure (frontend and backend)
+8. **Design tokens** - use custom Tailwind colors, don't hardcode hex values (frontend)
+9. **Mobile-first** - always consider responsive design (frontend)
+10. **Ask before over-engineering** - keep it simple until complexity is needed
+11. **Don't make assumptions** - ask questions when unclear
+12. **Document decisions** - update this file if you make new technical decisions
 
 ---
 
 ## Current State Reminders
 
+### Frontend
 - ✅ React Router is fully integrated
 - ✅ Theme system works (dark/light with localStorage)
 - ✅ Settings has nested routes working
 - ⚠️ Learn + Twin will merge into Nova (not refactored yet)
-- ⚠️ No backend yet (all frontend placeholders)
-- ⚠️ No real authentication (UI only)
+- ⚠️ No real authentication (UI only, no backend integration)
 - ⚠️ No API calls yet
 - ⚠️ No tests yet
 
+### Backend
+- ✅ Project structure defined in `backend.md`
+- ✅ Solution and projects created
+- ✅ NuGet packages installed
+- ⚠️ No database schema yet
+- ⚠️ No features implemented yet
+- ⚠️ Feature implementation will be done one at a time
+
 ---
 
-**Last Updated**: 2025-11-22 (update this when making significant changes)
+## Infrastructure Preferences
+
+### Database
+- ✅ **Use SQL Server LocalDB** (accessed via JetBrains Rider)
+- ❌ **NO Docker** - Do not use Docker for SQL Server or any other services unless explicitly requested
+- Connection String format: `Server=(localdb)\\mssqllocaldb;Database=Codewrinkles;Trusted_Connection=True;MultipleActiveResultSets=true`
+
+### Containers & Deployment
+- ❌ **NO Docker** unless explicitly requested by the user
+- Local development uses native tools (Rider, VS, etc.)
+
+---
+
+**Last Updated**: 2025-11-23 (update this when making significant changes)
