@@ -1,5 +1,7 @@
 using Codewrinkles.Application;
 using Codewrinkles.Infrastructure;
+using Codewrinkles.API.Modules.Identity;
+using Codewrinkles.API.ExceptionHandlers;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Metrics;
@@ -12,6 +14,10 @@ builder.Services.AddApplication();
 
 // Add Infrastructure layer
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// Add exception handlers
+builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 // Add CORS
 builder.Services.AddCors(options =>
@@ -48,6 +54,8 @@ builder.Services.AddOpenApi();
 var app = builder.Build();
 
 // Middleware pipeline
+app.UseExceptionHandler();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -56,6 +64,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors();
 
-// Map endpoints (will be added per feature)
+// Map endpoints
+app.MapIdentityEndpoints();
 
 app.Run();

@@ -5,7 +5,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Kommand" Version="1.0.0-alpha.1" />
+    <PackageReference Include="Kommand" Version="*-*" />
   </ItemGroup>
 
   <PropertyGroup>

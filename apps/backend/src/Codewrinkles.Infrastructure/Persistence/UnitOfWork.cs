@@ -1,0 +1,72 @@
+using System.Data;
+using Codewrinkles.Application.Common.Interfaces;
+using Microsoft.EntityFrameworkCore.Storage;
+
+namespace Codewrinkles.Infrastructure.Persistence;
+
+public sealed class UnitOfWork : IUnitOfWork
+{
+    private readonly ApplicationDbContext _context;
+    private readonly IIdentityRepository _identities;
+    private readonly IProfileRepository _profiles;
+
+    public UnitOfWork(
+        ApplicationDbContext context,
+        IIdentityRepository identities,
+        IProfileRepository profiles)
+    {
+        _context = context;
+        _identities = identities;
+        _profiles = profiles;
+    }
+
+    public IIdentityRepository Identities => _identities;
+
+    public IProfileRepository Profiles => _profiles;
+
+    public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        return _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<IUnitOfWorkTransaction> BeginTransactionAsync(
+        IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
+        CancellationToken cancellationToken = default)
+    {
+        // EF Core's BeginTransactionAsync only takes CancellationToken
+        // Isolation level must be set on the connection before beginning transaction
+        var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+
+        return new UnitOfWorkTransaction(transaction);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _context.DisposeAsync();
+    }
+}
+
+public sealed class UnitOfWorkTransaction : IUnitOfWorkTransaction
+{
+    private readonly IDbContextTransaction _transaction;
+
+    public UnitOfWorkTransaction(IDbContextTransaction transaction)
+    {
+        _transaction = transaction;
+    }
+
+    public Task CommitAsync(CancellationToken cancellationToken = default)
+    {
+        return _transaction.CommitAsync(cancellationToken);
+    }
+
+    public Task RollbackAsync(CancellationToken cancellationToken = default)
+    {
+        return _transaction.RollbackAsync(cancellationToken);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _transaction.DisposeAsync();
+    }
+}

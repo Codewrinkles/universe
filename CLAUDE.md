@@ -32,6 +32,61 @@
 
 ## Code Standards - ENFORCE STRICTLY
 
+### 🚨 CRITICAL: Secrets Management & Security
+
+**❌ NEVER COMMIT SECRETS TO SOURCE CONTROL**
+
+This is a **non-negotiable security requirement**:
+
+**What counts as a secret:**
+- ❌ Connection strings (database, cache, etc.)
+- ❌ API keys and tokens
+- ❌ JWT secret keys
+- ❌ OAuth client secrets
+- ❌ Encryption keys
+- ❌ Third-party service credentials
+- ❌ Any password or sensitive configuration
+
+**How to handle secrets:**
+
+**.NET Backend:**
+1. **Use .NET User Secrets for local development:**
+   ```bash
+   cd apps/backend/src/Codewrinkles.API
+   dotnet user-secrets init
+   dotnet user-secrets set "ConnectionStrings:DefaultConnection" "your-connection-string"
+   dotnet user-secrets set "Jwt:SecretKey" "your-secret-key"
+   ```
+
+2. **Connection String Format (SQL Server LocalDB):**
+   ```
+   Server=(localdb)\mssqllocaldb;Database=codewrinkles;Trusted_Connection=True;MultipleActiveResultSets=true
+   ```
+
+3. **Use environment variables for production:**
+   - Azure: App Configuration / Key Vault
+   - Docker: Environment variables
+   - CI/CD: Encrypted secrets
+
+**Frontend:**
+1. **Use `.env.local` (Git-ignored)** for local development
+2. **NEVER commit `.env` files with real values**
+3. **Use environment-specific configs** in CI/CD
+
+**What CAN be committed:**
+- ✅ Non-sensitive configuration (Issuer, Audience, timeouts)
+- ✅ Feature flags
+- ✅ Public URLs
+- ✅ Default values (placeholders like `"your-api-key-here"`)
+
+**Verification checklist:**
+- ✅ `.gitignore` includes `.env.local`, `appsettings.*.local.json`
+- ✅ `appsettings.json` has NO connection strings or secrets
+- ✅ User secrets initialized for API project
+- ✅ All secrets stored in user secrets or environment variables
+
+---
+
 ### 🚨 CRITICAL: Library Usage Policy
 
 **❌ NEVER USE LIBRARIES UNLESS IT'S THE ONLY FEASIBLE OPTION**
@@ -61,6 +116,196 @@ This is a **fundamental principle** for both frontend and backend:
 3. Is this a critical security feature?
 
 If all three are "no", **build it yourself**.
+
+---
+
+### 🚨 CRITICAL: C# Nullable Reference Types & Anti-Patterns
+
+**❌ NEVER USE `null!` OR `string.Empty` TO SUPPRESS WARNINGS**
+
+When using nullable reference types in C#, compiler warnings exist for a reason - they indicate real logic problems.
+
+**Anti-Patterns (NEVER DO THIS):**
+```csharp
+// ❌ WRONG - Defeats the purpose of nullable reference types
+public string Email { get; private set; } = null!;
+public string Name { get; private set; } = string.Empty;
+```
+
+**The Correct Pattern for EF Core Entities:**
+
+For EF Core entities with private parameterless constructors, use **targeted pragma suppression**:
+
+```csharp
+public string Email { get; private set; }
+public string Name { get; private set; }
+public Profile Profile { get; private set; }
+
+// Private parameterless constructor for EF Core materialization only
+// EF Core will populate all properties via reflection when loading from database
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor
+private Identity() { }
+#pragma warning restore CS8618
+
+// Public factory method for creating valid instances
+public static Identity Create(string email, string passwordHash)
+{
+    ArgumentException.ThrowIfNullOrWhiteSpace(email);
+    ArgumentException.ThrowIfNullOrWhiteSpace(passwordHash);
+
+    return new Identity
+    {
+        Email = email.Trim().ToLowerInvariant(),
+        // ... set all required properties
+    };
+}
+```
+
+**Why This Matters:**
+- ✅ **Explicit**: Clear about what we're suppressing and why (only for EF Core constructor)
+- ✅ **Scoped**: Warning is restored immediately after, catching real bugs elsewhere
+- ✅ **Documented**: Comment explains why suppression is necessary
+- ❌ Using `null!` hides real null reference bugs throughout the codebase
+- ❌ Using `string.Empty` lies about the data and can cause subtle bugs
+
+**Rules:**
+1. ✅ Use `#pragma warning disable/restore CS8618` around EF Core constructors only
+2. ✅ Add comments explaining why suppression is needed
+3. ✅ Always restore the warning immediately after
+4. ❌ **NEVER** use `null!` on property declarations
+5. ❌ **NEVER** use `string.Empty` to suppress warnings
+6. ❌ **NEVER** use global nullable disable - fix the issues properly
+
+**References:**
+- [Working with nullable reference types - EF Core](https://learn.microsoft.com/en-us/ef/core/miscellaneous/nullable-reference-types)
+- [Required members - C# feature specifications](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-11.0/required-members)
+
+---
+
+### C# Class Member Ordering
+
+**ENFORCE STRICT ORDERING** for all class members:
+
+1. **Fields and constants**
+2. **Constructors** (public, private, static, non-static - any order within this section)
+3. **Properties** (auto-properties, computed properties, navigation properties)
+4. **Factory methods** (static Create/CreateFrom methods)
+5. **Public methods**
+6. **Private methods**
+
+**Example:**
+```csharp
+public sealed class Identity
+{
+    // 1. Fields (if any)
+    private const int MaxLoginAttempts = 5;
+
+    // 2. Constructors
+#pragma warning disable CS8618
+    private Identity() { } // EF Core constructor
+#pragma warning restore CS8618
+
+    // 3. Properties
+    public Guid Id { get; private set; }
+    public string Email { get; private set; }
+    public Profile Profile { get; private set; } // Navigation property
+
+    // 4. Factory methods
+    public static Identity Create(string email, string passwordHash)
+    {
+        // ...
+    }
+
+    // 5. Public methods
+    public void MarkEmailAsVerified()
+    {
+        // ...
+    }
+
+    // 6. Private methods
+    private bool IsValidEmail(string email)
+    {
+        // ...
+    }
+}
+```
+
+**Why this order:**
+- ✅ **Consistent**: Same structure across all classes makes code easier to navigate
+- ✅ **Logical**: Data (fields/properties) before behavior (methods)
+- ✅ **Public API first**: Constructors and factory methods (entry points) before implementation details
+
+---
+
+### 🚨 CRITICAL: GUID Primary Keys - Sequential Generation
+
+**❌ NEVER USE `Guid.NewGuid()` FOR PRIMARY KEYS**
+
+Random GUIDs cause severe database performance problems:
+- ❌ **Massive index fragmentation** (can reach 99%+)
+- ❌ **Poor insert performance** due to constant page splits
+- ❌ **Wasted disk space** from fragmentation
+- ❌ **Slower queries** due to fragmented data
+
+**✅ ALWAYS let EF Core generate sequential GUIDs:**
+
+```csharp
+// ❌ WRONG - Random GUID causes index fragmentation
+public static Identity Create(string email)
+{
+    return new Identity
+    {
+        Id = Guid.NewGuid(), // DON'T DO THIS
+        Email = email
+    };
+}
+
+// ✅ CORRECT - Let EF Core generate sequential GUID
+public static Identity Create(string email)
+{
+    return new Identity
+    {
+        // Id will be generated by EF Core using sequential GUID generation
+        Email = email
+    };
+}
+```
+
+**EF Core Configuration:**
+```csharp
+public void Configure(EntityTypeBuilder<Identity> builder)
+{
+    builder.HasKey(i => i.Id);
+
+    // Explicitly configure sequential GUID generation
+    // This avoids index fragmentation issues with random GUIDs
+    builder.Property(i => i.Id)
+        .ValueGeneratedOnAdd(); // EF Core uses SequentialGuidValueGenerator
+}
+```
+
+**Why Sequential GUIDs:**
+- ✅ **Minimal fragmentation**: Sequential values are added to end of index
+- ✅ **Better insert performance**: No page splits required
+- ✅ **Lower disk usage**: Pages remain compact
+- ✅ **Faster queries**: Data is well-organized
+
+**Technical Details:**
+- EF Core SQL Server provider uses `SequentialGuidValueGenerator` by default for GUID primary keys
+- This is similar to SQL Server's `NEWSEQUENTIALID()` function
+- Values are generated **client-side** (no extra database round-trip)
+- Still globally unique, but with sequential ordering
+
+**Rules:**
+1. ✅ **NEVER** set `Id = Guid.NewGuid()` in factory methods
+2. ✅ Configure `ValueGeneratedOnAdd()` for all GUID primary keys
+3. ✅ Add comment explaining sequential GUID generation
+4. ❌ **NEVER** use `HasDefaultValueSql("NEWID()")` - this creates random GUIDs
+
+**References:**
+- [GUIDs as PRIMARY KEYs - Kimberly L. Tripp](https://www.sqlskills.com/blogs/kimberly/guids-as-primary-keys-andor-the-clustering-key/)
+- [SQL Server GUID Index Fragmentation - MSSQLTips](https://www.mssqltips.com/sqlservertip/6595/sql-server-guid-column-and-index-fragmentation/)
+- [EF Core Value Generation - Microsoft Learn](https://learn.microsoft.com/en-us/ef/core/modeling/generated-properties)
 
 ---
 
@@ -387,6 +632,68 @@ npm install         # Install all dependencies
 - ✅ OpenTelemetry instrumentation from the start
 - ✅ Custom authentication (no ASP.NET Core Identity)
 - ✅ JWT + refresh tokens with revocation
+
+### OpenAPI & API Documentation
+
+**Built-in OpenAPI + Scalar (NOT Swashbuckle)**
+
+We use **.NET 10's built-in OpenAPI** with **Scalar** for API documentation.
+
+**Configuration (in Program.cs):**
+```csharp
+// Register OpenAPI document generation
+builder.Services.AddOpenApi();
+
+// In development, map OpenAPI endpoint and Scalar UI
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();           // Exposes /openapi/v1.json
+    app.MapScalarApiReference(); // Scalar UI at /scalar
+}
+```
+
+**Endpoint Registration:**
+```csharp
+// ✅ CORRECT - Minimal API endpoints are auto-discovered
+app.MapPost("/api/users", CreateUser)
+    .WithName("CreateUser")
+    .WithTags("Users");
+
+// ❌ WRONG - WithOpenApi() is DEPRECATED
+app.MapPost("/api/users", CreateUser)
+    .WithOpenApi(); // DON'T USE THIS - ASPDEPR002
+```
+
+**Customizing OpenAPI Metadata (if needed):**
+```csharp
+app.MapPost("/api/users", CreateUser)
+    .WithName("CreateUser")
+    .WithTags("Users")
+    .AddOpenApiOperationTransformer((operation, context, ct) =>
+    {
+        operation.Summary = "Creates a new user";
+        operation.Description = "Registers a user with email and password";
+        return Task.CompletedTask;
+    });
+```
+
+**Rules:**
+1. ✅ Use `AddOpenApi()` for document generation
+2. ✅ Use `MapScalarApiReference()` for UI
+3. ✅ Use `.WithName()` and `.WithTags()` for basic metadata
+4. ✅ Use `.AddOpenApiOperationTransformer()` for advanced customization
+5. ❌ **NEVER** use `.WithOpenApi()` - it's deprecated (ASPDEPR002)
+6. ❌ **NEVER** install Swashbuckle packages
+
+**Why This Matters:**
+- ✅ Built-in support is faster and lighter than Swashbuckle
+- ✅ Works with AOT compilation
+- ✅ Scalar provides better UI than Swagger UI
+- ✅ No third-party dependencies for OpenAPI
+
+**References:**
+- [Breaking change: Deprecation of WithOpenApi](https://learn.microsoft.com/en-us/dotnet/core/compatibility/aspnet-core/10/withopenapi-deprecated)
+- [Use OpenAPI documents](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/openapi/using-openapi-documents?view=aspnetcore-10.0)
 
 ### Future Decisions (Not Implemented Yet)
 

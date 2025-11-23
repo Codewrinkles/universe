@@ -422,3 +422,10 @@ apps/frontend/dist/
 apps/frontend/.vite/
 apps/frontend/dist-ssr/
 apps/frontend/*.local
+
+# Backend secrets and local configuration
+**/appsettings.*.local.json
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local

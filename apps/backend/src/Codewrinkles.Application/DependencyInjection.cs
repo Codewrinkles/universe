@@ -7,7 +7,11 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         // Register Kommand from this assembly
-        // services.AddKommand(typeof(DependencyInjection).Assembly);
+        services.AddKommand(config =>
+        {
+            config.RegisterHandlersFromAssembly(typeof(DependencyInjection).Assembly)
+                  .WithValidation();
+        });
 
         return services;
     }
