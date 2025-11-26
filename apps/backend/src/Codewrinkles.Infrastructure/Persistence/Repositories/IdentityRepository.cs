@@ -31,6 +31,15 @@ public sealed class IdentityRepository : IIdentityRepository
             .FirstOrDefaultAsync(i => i.EmailNormalized == emailNormalized, cancellationToken);
     }
 
+    public Task<Identity?> FindByEmailWithProfileAsync(string email, CancellationToken cancellationToken = default)
+    {
+        var emailNormalized = email.Trim().ToUpperInvariant();
+        // Tracked (no AsNoTracking) because login updates FailedLoginAttempts and LastLoginAt
+        return _identities
+            .Include(i => i.Profile)
+            .FirstOrDefaultAsync(i => i.EmailNormalized == emailNormalized, cancellationToken);
+    }
+
     public Task<Identity?> FindByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return _identities.FindAsync([id], cancellationToken: cancellationToken).AsTask();

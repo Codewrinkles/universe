@@ -13,6 +13,9 @@ public static class IdentityEndpoints
 
         group.MapPost("/register", RegisterUser)
             .WithName("RegisterUser");
+
+        group.MapPost("/login", LoginUser)
+            .WithName("LoginUser");
     }
 
     private static async Task<IResult> RegisterUser(
@@ -40,6 +43,53 @@ public static class IdentityEndpoints
             refreshToken = result.RefreshToken
         });
     }
+
+    private static async Task<IResult> LoginUser(
+        [FromBody] LoginUserRequest request,
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var command = new LoginUserCommand(
+                Email: request.Email,
+                Password: request.Password
+            );
+
+            var result = await mediator.SendAsync(command, cancellationToken);
+
+            return Results.Ok(new
+            {
+                identityId = result.IdentityId,
+                profileId = result.ProfileId,
+                email = result.Email,
+                name = result.Name,
+                handle = result.Handle,
+                accessToken = result.AccessToken,
+                refreshToken = result.RefreshToken
+            });
+        }
+        catch (InvalidCredentialsException)
+        {
+            return Results.Unauthorized();
+        }
+        catch (AccountSuspendedException ex)
+        {
+            return Results.Problem(
+                title: "Account Suspended",
+                detail: ex.Message,
+                statusCode: 403
+            );
+        }
+        catch (AccountLockedException ex)
+        {
+            return Results.Problem(
+                title: "Account Locked",
+                detail: ex.Message,
+                statusCode: 423
+            );
+        }
+    }
 }
 
 public sealed record RegisterUserRequest(
@@ -47,4 +97,9 @@ public sealed record RegisterUserRequest(
     string Password,
     string Name,
     string? Handle = null
+);
+
+public sealed record LoginUserRequest(
+    string Email,
+    string Password
 );

@@ -17,6 +17,12 @@ public interface IIdentityRepository
     Task<Identity?> FindByEmailAsync(string email, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Find identity by email with Profile eagerly loaded (case-insensitive).
+    /// Returns null if not found.
+    /// </summary>
+    Task<Identity?> FindByEmailWithProfileAsync(string email, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Find identity by ID.
     /// Returns null if not found.
     /// </summary>

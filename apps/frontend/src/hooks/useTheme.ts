@@ -4,6 +4,22 @@ import type { Theme } from "../types";
 const THEME_STORAGE_KEY = "cw-theme";
 
 /**
+ * Read theme from localStorage synchronously.
+ * Returns the stored theme or "dark" as default.
+ */
+function getStoredTheme(): Theme {
+  try {
+    const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+    if (stored === "light" || stored === "dark") {
+      return stored;
+    }
+  } catch {
+    // localStorage might be unavailable (e.g., in private browsing)
+  }
+  return "dark";
+}
+
+/**
  * Custom hook for managing dark/light theme with localStorage persistence.
  * Applies theme class to document.documentElement for Tailwind's dark mode.
  */
@@ -12,20 +28,8 @@ export function useTheme(): {
   toggleTheme: () => void;
   setTheme: (theme: Theme) => void;
 } {
-  const [theme, setThemeState] = useState<Theme>("dark");
-
-  // Load theme from localStorage on mount
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
-      if (stored === "light" || stored === "dark") {
-        setThemeState(stored);
-      }
-    } catch (error) {
-      // localStorage might be unavailable (e.g., in private browsing)
-      console.warn("Failed to read theme from localStorage:", error);
-    }
-  }, []);
+  // Initialize from localStorage to avoid race condition
+  const [theme, setThemeState] = useState<Theme>(getStoredTheme);
 
   // Apply theme class to document and persist to localStorage
   useEffect(() => {

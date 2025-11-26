@@ -34,14 +34,14 @@ export function TwinPage(): JSX.Element {
             <span className="text-[15px] text-brand-soft">✺</span>
           </div>
           <div>
-            <h1 className="text-base font-semibold tracking-tight text-text-primary">Twin</h1>
+            <h1 className="text-base font-semibold tracking-tight text-text-primary">Nova</h1>
             <p className="text-xs text-text-secondary">
-              A digital assistant that mirrors your knowledge.
+              Learn through conversation with AI-powered insights.
             </p>
           </div>
         </div>
         <span className="inline-flex items-center rounded-full border border-brand-soft/40 bg-brand-soft/10 px-3 py-[3px] text-[11px] font-medium text-brand-soft">
-          TWIN CHAT
+          NOVA CHAT
         </span>
       </div>
 

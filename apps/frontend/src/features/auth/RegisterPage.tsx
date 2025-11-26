@@ -1,37 +1,138 @@
+/**
+ * User registration page
+ * Handles email/password registration with validation
+ */
+
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import type { AuthMode } from "../../types";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import type { AuthMode, FormErrors } from "../../types";
+import { useAuth } from "../../hooks/useAuth";
 import { AuthCard } from "./AuthCard";
 import { SocialSignInButtons } from "./SocialSignInButtons";
-
-function Field({ label, placeholder, type = "text" }: { label: string; placeholder: string; type?: string }): JSX.Element {
-  return (
-    <div className="space-y-1">
-      <label className="block text-xs text-text-tertiary">{label}</label>
-      <input
-        type={type}
-        placeholder={placeholder}
-        className="w-full rounded-xl border border-border bg-surface-page px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-brand-soft/70 focus:ring-offset-2 focus:ring-offset-surface-page"
-      />
-    </div>
-  );
-}
+import { PasswordStrength } from "./PasswordStrength";
+import { FormField } from "../../components/ui/FormField";
+import {
+  validateEmail,
+  validatePassword,
+  validateName,
+  validateHandle,
+  validateRegisterForm,
+  hasErrors,
+} from "../../utils/validation";
+import { ApiError } from "../../utils/api";
 
 export function RegisterPage(): JSX.Element {
-  const [mode, setMode] = useState<AuthMode>("password");
+  const navigate = useNavigate();
+  const { register, isAuthenticated, isLoading: authLoading } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent): void => {
+  // Form state
+  const [mode, setMode] = useState<AuthMode>("password");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [handle, setHandle] = useState("");
+
+  // UI state
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  // Redirect if already authenticated
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-text-secondary">Loading...</div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  // Field blur handlers for validation
+  const handleBlur = (field: string): void => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+
+    let error: string | undefined;
+    switch (field) {
+      case "name":
+        error = validateName(name);
+        break;
+      case "email":
+        error = validateEmail(email);
+        break;
+      case "password":
+        error = validatePassword(password);
+        break;
+      case "handle":
+        error = validateHandle(handle);
+        break;
+    }
+
+    setErrors((prev) => ({ ...prev, [field]: error }));
+  };
+
+  // Form submission
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    // Placeholder for future backend integration
+
+    // Validate all fields
+    const formErrors = validateRegisterForm(email, password, name, handle || undefined);
+
+    // Mark all fields as touched
+    setTouched({ name: true, email: true, password: true, handle: true });
+    setErrors(formErrors);
+
+    if (hasErrors(formErrors)) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrors({});
+
+    try {
+      await register({
+        email: email.trim(),
+        password,
+        name: name.trim(),
+        handle: handle.trim() || undefined,
+      });
+
+      // Registration successful - navigate to home
+      navigate("/", { replace: true });
+    } catch (error) {
+      if (error instanceof ApiError) {
+        // Handle validation errors from server
+        if (error.isValidationError() && error.validationErrors) {
+          const serverErrors: FormErrors = {};
+          for (const err of error.validationErrors) {
+            const field = err.property.toLowerCase() as keyof FormErrors;
+            serverErrors[field] = err.message;
+          }
+          setErrors(serverErrors);
+        } else if (error.isConflictError()) {
+          // Duplicate email or handle
+          setErrors({ general: error.message });
+        } else {
+          setErrors({ general: error.message });
+        }
+      } else {
+        setErrors({ general: "An unexpected error occurred. Please try again." });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <AuthCard title="Create your account" subtitle="Start your Codewrinkles workspace.">
-      <div className="inline-flex rounded-full border border-border bg-surface-card2 p-[3px] text-xs mb-4">
+      {/* Auth mode toggle */}
+      <div className="mb-4 inline-flex rounded-full border border-border bg-surface-card2 p-[3px] text-xs">
         <button
           type="button"
           onClick={() => setMode("password")}
-          className={`px-4 py-1.5 rounded-full transition-colors ${
+          className={`rounded-full px-4 py-1.5 transition-colors ${
             mode === "password"
               ? "bg-surface-page text-text-primary"
               : "text-text-secondary hover:text-text-primary"
@@ -42,7 +143,7 @@ export function RegisterPage(): JSX.Element {
         <button
           type="button"
           onClick={() => setMode("magic")}
-          className={`px-4 py-1.5 rounded-full transition-colors ${
+          className={`rounded-full px-4 py-1.5 transition-colors ${
             mode === "magic"
               ? "bg-surface-page text-text-primary"
               : "text-text-secondary hover:text-text-primary"
@@ -52,10 +153,71 @@ export function RegisterPage(): JSX.Element {
         </button>
       </div>
 
-      <form className="space-y-4" onSubmit={handleSubmit}>
-        <Field label="Name" placeholder="Daniel" />
-        <Field label="Email" placeholder="you@example.com" />
-        {mode === "password" && <Field label="Password" placeholder="Create a password" type="password" />}
+      {/* General error message */}
+      {errors.general && (
+        <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-500">
+          {errors.general}
+        </div>
+      )}
+
+      <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+        <FormField
+          label="Name"
+          placeholder="Daniel"
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onBlur={() => handleBlur("name")}
+          error={touched["name"] ? errors.name : undefined}
+          disabled={isSubmitting}
+          autoComplete="name"
+          required
+        />
+
+        <FormField
+          label="Email"
+          placeholder="you@example.com"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          onBlur={() => handleBlur("email")}
+          error={touched["email"] ? errors.email : undefined}
+          disabled={isSubmitting}
+          autoComplete="email"
+          required
+        />
+
+        {mode === "password" && (
+          <FormField
+            label="Password"
+            placeholder="Create a password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onBlur={() => handleBlur("password")}
+            error={touched["password"] ? errors.password : undefined}
+            disabled={isSubmitting}
+            autoComplete="new-password"
+            required
+          >
+            {password && <PasswordStrength password={password} />}
+          </FormField>
+        )}
+
+        {mode === "password" && (
+          <FormField
+            label="Handle (optional)"
+            placeholder="codewrinkles"
+            type="text"
+            value={handle}
+            onChange={(e) => setHandle(e.target.value)}
+            onBlur={() => handleBlur("handle")}
+            error={touched["handle"] ? errors.handle : undefined}
+            disabled={isSubmitting}
+            autoComplete="username"
+          />
+        )}
+
         {mode === "magic" && (
           <p className="text-xs text-text-secondary">
             We&apos;ll create your account after you confirm the magic link.
@@ -64,9 +226,10 @@ export function RegisterPage(): JSX.Element {
 
         <button
           type="submit"
-          className="btn-primary w-full rounded-full bg-brand-soft px-4 py-2 text-sm font-medium text-black hover:bg-brand transition-colors"
+          disabled={isSubmitting}
+          className="btn-primary w-full rounded-full bg-brand-soft px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-brand disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {mode === "password" ? "Create account" : "Send magic link"}
+          {isSubmitting ? "Creating account..." : mode === "password" ? "Create account" : "Send magic link"}
         </button>
       </form>
 
@@ -77,7 +240,7 @@ export function RegisterPage(): JSX.Element {
           to="/"
           className="inline-flex items-center gap-1 text-text-tertiary hover:text-text-primary"
         >
-          <span>←</span>
+          <span>&larr;</span>
           <span>Back to Home</span>
         </Link>
         <div>

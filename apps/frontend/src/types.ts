@@ -49,3 +49,69 @@ export interface OnboardingStep {
   description: string;
   chips: string[];
 }
+
+// ============================================
+// Auth Types
+// ============================================
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  name: string;
+  handle?: string;
+}
+
+export interface RegisterResponse {
+  identityId: string;
+  profileId: string;
+  email: string;
+  name: string;
+  handle: string | null;
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  identityId: string;
+  profileId: string;
+  email: string;
+  name: string;
+  handle: string | null;
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface User {
+  identityId: string;
+  profileId: string;
+  email: string;
+  name: string;
+  handle: string | null;
+}
+
+export interface ApiErrorResponse {
+  error?: string;
+  title?: string;
+  detail?: string;
+  status?: number;
+  // ASP.NET Core ProblemDetails validation errors format: { "FieldName": ["error1", "error2"] }
+  errors?: Record<string, string[]>;
+}
+
+export interface ValidationErrorItem {
+  property: string;
+  message: string;
+}
+
+export interface FormErrors {
+  email?: string;
+  password?: string;
+  name?: string;
+  handle?: string;
+  general?: string;
+}

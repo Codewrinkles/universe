@@ -2,10 +2,8 @@ import { NavLink } from "react-router-dom";
 
 const NAV_ITEMS = [
   { label: "Home", path: "/" },
-  { label: "Social", path: "/social" },
-  { label: "Learn", path: "/learn" },
-  { label: "Twin", path: "/twin" },
-  { label: "Settings", path: "/settings" },
+  { label: "Pulse", path: "/pulse" },
+  { label: "Nova", path: "/nova" },
 ];
 
 export function MobileNav(): JSX.Element {

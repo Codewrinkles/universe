@@ -2,47 +2,88 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Base styles */
+/* Base styles - use CSS variables for theme switching */
 html,
 body {
-  @apply min-h-screen bg-surface-page text-text-primary text-sm;
+  @apply min-h-screen text-sm;
+  background-color: var(--color-surface-page);
+  color: var(--color-text-primary);
 }
 
-/* Light theme overrides */
+/* Light theme using CSS custom properties */
+:root {
+  --color-surface-page: #050505;
+  --color-surface-card1: #0A0A0A;
+  --color-surface-card2: #111111;
+  --color-border: #2A2A2A;
+  --color-border-deep: #1A1A1A;
+  --color-text-primary: #F3F4F6;
+  --color-text-secondary: #A1A1AA;
+  --color-text-tertiary: #737373;
+}
+
 .light-theme {
-  @apply bg-gray-100 text-slate-900;
+  --color-surface-page: #F3F4F6;
+  --color-surface-card1: #FFFFFF;
+  --color-surface-card2: #F9FAFB;
+  --color-border: #E2E8F0;
+  --color-border-deep: #CBD5E1;
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #94A3B8;
 }
 
-.light-theme .bg-surface-page {
-  background-color: #F3F4F6 !important;
+/* Override Tailwind utility classes to use CSS variables */
+.light-theme,
+.dark-theme {
+  background-color: var(--color-surface-page);
+  color: var(--color-text-primary);
 }
 
-.light-theme .bg-surface-card1 {
-  background-color: #FFFFFF !important;
+.light-theme .bg-surface-page,
+.light-theme [class*="bg-surface-page"] {
+  background-color: var(--color-surface-page) !important;
 }
 
-.light-theme .bg-surface-card2 {
-  background-color: #F9FAFB !important;
+.light-theme .bg-surface-card1,
+.light-theme [class*="bg-surface-card1"] {
+  background-color: var(--color-surface-card1) !important;
 }
 
-.light-theme .border-border {
-  border-color: #E2E8F0 !important;
+.light-theme .bg-surface-card2,
+.light-theme [class*="bg-surface-card2"] {
+  background-color: var(--color-surface-card2) !important;
 }
 
-.light-theme .border-border-deep {
-  border-color: #CBD5E1 !important;
+.light-theme .border-border,
+.light-theme [class*="border-border"]:not([class*="border-border-"]) {
+  border-color: var(--color-border) !important;
 }
 
-.light-theme .text-text-primary {
-  color: #0F172A !important;
+.light-theme .border-border-deep,
+.light-theme [class*="border-border-deep"] {
+  border-color: var(--color-border-deep) !important;
 }
 
-.light-theme .text-text-secondary {
-  color: #475569 !important;
+.light-theme .text-text-primary,
+.light-theme [class*="text-text-primary"] {
+  color: var(--color-text-primary) !important;
 }
 
-.light-theme .text-text-tertiary {
-  color: #94A3B8 !important;
+.light-theme .text-text-secondary,
+.light-theme [class*="text-text-secondary"] {
+  color: var(--color-text-secondary) !important;
+}
+
+.light-theme .text-text-tertiary,
+.light-theme [class*="text-text-tertiary"] {
+  color: var(--color-text-tertiary) !important;
+}
+
+/* Ring offset needs special handling */
+.light-theme .ring-offset-surface-page,
+.light-theme [class*="ring-offset-surface-page"] {
+  --tw-ring-offset-color: var(--color-surface-page) !important;
 }
 
 .light-theme .shadow-sm {
