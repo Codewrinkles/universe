@@ -13,16 +13,71 @@ export interface App {
   description: string;
 }
 
+// Post author info
+export interface PostAuthor {
+  id: string;
+  name: string;
+  handle: string;
+  avatarUrl?: string;
+}
+
+// Media attachments
+export interface PostImage {
+  url: string;
+  alt?: string;
+  width?: number;
+  height?: number;
+}
+
+export interface PostVideo {
+  url: string;
+  thumbnailUrl?: string;
+  duration?: string;
+}
+
+export interface PostLinkPreview {
+  url: string;
+  title: string;
+  description?: string;
+  imageUrl?: string;
+  domain: string;
+}
+
+// Reposted content
+export interface RepostedPost {
+  id: number;
+  author: PostAuthor;
+  content: string;
+  timeAgo: string;
+  images?: PostImage[];
+  video?: PostVideo;
+  linkPreview?: PostLinkPreview;
+}
+
+// Main Post interface
 export interface Post {
   id: number;
-  timeAgo: string;
+  author: PostAuthor;
   content: string;
-  type: "default" | "quote" | "thread" | "image";
-  quoted?: {
-    author: string;
-    text: string;
-  };
-  repliesPreview?: number;
+  timeAgo: string;
+
+  // Engagement stats
+  replyCount?: number;
+  repostCount?: number;
+  likeCount?: number;
+  viewCount?: number;
+
+  // Media attachments (optional)
+  images?: PostImage[];
+  video?: PostVideo;
+  linkPreview?: PostLinkPreview;
+
+  // Repost (quote tweet style)
+  repostedPost?: RepostedPost;
+
+  // Thread indicator
+  isThread?: boolean;
+  threadLength?: number;
 }
 
 export interface Module {

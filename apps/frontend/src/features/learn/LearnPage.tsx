@@ -24,7 +24,7 @@ function SuggestedPath({ title, description }: { title: string; description: str
 
 export function LearnPage(): JSX.Element {
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-6xl px-4 py-6 lg:py-8 space-y-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-surface-card1 border border-violet-500/60">

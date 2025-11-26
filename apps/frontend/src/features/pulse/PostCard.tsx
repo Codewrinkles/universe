@@ -1,70 +1,146 @@
 import type { Post } from "../../types";
+import { PostImages } from "./PostImages";
+import { PostVideo } from "./PostVideo";
+import { PostLinkPreview } from "./PostLinkPreview";
+import { PostRepost } from "./PostRepost";
 
 export interface PostCardProps {
   post: Post;
 }
 
-function FeedAction({ icon, label }: { icon: string; label: string }): JSX.Element {
+function formatCount(count: number): string {
+  if (count >= 1000000) {
+    return `${(count / 1000000).toFixed(1)}M`;
+  }
+  if (count >= 1000) {
+    return `${(count / 1000).toFixed(1)}K`;
+  }
+  return count.toString();
+}
+
+interface ActionButtonProps {
+  icon: string;
+  count?: number;
+  hoverColor?: string;
+  label: string;
+}
+
+function ActionButton({ icon, count, hoverColor = "hover:text-brand-soft hover:bg-brand-soft/10", label }: ActionButtonProps): JSX.Element {
   return (
     <button
       type="button"
-      className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs text-text-tertiary hover:bg-surface-page hover:text-text-primary transition-colors"
+      title={label}
+      className={`group flex items-center gap-1.5 rounded-full p-2 text-text-tertiary transition-colors ${hoverColor}`}
     >
-      <span className="text-[11px]">{icon}</span>
-      <span>{label}</span>
+      <span className="text-base">{icon}</span>
+      {count !== undefined && count > 0 && (
+        <span className="text-xs">{formatCount(count)}</span>
+      )}
     </button>
   );
 }
 
 export function PostCard({ post }: PostCardProps): JSX.Element {
+  const { author } = post;
+
   return (
-    <article className="rounded-2xl border border-border bg-surface-card1 p-4 transition-all duration-150 hover:border-brand-soft/50 hover:bg-surface-card2">
-      <header className="mb-2 flex items-start justify-between gap-3 text-sm">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-card2 text-xs font-semibold text-text-primary border border-border">
-            D
-          </div>
-          <div className="flex flex-col">
-            <span className="font-medium tracking-tight text-text-primary">
-              Daniel @ Codewrinkles
+    <article className="px-4 py-3 hover:bg-surface-card1/50 transition-colors cursor-pointer">
+      <div className="flex gap-3">
+        {/* Avatar */}
+        <div className="flex-shrink-0">
+          {author.avatarUrl ? (
+            <img
+              src={author.avatarUrl}
+              alt={author.name}
+              className="h-10 w-10 rounded-full object-cover"
+            />
+          ) : (
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-card2 text-sm font-semibold text-text-primary border border-border">
+              {author.name.charAt(0).toUpperCase()}
+            </div>
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          {/* Header */}
+          <div className="flex items-center gap-1 text-sm">
+            <span className="font-semibold text-text-primary hover:underline truncate">
+              {author.name}
             </span>
-            <span className="text-xs text-text-tertiary">@codewrinkles</span>
+            <span className="text-text-tertiary truncate">@{author.handle}</span>
+            <span className="text-text-tertiary">·</span>
+            <span className="text-text-tertiary hover:underline">{post.timeAgo}</span>
+          </div>
+
+          {/* Post text content */}
+          {post.content && (
+            <p className="mt-1 text-[15px] leading-normal text-text-primary whitespace-pre-wrap">
+              {post.content}
+            </p>
+          )}
+
+          {/* Photo attachment */}
+          {post.images && post.images.length > 0 && (
+            <PostImages images={post.images} />
+          )}
+
+          {/* Video attachment */}
+          {post.video && (
+            <PostVideo video={post.video} />
+          )}
+
+          {/* Link preview */}
+          {post.linkPreview && (
+            <PostLinkPreview link={post.linkPreview} />
+          )}
+
+          {/* Reposted content (quote tweet) */}
+          {post.repostedPost && (
+            <PostRepost repost={post.repostedPost} />
+          )}
+
+          {/* Thread indicator */}
+          {post.isThread && (
+            <div className="mt-3 text-sm text-brand-soft hover:underline cursor-pointer">
+              Show this thread{post.threadLength ? ` (${post.threadLength} posts)` : ""}
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="mt-2 flex items-center justify-between max-w-md -ml-2">
+            <ActionButton
+              icon="💬"
+              count={post.replyCount}
+              hoverColor="hover:text-sky-400 hover:bg-sky-400/10"
+              label="Reply"
+            />
+            <ActionButton
+              icon="🔄"
+              count={post.repostCount}
+              hoverColor="hover:text-green-400 hover:bg-green-400/10"
+              label="Repost"
+            />
+            <ActionButton
+              icon="❤️"
+              count={post.likeCount}
+              hoverColor="hover:text-pink-400 hover:bg-pink-400/10"
+              label="Like"
+            />
+            <ActionButton
+              icon="📊"
+              count={post.viewCount}
+              hoverColor="hover:text-brand-soft hover:bg-brand-soft/10"
+              label="Views"
+            />
+            <ActionButton
+              icon="↗️"
+              hoverColor="hover:text-brand-soft hover:bg-brand-soft/10"
+              label="Share"
+            />
           </div>
         </div>
-        <span className="text-xs text-text-tertiary">{post.timeAgo}</span>
-      </header>
-      <p className="text-sm leading-relaxed text-text-primary mb-3">{post.content}</p>
-
-      {post.type === "quote" && post.quoted && (
-        <div className="mb-3 rounded-xl border border-border bg-surface-page/60 px-3 py-2 text-xs text-text-secondary">
-          <div className="mb-1 text-[10px] uppercase tracking-wide text-text-tertiary">
-            {post.quoted.author}
-          </div>
-          <div className="italic">&ldquo;{post.quoted.text}&rdquo;</div>
-        </div>
-      )}
-
-      {post.type === "thread" && (
-        <div className="mb-3 rounded-xl border border-dashed border-border bg-surface-page/50 px-3 py-2 text-xs text-text-tertiary">
-          <div className="flex items-center justify-between">
-            <span>Thread preview</span>
-            <span className="text-[10px]">{post.repliesPreview} replies</span>
-          </div>
-          <div className="mt-1 h-[1px] bg-border-deep/70" />
-        </div>
-      )}
-
-      {post.type === "image" && (
-        <div className="mb-3 overflow-hidden rounded-xl border border-border bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 h-40 flex items-center justify-center text-[11px] text-text-tertiary">
-          <span>Image placeholder – vertical slice diagram</span>
-        </div>
-      )}
-
-      <footer className="mt-2 flex gap-4 text-xs text-text-tertiary">
-        <FeedAction icon="💬" label="Reply" />
-        <FeedAction icon="✧" label="Appreciate" />
-        <FeedAction icon="↗" label="Share" />
-      </footer>
+      </div>
     </article>
   );
 }

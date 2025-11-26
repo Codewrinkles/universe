@@ -57,7 +57,7 @@ export function OnboardingPage(): JSX.Element {
   };
 
   return (
-    <div className="min-h-[60vh] flex items-center justify-center">
+    <div className="min-h-[60vh] flex items-center justify-center px-4 py-6 lg:py-8">
       <div className="w-full max-w-xl">
         <Card>
           <div className="flex items-center justify-between mb-4">

@@ -15,7 +15,7 @@ export function ShellLayout({ theme, onThemeToggle }: ShellLayoutProps): JSX.Ele
   return (
     <div className="min-h-screen">
       <Header theme={theme} onThemeToggle={onThemeToggle} />
-      <main className="mx-auto max-w-6xl px-4 py-6 lg:py-8 text-sm">
+      <main className="text-sm">
         <Outlet />
       </main>
     </div>

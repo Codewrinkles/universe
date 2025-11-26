@@ -7,10 +7,12 @@ export interface FeedProps {
 
 export function Feed({ posts }: FeedProps): JSX.Element {
   return (
-    <div className="space-y-3">
+    <>
       {posts.map((post) => (
-        <PostCard key={post.id} post={post} />
+        <div key={post.id} className="border-b border-border">
+          <PostCard post={post} />
+        </div>
       ))}
-    </div>
+    </>
   );
 }
