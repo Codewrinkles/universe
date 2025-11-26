@@ -5,9 +5,10 @@
 
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
-import type { User, RegisterRequest, LoginRequest } from "../types";
+import type { User, RegisterRequest, LoginRequest, UpdateProfileRequest } from "../types";
 import { config } from "../config";
 import { authApi } from "../services/authApi";
+import { profileApi } from "../services/profileApi";
 import { setAuthTokens, clearAuthData } from "../utils/api";
 
 interface AuthContextType {
@@ -17,6 +18,8 @@ interface AuthContextType {
   register: (data: RegisterRequest) => Promise<void>;
   login: (data: LoginRequest) => Promise<void>;
   logout: () => void;
+  updateProfile: (data: UpdateProfileRequest) => Promise<void>;
+  updateAvatar: (file: File) => Promise<string>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -72,6 +75,8 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
       email: response.email,
       name: response.name,
       handle: response.handle,
+      bio: null,
+      avatarUrl: null,
     };
 
     // Store user data
@@ -98,6 +103,8 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
       email: response.email,
       name: response.name,
       handle: response.handle,
+      bio: response.bio,
+      avatarUrl: response.avatarUrl,
     };
 
     // Store user data
@@ -116,6 +123,59 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
     setUser(null);
   }, []);
 
+  /**
+   * Update user profile
+   * Updates name, bio, and handle
+   */
+  const updateProfile = useCallback(async (data: UpdateProfileRequest): Promise<void> => {
+    if (!user) {
+      throw new Error("Not authenticated");
+    }
+
+    const response = await profileApi.updateProfile(user.profileId, data);
+
+    // Update user state with new profile data
+    const updatedUser: User = {
+      ...user,
+      name: response.name,
+      handle: response.handle,
+      bio: response.bio,
+      avatarUrl: response.avatarUrl,
+    };
+
+    // Persist to localStorage
+    localStorage.setItem(config.auth.userKey, JSON.stringify(updatedUser));
+
+    // Update state
+    setUser(updatedUser);
+  }, [user]);
+
+  /**
+   * Upload new avatar
+   * Returns the new avatar URL
+   */
+  const updateAvatar = useCallback(async (file: File): Promise<string> => {
+    if (!user) {
+      throw new Error("Not authenticated");
+    }
+
+    const response = await profileApi.uploadAvatar(user.profileId, file);
+
+    // Update user state with new avatar URL
+    const updatedUser: User = {
+      ...user,
+      avatarUrl: response.avatarUrl,
+    };
+
+    // Persist to localStorage
+    localStorage.setItem(config.auth.userKey, JSON.stringify(updatedUser));
+
+    // Update state
+    setUser(updatedUser);
+
+    return response.avatarUrl;
+  }, [user]);
+
   const value: AuthContextType = {
     user,
     isAuthenticated: user !== null,
@@ -123,6 +183,8 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
     register,
     login,
     logout,
+    updateProfile,
+    updateAvatar,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

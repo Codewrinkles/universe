@@ -429,3 +429,22 @@ apps/frontend/*.local
 **/.env.development.local
 **/.env.test.local
 **/.env.production.local
+
+# User uploaded content (avatars, media)
+**/wwwroot/avatars/*
+!**/wwwroot/avatars/.gitkeep
+
+# JetBrains Rider
+.idea/
+
+# Temporary/planning files
+NEXT_SESSION_PROMPT.md
+USER_REGISTRATION_PLAN.md
+
+# Misc
+nul
+favicon.ico
+logo.png
+
+# Claude Code local settings
+.claude/settings.local.json

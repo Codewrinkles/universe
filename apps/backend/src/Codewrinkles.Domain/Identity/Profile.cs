@@ -56,6 +56,27 @@ public sealed class Profile
         UpdatedAt = DateTime.UtcNow;
     }
 
+    public void UpdateProfileDetails(string name, string? bio, string? handle)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
+
+        Name = name.Trim();
+        Bio = string.IsNullOrWhiteSpace(bio) ? null : bio.Trim();
+
+        if (!string.IsNullOrWhiteSpace(handle))
+        {
+            Handle = handle.Trim().ToLowerInvariant();
+        }
+
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void UpdateAvatarUrl(string? avatarUrl)
+    {
+        AvatarUrl = string.IsNullOrWhiteSpace(avatarUrl) ? null : avatarUrl.Trim();
+        UpdatedAt = DateTime.UtcNow;
+    }
+
     // Private methods
     private static string GenerateHandleFromName(string name)
     {

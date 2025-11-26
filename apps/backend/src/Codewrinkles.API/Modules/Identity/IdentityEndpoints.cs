@@ -16,6 +16,13 @@ public static class IdentityEndpoints
 
         group.MapPost("/login", LoginUser)
             .WithName("LoginUser");
+
+        group.MapPut("/profile/{profileId:guid}", UpdateProfile)
+            .WithName("UpdateProfile");
+
+        group.MapPost("/profile/{profileId:guid}/avatar", UploadAvatar)
+            .WithName("UploadAvatar")
+            .DisableAntiforgery();
     }
 
     private static async Task<IResult> RegisterUser(
@@ -65,6 +72,8 @@ public static class IdentityEndpoints
                 email = result.Email,
                 name = result.Name,
                 handle = result.Handle,
+                bio = result.Bio,
+                avatarUrl = result.AvatarUrl,
                 accessToken = result.AccessToken,
                 refreshToken = result.RefreshToken
             });
@@ -90,6 +99,99 @@ public static class IdentityEndpoints
             );
         }
     }
+
+    private static async Task<IResult> UpdateProfile(
+        Guid profileId,
+        [FromBody] UpdateProfileRequest request,
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var command = new UpdateProfileCommand(
+                ProfileId: profileId,
+                Name: request.Name,
+                Bio: request.Bio,
+                Handle: request.Handle
+            );
+
+            var result = await mediator.SendAsync(command, cancellationToken);
+
+            return Results.Ok(new
+            {
+                profileId = result.ProfileId,
+                name = result.Name,
+                handle = result.Handle,
+                bio = result.Bio,
+                avatarUrl = result.AvatarUrl
+            });
+        }
+        catch (ProfileNotFoundException)
+        {
+            return Results.NotFound();
+        }
+        catch (HandleAlreadyTakenException ex)
+        {
+            return Results.Problem(
+                title: "Handle Already Taken",
+                detail: ex.Message,
+                statusCode: 409
+            );
+        }
+    }
+
+    private static async Task<IResult> UploadAvatar(
+        Guid profileId,
+        IFormFile file,
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        // Validate file
+        if (file is null || file.Length == 0)
+        {
+            return Results.BadRequest("No file uploaded");
+        }
+
+        // Validate file size (max 5MB)
+        const int maxFileSize = 5 * 1024 * 1024;
+        if (file.Length > maxFileSize)
+        {
+            return Results.BadRequest("File size exceeds 5MB limit");
+        }
+
+        // Validate content type
+        var allowedTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
+        if (!allowedTypes.Contains(file.ContentType.ToLowerInvariant()))
+        {
+            return Results.BadRequest("Invalid file type. Allowed: JPEG, PNG, GIF, WebP");
+        }
+
+        try
+        {
+            await using var stream = file.OpenReadStream();
+
+            var command = new UploadAvatarCommand(
+                ProfileId: profileId,
+                ImageStream: stream
+            );
+
+            var result = await mediator.SendAsync(command, cancellationToken);
+
+            return Results.Ok(new
+            {
+                profileId = result.ProfileId,
+                avatarUrl = result.AvatarUrl
+            });
+        }
+        catch (ProfileNotFoundException)
+        {
+            return Results.NotFound();
+        }
+        catch (InvalidImageException ex)
+        {
+            return Results.BadRequest(ex.Message);
+        }
+    }
 }
 
 public sealed record RegisterUserRequest(
@@ -102,4 +204,10 @@ public sealed record RegisterUserRequest(
 public sealed record LoginUserRequest(
     string Email,
     string Password
+);
+
+public sealed record UpdateProfileRequest(
+    string Name,
+    string? Bio,
+    string? Handle
 );

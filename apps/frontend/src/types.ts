@@ -82,6 +82,8 @@ export interface LoginResponse {
   email: string;
   name: string;
   handle: string | null;
+  bio: string | null;
+  avatarUrl: string | null;
   accessToken: string;
   refreshToken: string;
 }
@@ -92,6 +94,28 @@ export interface User {
   email: string;
   name: string;
   handle: string | null;
+  bio: string | null;
+  avatarUrl: string | null;
+}
+
+// Profile API types
+export interface UpdateProfileRequest {
+  name: string;
+  bio: string | null;
+  handle: string | null;
+}
+
+export interface UpdateProfileResponse {
+  profileId: string;
+  name: string;
+  handle: string | null;
+  bio: string | null;
+  avatarUrl: string | null;
+}
+
+export interface UploadAvatarResponse {
+  profileId: string;
+  avatarUrl: string;
 }
 
 export interface ApiErrorResponse {

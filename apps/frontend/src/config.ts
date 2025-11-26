@@ -11,6 +11,8 @@ export const config = {
     endpoints: {
       register: `${API_BASE_URL}/api/identity/register`,
       login: `${API_BASE_URL}/api/identity/login`,
+      profile: (profileId: string) => `${API_BASE_URL}/api/identity/profile/${profileId}`,
+      avatar: (profileId: string) => `${API_BASE_URL}/api/identity/profile/${profileId}/avatar`,
     },
   },
   auth: {

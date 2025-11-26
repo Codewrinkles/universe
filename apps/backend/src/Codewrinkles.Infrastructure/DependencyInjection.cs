@@ -3,6 +3,7 @@ using Codewrinkles.Domain.Identity;
 using Codewrinkles.Infrastructure.Options;
 using Codewrinkles.Infrastructure.Persistence;
 using Codewrinkles.Infrastructure.Persistence.Repositories;
+using Codewrinkles.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -48,6 +49,9 @@ public static class DependencyInjection
             );
             return new JwtTokenGenerator(jwtSettings);
         });
+
+        // Application Services
+        services.AddScoped<IAvatarService, AvatarService>();
 
         return services;
     }

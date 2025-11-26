@@ -64,6 +64,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors();
 
+// Serve static files (for avatar images)
+app.UseStaticFiles();
+
 // Map endpoints
 app.MapIdentityEndpoints();
 

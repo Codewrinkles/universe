@@ -1,37 +1,270 @@
+import { useState, useRef } from "react";
 import { Toggle } from "../../components/ui/Toggle";
+import { useAuth } from "../../hooks/useAuth";
+import { config } from "../../config";
 
-function Field({ label, placeholder }: { label: string; placeholder: string }): JSX.Element {
+interface FieldProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  maxLength?: number;
+  disabled?: boolean;
+}
+
+function Field({ label, value, onChange, placeholder, maxLength, disabled }: FieldProps): JSX.Element {
   return (
     <div className="space-y-1">
       <label className="block text-xs text-text-tertiary">{label}</label>
       <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-xl border border-border bg-surface-page px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-brand-soft/70 focus:ring-offset-2 focus:ring-offset-surface-page"
+        maxLength={maxLength}
+        disabled={disabled}
+        className="w-full rounded-xl border border-border bg-surface-page px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-brand-soft/70 focus:ring-offset-2 focus:ring-offset-surface-page disabled:opacity-50"
+      />
+    </div>
+  );
+}
+
+interface TextAreaFieldProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  maxLength?: number;
+  disabled?: boolean;
+}
+
+function TextAreaField({ label, value, onChange, placeholder, maxLength, disabled }: TextAreaFieldProps): JSX.Element {
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between">
+        <label className="block text-xs text-text-tertiary">{label}</label>
+        {maxLength && (
+          <span className="text-xs text-text-tertiary">{value.length}/{maxLength}</span>
+        )}
+      </div>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        maxLength={maxLength}
+        disabled={disabled}
+        rows={3}
+        className="w-full rounded-xl border border-border bg-surface-page px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-brand-soft/70 focus:ring-offset-2 focus:ring-offset-surface-page disabled:opacity-50 resize-none"
       />
     </div>
   );
 }
 
 export function SettingsProfile(): JSX.Element {
+  const { user, updateProfile, updateAvatar } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [name, setName] = useState(user?.name ?? "");
+  const [handle, setHandle] = useState(user?.handle ?? "");
+  const [bio, setBio] = useState(user?.bio ?? "");
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const hasChanges =
+    name !== (user?.name ?? "") ||
+    handle !== (user?.handle ?? "") ||
+    bio !== (user?.bio ?? "");
+
+  const handleSave = async (): Promise<void> => {
+    if (!hasChanges) return;
+
+    setIsSaving(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      await updateProfile({
+        name,
+        handle: handle || null,
+        bio: bio || null,
+      });
+      setSuccess("Profile updated successfully");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update profile");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAvatarClick = (): void => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      setError("Please upload a valid image (JPEG, PNG, GIF, or WebP)");
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image must be less than 5MB");
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      await updateAvatar(file);
+      setSuccess("Avatar updated successfully");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to upload avatar");
+    } finally {
+      setIsUploadingAvatar(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  // Build avatar URL with cache busting
+  const avatarUrl = user?.avatarUrl
+    ? `${config.api.baseUrl}${user.avatarUrl}?t=${Date.now()}`
+    : null;
+
   return (
-    <div className="space-y-4">
-      <h2 className="text-sm font-semibold tracking-tight text-text-primary">Profile details</h2>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Display name" placeholder="Daniel @ Codewrinkles" />
-        <Field label="Handle" placeholder="@codewrinkles" />
-        <Field label="Tagline" placeholder="Running, .NET and agentic AI." />
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-sm font-semibold tracking-tight text-text-primary">Profile picture</h2>
+        <p className="text-xs text-text-tertiary mt-1">Square image, will be resized to 500x500</p>
+
+        <div className="mt-3 flex items-center gap-4">
+          <button
+            type="button"
+            onClick={handleAvatarClick}
+            disabled={isUploadingAvatar}
+            className="relative h-20 w-20 rounded-full overflow-hidden border-2 border-border hover:border-brand-soft/60 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-soft/70 focus:ring-offset-2 focus:ring-offset-surface-page disabled:opacity-50"
+          >
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt="Profile"
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="h-full w-full bg-surface-card2 flex items-center justify-center">
+                <span className="text-2xl text-text-tertiary">
+                  {user?.name?.charAt(0).toUpperCase() ?? "?"}
+                </span>
+              </div>
+            )}
+            {isUploadingAvatar && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <span className="text-xs text-white">Uploading...</span>
+              </div>
+            )}
+          </button>
+          <div className="flex flex-col gap-1">
+            <button
+              type="button"
+              onClick={handleAvatarClick}
+              disabled={isUploadingAvatar}
+              className="text-xs text-brand-soft hover:text-brand transition-colors disabled:opacity-50"
+            >
+              {avatarUrl ? "Change photo" : "Upload photo"}
+            </button>
+            <span className="text-xs text-text-tertiary">JPEG, PNG, GIF, or WebP. Max 5MB.</span>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+        </div>
+      </div>
+
+      <div>
+        <h2 className="text-sm font-semibold tracking-tight text-text-primary">Profile details</h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <Field
+            label="Display name"
+            value={name}
+            onChange={setName}
+            placeholder="Your name"
+            maxLength={100}
+            disabled={isSaving}
+          />
+          <Field
+            label="Handle"
+            value={handle}
+            onChange={setHandle}
+            placeholder="your_handle"
+            maxLength={50}
+            disabled={isSaving}
+          />
+        </div>
+        <div className="mt-3">
+          <TextAreaField
+            label="Bio"
+            value={bio}
+            onChange={setBio}
+            placeholder="A short bio about yourself..."
+            maxLength={500}
+            disabled={isSaving}
+          />
+        </div>
+      </div>
+
+      {(error || success) && (
+        <div className={`text-xs px-3 py-2 rounded-lg ${error ? "bg-red-500/10 text-red-400" : "bg-green-500/10 text-green-400"}`}>
+          {error || success}
+        </div>
+      )}
+
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!hasChanges || isSaving}
+          className="rounded-full bg-brand-soft px-4 py-2 text-xs font-medium text-black hover:bg-brand transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSaving ? "Saving..." : "Save changes"}
+        </button>
       </div>
     </div>
   );
 }
 
 export function SettingsAccount(): JSX.Element {
+  const { user } = useAuth();
+
   return (
     <div className="space-y-4">
       <h2 className="text-sm font-semibold tracking-tight text-text-primary">
         Account & security
       </h2>
-      <Field label="Email" placeholder="you@example.com" />
+      <div className="space-y-1">
+        <label className="block text-xs text-text-tertiary">Email</label>
+        <input
+          type="email"
+          value={user?.email ?? ""}
+          disabled
+          className="w-full rounded-xl border border-border bg-surface-page px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary disabled:opacity-50 cursor-not-allowed"
+        />
+      </div>
       <p className="text-xs text-text-tertiary">
         Authentication and advanced security settings will live here.
       </p>

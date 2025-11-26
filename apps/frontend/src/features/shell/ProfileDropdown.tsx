@@ -6,6 +6,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import { config } from "../../config";
 
 /**
  * Get initials from a name (up to 2 characters)
@@ -75,17 +76,30 @@ export function ProfileDropdown(): JSX.Element {
     logout();
   };
 
+  // Build avatar URL
+  const avatarUrl = user.avatarUrl
+    ? `${config.api.baseUrl}${user.avatarUrl}`
+    : null;
+
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Avatar button */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-soft text-sm font-semibold text-black hover:bg-brand transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-brand-soft/50 focus:ring-offset-2 focus:ring-offset-surface-page"
+        className="flex h-9 w-9 items-center justify-center rounded-full overflow-hidden bg-brand-soft text-sm font-semibold text-black hover:ring-2 hover:ring-brand-soft/50 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-brand-soft/50 focus:ring-offset-2 focus:ring-offset-surface-page"
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
-        {initials}
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt={user.name}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          initials
+        )}
       </button>
 
       {/* Dropdown menu */}

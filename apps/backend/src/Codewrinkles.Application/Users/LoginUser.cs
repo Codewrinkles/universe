@@ -15,6 +15,8 @@ public sealed record LoginUserResult(
     string Email,
     string Name,
     string? Handle,
+    string? Bio,
+    string? AvatarUrl,
     string AccessToken,
     string RefreshToken
 );
@@ -88,6 +90,8 @@ public sealed class LoginUserCommandHandler
             Email: identity.Email,
             Name: profile.Name,
             Handle: profile.Handle,
+            Bio: profile.Bio,
+            AvatarUrl: profile.AvatarUrl,
             AccessToken: accessToken,
             RefreshToken: refreshToken
         );
