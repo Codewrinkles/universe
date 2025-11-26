@@ -2,7 +2,7 @@ import { WhoToFollow } from "./WhoToFollow";
 
 export function PulseRightSidebar(): JSX.Element {
   return (
-    <div className="sticky top-20 space-y-4">
+    <div className="space-y-4">
       {/* Search bar */}
       <div className="relative">
         <input

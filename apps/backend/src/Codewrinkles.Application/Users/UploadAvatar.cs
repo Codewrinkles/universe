@@ -36,15 +36,14 @@ public sealed class UploadAvatarCommandHandler
         UploadAvatarCommand command,
         CancellationToken cancellationToken)
     {
-        // 1. Find the profile
-        var profile = await _unitOfWork.Profiles.FindByIdAsync(
-            command.ProfileId,
-            cancellationToken);
+        // Validator has already confirmed:
+        // - Profile exists
+        // - Image stream is valid
 
-        if (profile is null)
-        {
-            throw new ProfileNotFoundException(command.ProfileId);
-        }
+        // 1. Find the profile (guaranteed to exist after validation)
+        var profile = (await _unitOfWork.Profiles.FindByIdAsync(
+            command.ProfileId,
+            cancellationToken))!;
 
         // 2. Process and save the avatar image
         string avatarUrl;

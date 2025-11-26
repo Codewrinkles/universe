@@ -42,29 +42,18 @@ public sealed class LoginUserCommandHandler
         LoginUserCommand command,
         CancellationToken cancellationToken)
     {
+        // Validator has already confirmed:
+        // - Identity exists
+        // - Account is active
+        // - Account is not locked out
+
         // 1. Find identity by email (includes Profile via eager loading)
-        var identity = await _unitOfWork.Identities.FindByEmailWithProfileAsync(
+        // Identity is guaranteed to exist after validation
+        var identity = (await _unitOfWork.Identities.FindByEmailWithProfileAsync(
             command.Email,
-            cancellationToken);
+            cancellationToken))!;
 
-        if (identity is null)
-        {
-            throw new InvalidCredentialsException();
-        }
-
-        // 2. Check if account is active
-        if (!identity.IsActive)
-        {
-            throw new AccountSuspendedException();
-        }
-
-        // 3. Check if account is locked out
-        if (identity.IsLockedOut())
-        {
-            throw new AccountLockedException(identity.LockedUntil!.Value);
-        }
-
-        // 4. Verify password
+        // 2. Verify password (has side effect: records failed attempts)
         if (!_passwordHasher.VerifyPassword(command.Password, identity.PasswordHash))
         {
             // Record failed login attempt
@@ -74,16 +63,16 @@ public sealed class LoginUserCommandHandler
             throw new InvalidCredentialsException();
         }
 
-        // 5. Record successful login
+        // 3. Record successful login
         identity.RecordSuccessfulLogin();
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // 6. Generate JWT tokens
+        // 4. Generate JWT tokens
         var profile = identity.Profile;
         var accessToken = _jwtTokenGenerator.GenerateAccessToken(identity, profile);
         var refreshToken = JwtTokenGenerator.GenerateRefreshToken(identity);
 
-        // 7. Return result
+        // 5. Return result
         return new LoginUserResult(
             IdentityId: identity.Id,
             ProfileId: profile.Id,

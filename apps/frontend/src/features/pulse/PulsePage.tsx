@@ -235,15 +235,15 @@ export function PulsePage(): JSX.Element {
 
   return (
     <div className="flex justify-center">
-      {/* Left Navigation */}
-      <aside className="hidden md:flex md:w-[88px] xl:w-[275px] flex-shrink-0 justify-end pr-2 xl:pr-8">
-        <div className="w-[68px] xl:w-[240px]">
+      {/* Left Navigation - container matches right for symmetry */}
+      <aside className="hidden lg:flex w-[320px] flex-shrink-0 justify-end pr-8">
+        <div className="w-[240px]">
           <PulseNavigation />
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="w-full max-w-[600px] border-x border-border">
+      <main className="w-full max-w-[600px] border-x border-border lg:w-[600px]">
         {/* Composer */}
         <div className="border-b border-border p-4">
           <Composer
@@ -261,12 +261,15 @@ export function PulsePage(): JSX.Element {
         </div>
       </main>
 
-      {/* Right Sidebar */}
-      <aside className="hidden lg:block w-[350px] flex-shrink-0 pl-8">
-        <div className="w-[320px]">
-          <PulseRightSidebar />
-        </div>
+      {/* Right Sidebar - placeholder for spacing, matches left width */}
+      <aside className="hidden lg:block w-[320px] flex-shrink-0 pl-8">
+        {/* Empty placeholder - actual content is fixed positioned */}
       </aside>
+
+      {/* Right Sidebar - fixed position */}
+      <div className="hidden lg:block fixed top-20 z-10 w-[288px] left-[calc(50%+332px)]">
+        <PulseRightSidebar />
+      </div>
     </div>
   );
 }

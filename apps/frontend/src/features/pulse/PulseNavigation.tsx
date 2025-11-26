@@ -40,7 +40,7 @@ export function PulseNavigation(): JSX.Element {
     : null;
 
   return (
-    <nav className="sticky top-20 space-y-1">
+    <nav className="sticky top-20 z-10 space-y-1">
       <NavItem to="/pulse" icon="🏠" label="Home" />
       {/* <NavItem to="/pulse/explore" icon="🔍" label="Explore" /> */}
       <NavItem to="/pulse/notifications" icon="🔔" label="Notifications" badge={3} />

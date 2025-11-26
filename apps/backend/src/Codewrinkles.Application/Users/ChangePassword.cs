@@ -32,27 +32,20 @@ public sealed class ChangePasswordCommandHandler
         ChangePasswordCommand command,
         CancellationToken cancellationToken)
     {
-        // 1. Find identity by ID
-        var identity = await _unitOfWork.Identities.FindByIdAsync(
+        // Validator has already confirmed:
+        // - Identity exists
+        // - Current password is correct
+
+        // 1. Find identity (guaranteed to exist after validation)
+        var identity = (await _unitOfWork.Identities.FindByIdAsync(
             command.IdentityId,
-            cancellationToken);
+            cancellationToken))!;
 
-        if (identity is null)
-        {
-            throw new IdentityNotFoundException();
-        }
-
-        // 2. Verify current password
-        if (!_passwordHasher.VerifyPassword(command.CurrentPassword, identity.PasswordHash))
-        {
-            throw new CurrentPasswordInvalidException();
-        }
-
-        // 3. Hash new password and update
+        // 2. Hash new password and update
         var newPasswordHash = _passwordHasher.HashPassword(command.NewPassword);
         identity.ChangePassword(newPasswordHash);
 
-        // 4. Save changes
+        // 3. Save changes
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new ChangePasswordResult(Success: true);

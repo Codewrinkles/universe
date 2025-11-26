@@ -16,7 +16,7 @@ export function Header({ theme, onThemeToggle }: HeaderProps): JSX.Element {
   const isOnboardingPage = location.pathname === "/onboarding";
 
   return (
-    <header className="border-b border-border-deep bg-surface-page/95 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-border-deep bg-surface-page/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 gap-3 relative">
         {/* Brand */}
         <Link to="/" className="flex items-center focus:outline-none group">

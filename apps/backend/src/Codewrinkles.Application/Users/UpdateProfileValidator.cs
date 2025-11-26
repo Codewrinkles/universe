@@ -1,44 +1,65 @@
 using System.Text.RegularExpressions;
+using Codewrinkles.Application.Common.Interfaces;
 using Kommand;
 
 namespace Codewrinkles.Application.Users;
 
 public sealed partial class UpdateProfileValidator : IValidator<UpdateProfileCommand>
 {
+    private readonly IUnitOfWork _unitOfWork;
     private List<ValidationError> _errors = null!;
 
-    public Task<ValidationResult> ValidateAsync(
+    public UpdateProfileValidator(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<ValidationResult> ValidateAsync(
         UpdateProfileCommand request,
         CancellationToken cancellationToken)
     {
         _errors = [];
 
-        // ProfileId validation
-        if (request.ProfileId == Guid.Empty)
-        {
-            _errors.Add(new ValidationError(
-                nameof(UpdateProfileCommand.ProfileId),
-                "Profile ID is required"));
-        }
-
-        // Name validation
+        // Input format validation
+        ValidateProfileId(request.ProfileId);
         ValidateName(request.Name);
 
-        // Handle validation (if provided)
         if (!string.IsNullOrWhiteSpace(request.Handle))
         {
             ValidateHandle(request.Handle);
         }
 
-        // Bio validation (if provided)
         if (!string.IsNullOrWhiteSpace(request.Bio))
         {
             ValidateBio(request.Bio);
         }
 
-        return Task.FromResult(_errors.Count > 0
+        // If basic validation fails, return early
+        if (_errors.Count > 0)
+        {
+            return ValidationResult.Failure(_errors);
+        }
+
+        // Application-level validation (requires database checks)
+        await ValidateProfileExistsAsync(request.ProfileId, cancellationToken);
+        await ValidateHandleUniquenessAsync(
+            request.ProfileId,
+            request.Handle,
+            cancellationToken);
+
+        return _errors.Count > 0
             ? ValidationResult.Failure(_errors)
-            : ValidationResult.Success());
+            : ValidationResult.Success();
+    }
+
+    private void ValidateProfileId(Guid profileId)
+    {
+        if (profileId == Guid.Empty)
+        {
+            _errors.Add(new ValidationError(
+                nameof(UpdateProfileCommand.ProfileId),
+                "Profile ID is required"));
+        }
     }
 
     private void ValidateName(string name)
@@ -83,6 +104,57 @@ public sealed partial class UpdateProfileValidator : IValidator<UpdateProfileCom
             _errors.Add(new ValidationError(
                 nameof(UpdateProfileCommand.Bio),
                 "Bio must be 500 characters or less"));
+        }
+    }
+
+    private async Task ValidateProfileExistsAsync(
+        Guid profileId,
+        CancellationToken cancellationToken)
+    {
+        var profile = await _unitOfWork.Profiles.FindByIdAsync(
+            profileId,
+            cancellationToken);
+
+        if (profile is null)
+        {
+            throw new ProfileNotFoundException(profileId);
+        }
+    }
+
+    private async Task ValidateHandleUniquenessAsync(
+        Guid profileId,
+        string? handle,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(handle))
+        {
+            return;
+        }
+
+        // Get current profile to check if handle is actually changing
+        var currentProfile = await _unitOfWork.Profiles.FindByIdAsync(
+            profileId,
+            cancellationToken);
+
+        if (currentProfile is null)
+        {
+            return; // Already handled by ValidateProfileExistsAsync
+        }
+
+        var normalizedNewHandle = handle.Trim().ToLowerInvariant();
+        var currentHandle = currentProfile.Handle?.ToLowerInvariant();
+
+        // Only check uniqueness if handle is actually changing
+        if (normalizedNewHandle != currentHandle)
+        {
+            var handleExists = await _unitOfWork.Profiles.ExistsByHandleAsync(
+                handle,
+                cancellationToken);
+
+            if (handleExists)
+            {
+                throw new HandleAlreadyTakenException(handle);
+            }
         }
     }
 

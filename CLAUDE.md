@@ -633,6 +633,101 @@ npm install         # Install all dependencies
 - ✅ Custom authentication (no ASP.NET Core Identity)
 - ✅ JWT + refresh tokens with revocation
 
+### 🚨 CRITICAL: Kommand Validator/Handler Pattern
+
+**Validators validate. Handlers orchestrate.**
+
+This is a **strict separation of concerns**:
+
+- **Validators**: ALL precondition checks (entity exists, account state, uniqueness, credentials)
+- **Handlers**: ONLY orchestrate the action after validation passes (modify state, generate tokens, etc.)
+
+**Validator Responsibilities:**
+```csharp
+public sealed class LoginUserValidator : IValidator<LoginUserCommand>
+{
+    // ✅ Input format validation (email format, required fields, etc.)
+    // ✅ Application-level validation (entity exists, account active, not locked)
+    // ✅ Business rule validation (uniqueness checks, credentials verification*)
+
+    // *Exception: If credential verification has SIDE EFFECTS (like recording
+    // failed login attempts), keep it in handler
+}
+```
+
+**Handler Responsibilities:**
+```csharp
+public sealed class LoginUserCommandHandler : ICommandHandler<LoginUserCommand, LoginUserResult>
+{
+    // Validator has already confirmed all preconditions
+    // Handler ONLY does:
+    // ✅ Fetch entities (guaranteed to exist after validation)
+    // ✅ Execute the action (modify state, create records, etc.)
+    // ✅ Handle operations with side effects (e.g., password verification that records failed attempts)
+    // ✅ Generate results (tokens, DTOs, etc.)
+}
+```
+
+**Validator Structure:**
+```csharp
+public async Task<ValidationResult> ValidateAsync(
+    TCommand request,
+    CancellationToken cancellationToken)
+{
+    _errors = [];
+
+    // 1. Input format validation (synchronous)
+    ValidateRequiredFields(request);
+    ValidateFormats(request);
+
+    // If basic validation fails, return early
+    if (_errors.Count > 0)
+    {
+        return ValidationResult.Failure(_errors);
+    }
+
+    // 2. Application-level validation (async, requires database)
+    await ValidateEntityExistsAsync(request, cancellationToken);
+    await ValidateBusinessRulesAsync(request, cancellationToken);
+
+    return _errors.Count > 0
+        ? ValidationResult.Failure(_errors)
+        : ValidationResult.Success();
+}
+```
+
+**Error Handling in Validators:**
+- Return `ValidationResult.Failure(_errors)` for input format errors
+- Throw domain exceptions for application-level failures (e.g., `ProfileNotFoundException`, `AccountLockedException`)
+
+**Example - Login Validation:**
+```csharp
+// In validator:
+// ✅ Check email format → ValidationError
+// ✅ Check password not empty → ValidationError
+// ✅ Check identity exists → throw InvalidCredentialsException
+// ✅ Check account active → throw AccountSuspendedException
+// ✅ Check not locked out → throw AccountLockedException
+
+// In handler:
+// ✅ Verify password (has side effect: records failed attempts)
+// ✅ Record successful login
+// ✅ Generate JWT tokens
+```
+
+**Why This Matters:**
+- ✅ **Clear separation**: Validation logic is testable in isolation
+- ✅ **Handler simplicity**: Handlers assume preconditions are met
+- ✅ **Consistent pattern**: Every command/query follows the same structure
+- ✅ **Fail fast**: Invalid requests are rejected before expensive operations
+
+**Rules:**
+1. ✅ **ALWAYS** validate entity existence in validator
+2. ✅ **ALWAYS** validate business rules (uniqueness, state) in validator
+3. ✅ Keep operations with side effects in handler
+4. ❌ **NEVER** duplicate validation between validator and handler
+5. ❌ **NEVER** check entity existence in handler (validator already did)
+
 ### OpenAPI & API Documentation
 
 **Built-in OpenAPI + Scalar (NOT Swashbuckle)**
@@ -781,4 +876,4 @@ app.MapPost("/api/users", CreateUser)
 
 ---
 
-**Last Updated**: 2025-11-23 (update this when making significant changes)
+**Last Updated**: 2025-11-26 (update this when making significant changes)

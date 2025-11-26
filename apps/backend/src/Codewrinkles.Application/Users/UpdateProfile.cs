@@ -44,36 +44,16 @@ public sealed class UpdateProfileCommandHandler
         UpdateProfileCommand command,
         CancellationToken cancellationToken)
     {
-        // 1. Find the profile
-        var profile = await _unitOfWork.Profiles.FindByIdAsync(
+        // Validator has already confirmed:
+        // - Profile exists
+        // - Handle is unique (if being changed)
+
+        // 1. Find the profile (guaranteed to exist after validation)
+        var profile = (await _unitOfWork.Profiles.FindByIdAsync(
             command.ProfileId,
-            cancellationToken);
+            cancellationToken))!;
 
-        if (profile is null)
-        {
-            throw new ProfileNotFoundException(command.ProfileId);
-        }
-
-        // 2. Check handle uniqueness if handle is being changed
-        if (!string.IsNullOrWhiteSpace(command.Handle))
-        {
-            var normalizedNewHandle = command.Handle.Trim().ToLowerInvariant();
-            var currentHandle = profile.Handle?.ToLowerInvariant();
-
-            if (normalizedNewHandle != currentHandle)
-            {
-                var handleExists = await _unitOfWork.Profiles.ExistsByHandleAsync(
-                    command.Handle,
-                    cancellationToken);
-
-                if (handleExists)
-                {
-                    throw new HandleAlreadyTakenException(command.Handle);
-                }
-            }
-        }
-
-        // 3. Update the profile
+        // 2. Update the profile
         profile.UpdateProfileDetails(
             name: command.Name,
             bio: command.Bio,
@@ -81,7 +61,7 @@ public sealed class UpdateProfileCommandHandler
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // 4. Return result
+        // 3. Return result
         return new UpdateProfileResult(
             ProfileId: profile.Id,
             Name: profile.Name,
