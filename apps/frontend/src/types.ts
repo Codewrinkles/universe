@@ -118,6 +118,17 @@ export interface UploadAvatarResponse {
   avatarUrl: string;
 }
 
+// Change Password API types
+export interface ChangePasswordRequest {
+  identityId: string;
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface ChangePasswordResponse {
+  success: boolean;
+}
+
 export interface ApiErrorResponse {
   error?: string;
   title?: string;

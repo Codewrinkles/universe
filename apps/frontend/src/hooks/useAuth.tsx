@@ -5,7 +5,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
-import type { User, RegisterRequest, LoginRequest, UpdateProfileRequest } from "../types";
+import type { User, RegisterRequest, LoginRequest, UpdateProfileRequest, ChangePasswordRequest } from "../types";
 import { config } from "../config";
 import { authApi } from "../services/authApi";
 import { profileApi } from "../services/profileApi";
@@ -20,6 +20,7 @@ interface AuthContextType {
   logout: () => void;
   updateProfile: (data: UpdateProfileRequest) => Promise<void>;
   updateAvatar: (file: File) => Promise<string>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -176,6 +177,24 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
     return response.avatarUrl;
   }, [user]);
 
+  /**
+   * Change user password
+   * Requires current password verification
+   */
+  const changePassword = useCallback(async (currentPassword: string, newPassword: string): Promise<void> => {
+    if (!user) {
+      throw new Error("Not authenticated");
+    }
+
+    const request: ChangePasswordRequest = {
+      identityId: user.identityId,
+      currentPassword,
+      newPassword,
+    };
+
+    await authApi.changePassword(request);
+  }, [user]);
+
   const value: AuthContextType = {
     user,
     isAuthenticated: user !== null,
@@ -185,6 +204,7 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
     logout,
     updateProfile,
     updateAvatar,
+    changePassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

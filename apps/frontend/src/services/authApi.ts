@@ -3,7 +3,7 @@
  * Handles authentication-related API calls
  */
 
-import type { RegisterRequest, RegisterResponse, LoginRequest, LoginResponse } from "../types";
+import type { RegisterRequest, RegisterResponse, LoginRequest, LoginResponse, ChangePasswordRequest, ChangePasswordResponse } from "../types";
 import { config } from "../config";
 import { apiRequest } from "../utils/api";
 
@@ -23,6 +23,16 @@ export const authApi = {
    */
   login(data: LoginRequest): Promise<LoginResponse> {
     return apiRequest<LoginResponse>(config.api.endpoints.login, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  /**
+   * Change password for authenticated user
+   */
+  changePassword(data: ChangePasswordRequest): Promise<ChangePasswordResponse> {
+    return apiRequest<ChangePasswordResponse>(config.api.endpoints.changePassword, {
       method: "POST",
       body: JSON.stringify(data),
     });

@@ -89,4 +89,12 @@ public sealed class Identity
         IsActive = true;
         UpdatedAt = DateTime.UtcNow;
     }
+
+    public void ChangePassword(string newPasswordHash)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(newPasswordHash, nameof(newPasswordHash));
+
+        PasswordHash = newPasswordHash;
+        UpdatedAt = DateTime.UtcNow;
+    }
 }

@@ -249,25 +249,137 @@ export function SettingsProfile(): JSX.Element {
 }
 
 export function SettingsAccount(): JSX.Element {
-  const { user } = useAuth();
+  const { user, changePassword } = useAuth();
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const canSubmit =
+    currentPassword.length > 0 &&
+    newPassword.length >= 8 &&
+    newPassword === confirmPassword;
+
+  const handleChangePassword = async (): Promise<void> => {
+    if (!canSubmit) return;
+
+    // Client-side validation
+    if (newPassword !== confirmPassword) {
+      setError("New passwords do not match");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
+
+    const hasUpperCase = /[A-Z]/.test(newPassword);
+    const hasLowerCase = /[a-z]/.test(newPassword);
+    const hasDigit = /[0-9]/.test(newPassword);
+    const hasSpecialChar = /[^A-Za-z0-9]/.test(newPassword);
+
+    if (!hasUpperCase || !hasLowerCase || !hasDigit || !hasSpecialChar) {
+      setError("Password must contain uppercase, lowercase, number, and special character");
+      return;
+    }
+
+    setIsChangingPassword(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      await changePassword(currentPassword, newPassword);
+      setSuccess("Password changed successfully");
+      // Clear form
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to change password");
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-sm font-semibold tracking-tight text-text-primary">
-        Account & security
-      </h2>
-      <div className="space-y-1">
-        <label className="block text-xs text-text-tertiary">Email</label>
-        <input
-          type="email"
-          value={user?.email ?? ""}
-          disabled
-          className="w-full rounded-xl border border-border bg-surface-page px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary disabled:opacity-50 cursor-not-allowed"
-        />
+    <div className="space-y-6">
+      <div className="space-y-4">
+        <h2 className="text-sm font-semibold tracking-tight text-text-primary">
+          Account
+        </h2>
+        <div className="space-y-1">
+          <label className="block text-xs text-text-tertiary">Email</label>
+          <input
+            type="email"
+            value={user?.email ?? ""}
+            disabled
+            className="w-full rounded-xl border border-border bg-surface-page px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary disabled:opacity-50 cursor-not-allowed"
+          />
+        </div>
       </div>
-      <p className="text-xs text-text-tertiary">
-        Authentication and advanced security settings will live here.
-      </p>
+
+      <div className="space-y-4">
+        <h2 className="text-sm font-semibold tracking-tight text-text-primary">
+          Change password
+        </h2>
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <label className="block text-xs text-text-tertiary">Current password</label>
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              disabled={isChangingPassword}
+              className="w-full rounded-xl border border-border bg-surface-page px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-brand-soft/70 focus:ring-offset-2 focus:ring-offset-surface-page disabled:opacity-50"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="block text-xs text-text-tertiary">New password</label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              disabled={isChangingPassword}
+              className="w-full rounded-xl border border-border bg-surface-page px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-brand-soft/70 focus:ring-offset-2 focus:ring-offset-surface-page disabled:opacity-50"
+            />
+            <p className="text-xs text-text-tertiary">
+              Min 8 characters with uppercase, lowercase, number, and special character
+            </p>
+          </div>
+          <div className="space-y-1">
+            <label className="block text-xs text-text-tertiary">Confirm new password</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              disabled={isChangingPassword}
+              className="w-full rounded-xl border border-border bg-surface-page px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-brand-soft/70 focus:ring-offset-2 focus:ring-offset-surface-page disabled:opacity-50"
+            />
+          </div>
+        </div>
+
+        {(error || success) && (
+          <div className={`text-xs px-3 py-2 rounded-lg ${error ? "bg-red-500/10 text-red-400" : "bg-green-500/10 text-green-400"}`}>
+            {error || success}
+          </div>
+        )}
+
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={handleChangePassword}
+            disabled={!canSubmit || isChangingPassword}
+            className="rounded-full bg-brand-soft px-4 py-2 text-xs font-medium text-black hover:bg-brand transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isChangingPassword ? "Changing..." : "Change password"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

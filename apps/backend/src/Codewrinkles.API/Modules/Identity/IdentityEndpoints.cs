@@ -23,6 +23,9 @@ public static class IdentityEndpoints
         group.MapPost("/profile/{profileId:guid}/avatar", UploadAvatar)
             .WithName("UploadAvatar")
             .DisableAntiforgery();
+
+        group.MapPost("/change-password", ChangePassword)
+            .WithName("ChangePassword");
     }
 
     private static async Task<IResult> RegisterUser(
@@ -192,6 +195,37 @@ public static class IdentityEndpoints
             return Results.BadRequest(ex.Message);
         }
     }
+
+    private static async Task<IResult> ChangePassword(
+        [FromBody] ChangePasswordRequest request,
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var command = new ChangePasswordCommand(
+                IdentityId: request.IdentityId,
+                CurrentPassword: request.CurrentPassword,
+                NewPassword: request.NewPassword
+            );
+
+            await mediator.SendAsync(command, cancellationToken);
+
+            return Results.Ok(new { success = true });
+        }
+        catch (IdentityNotFoundException)
+        {
+            return Results.NotFound();
+        }
+        catch (CurrentPasswordInvalidException)
+        {
+            return Results.Problem(
+                title: "Invalid Password",
+                detail: "Current password is incorrect",
+                statusCode: 400
+            );
+        }
+    }
 }
 
 public sealed record RegisterUserRequest(
@@ -210,4 +244,10 @@ public sealed record UpdateProfileRequest(
     string Name,
     string? Bio,
     string? Handle
+);
+
+public sealed record ChangePasswordRequest(
+    Guid IdentityId,
+    string CurrentPassword,
+    string NewPassword
 );
