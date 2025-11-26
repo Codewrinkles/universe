@@ -116,7 +116,19 @@ Id = Guid.NewGuid()
 
 All Pulse-related tables use the `pulse` schema (similar to `identity` schema for auth).
 
-### Tables
+> **⚠️ IMPORTANT: EF Core Migrations Only**
+>
+> The SQL scripts below are **for documentation/reference purposes only**.
+>
+> **All schema changes MUST be implemented through:**
+> 1. Entity classes in `Codewrinkles.Domain/Pulse/`
+> 2. EF Core configurations in `Codewrinkles.Infrastructure/Persistence/Configurations/Pulse/`
+> 3. EF Core migrations: `dotnet ef migrations add <MigrationName>`
+> 4. Apply migrations: `dotnet ef database update`
+>
+> **Never execute these SQL scripts directly.** They exist only to visualize the target schema structure.
+
+### Tables (Reference Only)
 
 #### `pulse.Pulses`
 
