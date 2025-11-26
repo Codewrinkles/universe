@@ -1,6 +1,5 @@
 import type { Post } from "../../types";
 import { PostImages } from "./PostImages";
-import { PostVideo } from "./PostVideo";
 import { PostLinkPreview } from "./PostLinkPreview";
 import { PostRepost } from "./PostRepost";
 
@@ -83,11 +82,6 @@ export function PostCard({ post }: PostCardProps): JSX.Element {
           {/* Photo attachment */}
           {post.images && post.images.length > 0 && (
             <PostImages images={post.images} />
-          )}
-
-          {/* Video attachment */}
-          {post.video && (
-            <PostVideo video={post.video} />
           )}
 
           {/* Link preview */}

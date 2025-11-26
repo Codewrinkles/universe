@@ -65,22 +65,6 @@ const MOCK_POSTS: Post[] = [
     repostCount: 3,
     likeCount: 67,
   },
-  // Post with video
-  {
-    id: 4,
-    author: MOCK_AUTHOR,
-    timeAgo: "1d",
-    content: "New video: Building agentic AI features in a legacy SaaS. Full walkthrough from zero to deployed.",
-    video: {
-      url: "https://youtube.com/watch?v=example",
-      thumbnailUrl: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&h=450&fit=crop",
-      duration: "24:35",
-    },
-    replyCount: 45,
-    repostCount: 32,
-    likeCount: 289,
-    viewCount: 8500,
-  },
   // Post with link preview
   {
     id: 5,
@@ -185,32 +169,6 @@ const MOCK_POSTS: Post[] = [
     repostCount: 56,
     likeCount: 312,
     viewCount: 8900,
-  },
-  // Repost of a video post
-  {
-    id: 10,
-    author: {
-      id: "7",
-      name: "Learning Dev",
-      handle: "learningdev",
-    },
-    timeAgo: "3d",
-    content: "Finally someone explains microservices without making it overcomplicated 👏",
-    repostedPost: {
-      id: 103,
-      author: MOCK_AUTHOR,
-      content: "Quick explainer: When to use microservices vs monolith.",
-      timeAgo: "6d",
-      video: {
-        url: "https://youtube.com/watch?v=example2",
-        thumbnailUrl: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=450&fit=crop",
-        duration: "8:42",
-      },
-    },
-    replyCount: 89,
-    repostCount: 134,
-    likeCount: 756,
-    viewCount: 23000,
   },
   // Thread post
   {

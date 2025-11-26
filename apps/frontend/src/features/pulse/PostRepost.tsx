@@ -54,37 +54,6 @@ export function PostRepost({ repost }: PostRepostProps): JSX.Element {
         </div>
       )}
 
-      {/* Reposted video (show thumbnail preview) */}
-      {repost.video && (
-        <div className="mt-2 relative overflow-hidden rounded-xl">
-          {repost.video.thumbnailUrl ? (
-            <img
-              src={repost.video.thumbnailUrl}
-              alt="Video thumbnail"
-              className="w-full h-24 object-cover"
-            />
-          ) : (
-            <div className="w-full h-24 bg-surface-card2 flex items-center justify-center">
-              <span className="text-2xl">🎬</span>
-            </div>
-          )}
-          {/* Play icon overlay */}
-          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90">
-              <svg className="h-5 w-5 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </div>
-          </div>
-          {/* Duration badge */}
-          {repost.video.duration && (
-            <div className="absolute bottom-2 right-2 rounded bg-black/80 px-1.5 py-0.5 text-[10px] font-medium text-white">
-              {repost.video.duration}
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Reposted link preview (compact version) */}
       {repost.linkPreview && (
         <div className="mt-2 flex gap-2 rounded-xl border border-border overflow-hidden">

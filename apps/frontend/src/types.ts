@@ -29,12 +29,6 @@ export interface PostImage {
   height?: number;
 }
 
-export interface PostVideo {
-  url: string;
-  thumbnailUrl?: string;
-  duration?: string;
-}
-
 export interface PostLinkPreview {
   url: string;
   title: string;
@@ -43,14 +37,13 @@ export interface PostLinkPreview {
   domain: string;
 }
 
-// Reposted content
+// Reposted content (re-pulse)
 export interface RepostedPost {
   id: number;
   author: PostAuthor;
   content: string;
   timeAgo: string;
   images?: PostImage[];
-  video?: PostVideo;
   linkPreview?: PostLinkPreview;
 }
 
@@ -69,7 +62,6 @@ export interface Post {
 
   // Media attachments (optional)
   images?: PostImage[];
-  video?: PostVideo;
   linkPreview?: PostLinkPreview;
 
   // Repost (quote tweet style)
