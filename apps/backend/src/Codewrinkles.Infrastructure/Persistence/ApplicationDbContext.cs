@@ -1,4 +1,5 @@
 using Codewrinkles.Domain.Identity;
+using Codewrinkles.Domain.Pulse;
 using Microsoft.EntityFrameworkCore;
 
 namespace Codewrinkles.Infrastructure.Persistence;
@@ -10,8 +11,13 @@ public sealed class ApplicationDbContext : DbContext
     {
     }
 
+    // Identity schema
     public DbSet<Identity> Identities => Set<Identity>();
     public DbSet<Profile> Profiles => Set<Profile>();
+
+    // Pulse schema
+    public DbSet<Pulse> Pulses => Set<Pulse>();
+    public DbSet<PulseEngagement> PulseEngagements => Set<PulseEngagement>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -1,4 +1,7 @@
-import type { PostImage } from "../../types";
+import type { PulseImage } from "../../types";
+
+// Legacy type alias for compatibility
+type PostImage = PulseImage;
 
 interface PostImagesProps {
   images: PostImage[];
@@ -17,7 +20,7 @@ export function PostImages({ images }: PostImagesProps): JSX.Element {
       <div className="mt-3 overflow-hidden rounded-2xl border border-border">
         <img
           src={image.url}
-          alt={image.alt ?? "Post image"}
+          alt={image.altText ?? "Post image"}
           className="w-full h-auto max-h-[512px] object-cover"
         />
       </div>
@@ -32,7 +35,7 @@ export function PostImages({ images }: PostImagesProps): JSX.Element {
           <img
             key={index}
             src={image.url}
-            alt={image.alt ?? `Post image ${index + 1}`}
+            alt={image.altText ?? `Post image ${index + 1}`}
             className="w-full h-64 object-cover"
           />
         ))}
@@ -48,18 +51,18 @@ export function PostImages({ images }: PostImagesProps): JSX.Element {
       <div className="mt-3 grid grid-cols-2 gap-0.5 overflow-hidden rounded-2xl border border-border">
         <img
           src={first.url}
-          alt={first.alt ?? "Post image 1"}
+          alt={first.altText ?? "Post image 1"}
           className="w-full h-[272px] object-cover row-span-2"
         />
         <div className="flex flex-col gap-0.5">
           <img
             src={second.url}
-            alt={second.alt ?? "Post image 2"}
+            alt={second.altText ?? "Post image 2"}
             className="w-full h-[134px] object-cover"
           />
           <img
             src={third.url}
-            alt={third.alt ?? "Post image 3"}
+            alt={third.altText ?? "Post image 3"}
             className="w-full h-[134px] object-cover"
           />
         </div>
@@ -74,7 +77,7 @@ export function PostImages({ images }: PostImagesProps): JSX.Element {
         <div key={index} className="relative">
           <img
             src={image.url}
-            alt={image.alt ?? `Post image ${index + 1}`}
+            alt={image.altText ?? `Post image ${index + 1}`}
             className="w-full h-32 object-cover"
           />
           {index === 3 && count > 4 && (

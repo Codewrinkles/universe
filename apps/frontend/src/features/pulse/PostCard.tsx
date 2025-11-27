@@ -2,6 +2,8 @@ import type { Post } from "../../types";
 import { PostImages } from "./PostImages";
 import { PostLinkPreview } from "./PostLinkPreview";
 import { PostRepost } from "./PostRepost";
+import { formatTimeAgo } from "../../utils/timeUtils";
+import { config } from "../../config";
 
 export interface PostCardProps {
   post: Post;
@@ -42,14 +44,28 @@ function ActionButton({ icon, count, hoverColor = "hover:text-brand-soft hover:b
 export function PostCard({ post }: PostCardProps): JSX.Element {
   const { author } = post;
 
+  // Handle avatar URL - if it's a relative path, prepend base URL
+  const avatarUrl = author.avatarUrl
+    ? (author.avatarUrl.startsWith('http') ? author.avatarUrl : `${config.api.baseUrl}${author.avatarUrl}`)
+    : null;
+
+  // Format createdAt to relative time
+  const timeAgo = 'createdAt' in post ? formatTimeAgo(post.createdAt) : (post as any).timeAgo || '';
+
+  // Extract engagement counts (handle both new and legacy formats)
+  const replyCount = 'engagement' in post ? post.engagement.replyCount : (post as any).replyCount;
+  const repostCount = 'engagement' in post ? post.engagement.repulseCount : (post as any).repostCount;
+  const likeCount = 'engagement' in post ? post.engagement.likeCount : (post as any).likeCount;
+  const viewCount = 'engagement' in post ? post.engagement.viewCount : (post as any).viewCount;
+
   return (
     <article className="px-4 py-3 hover:bg-surface-card1/50 transition-colors cursor-pointer">
       <div className="flex gap-3">
         {/* Avatar */}
         <div className="flex-shrink-0">
-          {author.avatarUrl ? (
+          {avatarUrl ? (
             <img
-              src={author.avatarUrl}
+              src={avatarUrl}
               alt={author.name}
               className="h-10 w-10 rounded-full object-cover"
             />
@@ -69,7 +85,7 @@ export function PostCard({ post }: PostCardProps): JSX.Element {
             </span>
             <span className="text-text-tertiary truncate">@{author.handle}</span>
             <span className="text-text-tertiary">·</span>
-            <span className="text-text-tertiary hover:underline">{post.timeAgo}</span>
+            <span className="text-text-tertiary hover:underline">{timeAgo}</span>
           </div>
 
           {/* Post text content */}
@@ -80,8 +96,11 @@ export function PostCard({ post }: PostCardProps): JSX.Element {
           )}
 
           {/* Photo attachment */}
-          {post.images && post.images.length > 0 && (
-            <PostImages images={post.images} />
+          {'image' in post && post.image && (
+            <PostImages images={[post.image]} />
+          )}
+          {(post as any).images && (post as any).images.length > 0 && (
+            <PostImages images={(post as any).images} />
           )}
 
           {/* Link preview */}
@@ -89,15 +108,18 @@ export function PostCard({ post }: PostCardProps): JSX.Element {
             <PostLinkPreview link={post.linkPreview} />
           )}
 
-          {/* Reposted content (quote tweet) */}
-          {post.repostedPost && (
-            <PostRepost repost={post.repostedPost} />
+          {/* Reposted content (quote tweet) / Repulsed pulse */}
+          {'repulsedPulse' in post && post.repulsedPulse && (
+            <PostRepost repost={post.repulsedPulse} />
+          )}
+          {(post as any).repostedPost && (
+            <PostRepost repost={(post as any).repostedPost} />
           )}
 
           {/* Thread indicator */}
-          {post.isThread && (
+          {(post as any).isThread && (
             <div className="mt-3 text-sm text-brand-soft hover:underline cursor-pointer">
-              Show this thread{post.threadLength ? ` (${post.threadLength} posts)` : ""}
+              Show this thread{(post as any).threadLength ? ` (${(post as any).threadLength} posts)` : ""}
             </div>
           )}
 
@@ -105,25 +127,25 @@ export function PostCard({ post }: PostCardProps): JSX.Element {
           <div className="mt-2 flex items-center justify-between max-w-md -ml-2">
             <ActionButton
               icon="💬"
-              count={post.replyCount}
+              count={replyCount}
               hoverColor="hover:text-sky-400 hover:bg-sky-400/10"
               label="Reply"
             />
             <ActionButton
               icon="🔄"
-              count={post.repostCount}
+              count={repostCount}
               hoverColor="hover:text-green-400 hover:bg-green-400/10"
               label="Repost"
             />
             <ActionButton
               icon="❤️"
-              count={post.likeCount}
+              count={likeCount}
               hoverColor="hover:text-pink-400 hover:bg-pink-400/10"
               label="Like"
             />
             <ActionButton
               icon="📊"
-              count={post.viewCount}
+              count={viewCount}
               hoverColor="hover:text-brand-soft hover:bg-brand-soft/10"
               label="Views"
             />

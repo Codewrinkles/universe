@@ -14,6 +14,8 @@ export const config = {
       changePassword: `${API_BASE_URL}/api/identity/change-password`,
       profile: (profileId: string) => `${API_BASE_URL}/api/identity/profile/${profileId}`,
       avatar: (profileId: string) => `${API_BASE_URL}/api/identity/profile/${profileId}/avatar`,
+      pulse: `${API_BASE_URL}/api/pulse`,
+      pulseById: (id: string) => `${API_BASE_URL}/api/pulse/${id}`,
     },
   },
   auth: {

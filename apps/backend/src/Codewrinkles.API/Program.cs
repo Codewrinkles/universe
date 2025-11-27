@@ -1,6 +1,7 @@
 using Codewrinkles.Application;
 using Codewrinkles.Infrastructure;
 using Codewrinkles.API.Modules.Identity;
+using Codewrinkles.API.Modules.Pulse;
 using Codewrinkles.API.ExceptionHandlers;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -69,5 +70,6 @@ app.UseStaticFiles();
 
 // Map endpoints
 app.MapIdentityEndpoints();
+app.MapPulseEndpoints();
 
 app.Run();

@@ -13,23 +13,30 @@ export interface App {
   description: string;
 }
 
-// Post author info
-export interface PostAuthor {
+// ============================================
+// Pulse Types (matching backend DTOs)
+// ============================================
+
+export interface PulseAuthor {
   id: string;
   name: string;
   handle: string;
-  avatarUrl?: string;
+  avatarUrl: string | null;
 }
 
-// Media attachments
-export interface PostImage {
+export interface PulseEngagement {
+  replyCount: number;
+  repulseCount: number;
+  likeCount: number;
+  viewCount: number;
+}
+
+export interface PulseImage {
   url: string;
-  alt?: string;
-  width?: number;
-  height?: number;
+  altText?: string;
 }
 
-export interface PostLinkPreview {
+export interface PulseLinkPreview {
   url: string;
   title: string;
   description?: string;
@@ -37,40 +44,50 @@ export interface PostLinkPreview {
   domain: string;
 }
 
-// Reposted content (re-pulse)
-export interface RepostedPost {
-  id: number;
-  author: PostAuthor;
+export interface RepulsedPulse {
+  id: string;
+  author: PulseAuthor;
   content: string;
-  timeAgo: string;
-  images?: PostImage[];
-  linkPreview?: PostLinkPreview;
+  createdAt: string;
+  isDeleted: boolean;
+  image?: PulseImage;
+  linkPreview?: PulseLinkPreview;
 }
 
-// Main Post interface
-export interface Post {
-  id: number;
-  author: PostAuthor;
+export interface Pulse {
+  id: string;
+  author: PulseAuthor;
   content: string;
-  timeAgo: string;
-
-  // Engagement stats
-  replyCount?: number;
-  repostCount?: number;
-  likeCount?: number;
-  viewCount?: number;
-
-  // Media attachments (optional)
-  images?: PostImage[];
-  linkPreview?: PostLinkPreview;
-
-  // Repost (quote tweet style)
-  repostedPost?: RepostedPost;
-
-  // Thread indicator
-  isThread?: boolean;
-  threadLength?: number;
+  type: "original" | "repulse" | "reply";
+  createdAt: string;
+  engagement: PulseEngagement;
+  isLikedByCurrentUser: boolean;
+  image?: PulseImage;
+  linkPreview?: PulseLinkPreview;
+  repulsedPulse?: RepulsedPulse;
 }
+
+export interface FeedResponse {
+  pulses: Pulse[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
+export interface CreatePulseRequest {
+  authorId: string;
+  content: string;
+}
+
+export interface CreatePulseResponse {
+  pulseId: string;
+  content: string;
+  createdAt: string;
+}
+
+// Legacy Post types (deprecated - use Pulse types above)
+export type PostAuthor = PulseAuthor;
+export type Post = Pulse;
+export type RepostedPost = RepulsedPulse;
 
 export interface Module {
   id: number;

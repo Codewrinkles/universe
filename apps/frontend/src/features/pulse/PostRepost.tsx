@@ -1,17 +1,36 @@
-import type { RepostedPost } from "../../types";
+import type { RepulsedPulse } from "../../types";
+import { formatTimeAgo } from "../../utils/timeUtils";
+import { config } from "../../config";
 
 interface PostRepostProps {
-  repost: RepostedPost;
+  repost: RepulsedPulse;
 }
 
 export function PostRepost({ repost }: PostRepostProps): JSX.Element {
+  // Handle avatar URL - if it's a relative path, prepend base URL
+  const avatarUrl = repost.author.avatarUrl
+    ? (repost.author.avatarUrl.startsWith('http') ? repost.author.avatarUrl : `${config.api.baseUrl}${repost.author.avatarUrl}`)
+    : null;
+
+  // Format createdAt to relative time
+  const timeAgo = formatTimeAgo(repost.createdAt);
+
+  // If pulse is deleted, show placeholder
+  if (repost.isDeleted) {
+    return (
+      <div className="mt-3 rounded-2xl border border-border p-3 bg-surface-card2/30">
+        <p className="text-sm text-text-tertiary italic">This pulse has been deleted</p>
+      </div>
+    );
+  }
+
   return (
     <div className="mt-3 rounded-2xl border border-border p-3 hover:bg-surface-card1/50 transition-colors cursor-pointer">
       {/* Reposted author info */}
       <div className="flex items-center gap-2">
-        {repost.author.avatarUrl ? (
+        {avatarUrl ? (
           <img
-            src={repost.author.avatarUrl}
+            src={avatarUrl}
             alt={repost.author.name}
             className="h-5 w-5 rounded-full object-cover"
           />
@@ -26,7 +45,7 @@ export function PostRepost({ repost }: PostRepostProps): JSX.Element {
           </span>
           <span className="text-text-tertiary truncate">@{repost.author.handle}</span>
           <span className="text-text-tertiary">·</span>
-          <span className="text-text-tertiary">{repost.timeAgo}</span>
+          <span className="text-text-tertiary">{timeAgo}</span>
         </div>
       </div>
 
@@ -35,22 +54,14 @@ export function PostRepost({ repost }: PostRepostProps): JSX.Element {
         {repost.content}
       </p>
 
-      {/* Reposted images (if any, show small preview) */}
-      {repost.images && repost.images.length > 0 && (
-        <div className="mt-2 flex gap-1 overflow-hidden rounded-xl">
-          {repost.images.slice(0, 4).map((image, index) => (
-            <img
-              key={index}
-              src={image.url}
-              alt={image.alt ?? `Image ${index + 1}`}
-              className="h-16 w-16 object-cover rounded-lg"
-            />
-          ))}
-          {repost.images.length > 4 && (
-            <div className="h-16 w-16 rounded-lg bg-surface-card2 flex items-center justify-center text-xs text-text-tertiary">
-              +{repost.images.length - 4}
-            </div>
-          )}
+      {/* Reposted image (single only in backend for now) */}
+      {repost.image && (
+        <div className="mt-2 overflow-hidden rounded-xl">
+          <img
+            src={repost.image.url}
+            alt={repost.image.altText ?? "Image"}
+            className="h-32 w-full object-cover"
+          />
         </div>
       )}
 

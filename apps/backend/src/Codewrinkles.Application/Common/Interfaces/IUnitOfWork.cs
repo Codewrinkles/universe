@@ -6,6 +6,7 @@ public interface IUnitOfWork : IAsyncDisposable
 {
     IIdentityRepository Identities { get; }
     IProfileRepository Profiles { get; }
+    IPulseRepository Pulses { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 

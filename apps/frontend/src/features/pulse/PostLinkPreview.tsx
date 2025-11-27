@@ -1,4 +1,7 @@
-import type { PostLinkPreview as PostLinkPreviewType } from "../../types";
+import type { PulseLinkPreview } from "../../types";
+
+// Legacy type alias
+type PostLinkPreviewType = PulseLinkPreview;
 
 interface PostLinkPreviewProps {
   link: PostLinkPreviewType;

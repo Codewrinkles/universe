@@ -9,20 +9,25 @@ public sealed class UnitOfWork : IUnitOfWork
     private readonly ApplicationDbContext _context;
     private readonly IIdentityRepository _identities;
     private readonly IProfileRepository _profiles;
+    private readonly IPulseRepository _pulses;
 
     public UnitOfWork(
         ApplicationDbContext context,
         IIdentityRepository identities,
-        IProfileRepository profiles)
+        IProfileRepository profiles,
+        IPulseRepository pulses)
     {
         _context = context;
         _identities = identities;
         _profiles = profiles;
+        _pulses = pulses;
     }
 
     public IIdentityRepository Identities => _identities;
 
     public IProfileRepository Profiles => _profiles;
+
+    public IPulseRepository Pulses => _pulses;
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

@@ -7,10 +7,19 @@ export interface ComposerProps {
   maxChars: number;
   isOverLimit: boolean;
   charsLeft: number;
+  onSubmit?: () => void;
+  isSubmitting?: boolean;
 }
 
-export function Composer({ value, onChange, maxChars, isOverLimit, charsLeft }: ComposerProps): JSX.Element {
+export function Composer({ value, onChange, maxChars, isOverLimit, charsLeft, onSubmit, isSubmitting = false }: ComposerProps): JSX.Element {
   const { user } = useAuth();
+
+  const handleSubmit = (): void => {
+    if (value.trim().length === 0 || isOverLimit || isSubmitting) {
+      return;
+    }
+    onSubmit?.();
+  };
 
   const avatarUrl = user?.avatarUrl
     ? `${config.api.baseUrl}${user.avatarUrl}`
@@ -104,14 +113,15 @@ export function Composer({ value, onChange, maxChars, isOverLimit, charsLeft }: 
             )}
             <button
               type="button"
-              disabled={value.trim().length === 0 || isOverLimit}
+              disabled={value.trim().length === 0 || isOverLimit || isSubmitting}
+              onClick={handleSubmit}
               className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
-                value.trim().length === 0 || isOverLimit
+                value.trim().length === 0 || isOverLimit || isSubmitting
                   ? "bg-brand-soft/50 text-black/50 cursor-not-allowed"
                   : "bg-brand-soft text-black hover:bg-brand"
               }`}
             >
-              Post
+              {isSubmitting ? "Posting..." : "Post"}
             </button>
           </div>
         </div>
