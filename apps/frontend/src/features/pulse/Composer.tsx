@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { config } from "../../config";
 
@@ -14,10 +14,21 @@ export interface ComposerProps {
   onImageSelect?: (file: File | null) => void;
 }
 
-export function Composer({ value, onChange, maxChars, isOverLimit, charsLeft, onSubmit, isSubmitting = false, onImageSelect }: ComposerProps): JSX.Element {
+export function Composer({ value, onChange, maxChars, isOverLimit, charsLeft, onSubmit, isSubmitting = false, selectedImage, onImageSelect }: ComposerProps): JSX.Element {
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isFocused, setIsFocused] = useState(false);
+
+  // Clear preview when selectedImage is cleared by parent
+  useEffect(() => {
+    if (selectedImage === null) {
+      setImagePreview(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  }, [selectedImage]);
 
   const handleSubmit = (): void => {
     if (value.trim().length === 0 || isOverLimit || isSubmitting) {
@@ -73,9 +84,11 @@ export function Composer({ value, onChange, maxChars, isOverLimit, charsLeft, on
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          rows={2}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          rows={isFocused || value.length > 0 ? 8 : 3}
           placeholder="What's happening?"
-          className="w-full resize-none bg-transparent text-lg text-text-primary placeholder:text-text-tertiary focus:outline-none"
+          className="w-full resize-none bg-transparent text-lg text-text-primary placeholder:text-text-tertiary focus:outline-none transition-all custom-scrollbar"
         />
         {imagePreview && (
           <div className="relative inline-block rounded-xl overflow-hidden border border-border">

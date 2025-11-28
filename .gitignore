@@ -433,6 +433,8 @@ apps/frontend/*.local
 # User uploaded content (avatars, media)
 **/wwwroot/avatars/*
 !**/wwwroot/avatars/.gitkeep
+**/wwwroot/pulse-images/*
+!**/wwwroot/pulse-images/.gitkeep
 
 # JetBrains Rider
 .idea/

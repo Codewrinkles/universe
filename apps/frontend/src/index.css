@@ -120,4 +120,29 @@ body {
   .typing-dot:nth-child(3) {
     animation-delay: 0.4s;
   }
+
+  /* Custom scrollbar styling to match app theme */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #0A0A0A; /* surface-card1 */
+    border-radius: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #737373; /* text-tertiary - more visible */
+    border-radius: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #35D6C0; /* brand-soft */
+  }
+
+  /* Firefox scrollbar */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #737373 #0A0A0A;
+  }
 }
