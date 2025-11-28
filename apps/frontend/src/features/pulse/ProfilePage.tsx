@@ -7,6 +7,7 @@ import { PulseRightSidebar } from "./PulseRightSidebar";
 import { PostCard } from "./PostCard";
 import { UnifiedComposer } from "./UnifiedComposer";
 import type { User, Pulse, FollowerDto, FollowingDto } from "../../types";
+import { LoadingProfile, LoadingCard, LoadingUserItem, Skeleton } from "../../components/ui";
 
 interface ProfileHeaderProps {
   profile: User;
@@ -14,9 +15,10 @@ interface ProfileHeaderProps {
   followersCount: number;
   followingCount: number;
   pulsesCount: number;
+  isLoadingCounts?: boolean;
 }
 
-function ProfileHeader({ profile, isOwnProfile, followersCount, followingCount, pulsesCount }: ProfileHeaderProps): JSX.Element {
+function ProfileHeader({ profile, isOwnProfile, followersCount, followingCount, pulsesCount, isLoadingCounts = false }: ProfileHeaderProps): JSX.Element {
   const avatarUrl = profile.avatarUrl
     ? `${config.api.baseUrl}${profile.avatarUrl}?t=${Date.now()}`
     : null;
@@ -97,18 +99,28 @@ function ProfileHeader({ profile, isOwnProfile, followersCount, followingCount, 
 
           {/* Stats */}
           <div className="mt-3 flex gap-4 text-sm">
-            <div>
-              <span className="font-semibold text-text-primary">{pulsesCount}</span>{" "}
-              <span className="text-text-secondary">Pulses</span>
-            </div>
-            <div>
-              <span className="font-semibold text-text-primary">{followingCount}</span>{" "}
-              <span className="text-text-secondary">Following</span>
-            </div>
-            <div>
-              <span className="font-semibold text-text-primary">{followersCount}</span>{" "}
-              <span className="text-text-secondary">Followers</span>
-            </div>
+            {isLoadingCounts ? (
+              <>
+                <Skeleton variant="text" className="h-5 w-20" />
+                <Skeleton variant="text" className="h-5 w-24" />
+                <Skeleton variant="text" className="h-5 w-24" />
+              </>
+            ) : (
+              <>
+                <div>
+                  <span className="font-semibold text-text-primary">{pulsesCount}</span>{" "}
+                  <span className="text-text-secondary">Pulses</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-text-primary">{followingCount}</span>{" "}
+                  <span className="text-text-secondary">Following</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-text-primary">{followersCount}</span>{" "}
+                  <span className="text-text-secondary">Followers</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -129,6 +141,9 @@ export function ProfilePage(): JSX.Element {
   const [followers, setFollowers] = useState<FollowerDto[]>([]);
   const [following, setFollowing] = useState<FollowingDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingPulses, setIsLoadingPulses] = useState(false);
+  const [isLoadingFollowers, setIsLoadingFollowers] = useState(false);
+  const [isLoadingFollowing, setIsLoadingFollowing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [replyingToPulseId, setReplyingToPulseId] = useState<string | null>(null);
 
@@ -180,6 +195,7 @@ export function ProfilePage(): JSX.Element {
     if (!profile) return;
 
     const fetchPulses = async (): Promise<void> => {
+      setIsLoadingPulses(true);
       try {
         const token = localStorage.getItem(config.auth.accessTokenKey);
         const response = await fetch(`${config.api.baseUrl}/api/pulse/author/${profile.profileId}?limit=20`, {
@@ -194,6 +210,8 @@ export function ProfilePage(): JSX.Element {
         }
       } catch (err) {
         console.error("Error fetching pulses:", err);
+      } finally {
+        setIsLoadingPulses(false);
       }
     };
 
@@ -205,9 +223,13 @@ export function ProfilePage(): JSX.Element {
     if (!profile) return;
 
     const fetchFollowers = async (): Promise<void> => {
+      setIsLoadingFollowers(true);
       try {
         const token = localStorage.getItem(config.auth.accessTokenKey);
-        if (!token) return;
+        if (!token) {
+          setIsLoadingFollowers(false);
+          return;
+        }
 
         const url = new URL(config.api.endpoints.socialFollowers(profile.profileId));
         url.searchParams.set('limit', '50');
@@ -224,6 +246,8 @@ export function ProfilePage(): JSX.Element {
         }
       } catch (err) {
         console.error("Error fetching followers:", err);
+      } finally {
+        setIsLoadingFollowers(false);
       }
     };
 
@@ -235,9 +259,13 @@ export function ProfilePage(): JSX.Element {
     if (!profile) return;
 
     const fetchFollowing = async (): Promise<void> => {
+      setIsLoadingFollowing(true);
       try {
         const token = localStorage.getItem(config.auth.accessTokenKey);
-        if (!token) return;
+        if (!token) {
+          setIsLoadingFollowing(false);
+          return;
+        }
 
         const url = new URL(config.api.endpoints.socialFollowing(profile.profileId));
         url.searchParams.set('limit', '50');
@@ -254,6 +282,8 @@ export function ProfilePage(): JSX.Element {
         }
       } catch (err) {
         console.error("Error fetching following:", err);
+      } finally {
+        setIsLoadingFollowing(false);
       }
     };
 
@@ -299,8 +329,25 @@ export function ProfilePage(): JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-surface-page">
-        <div className="text-sm text-text-secondary">Loading profile...</div>
+      <div className="flex justify-center">
+        {/* Left Navigation */}
+        <aside className="hidden lg:flex w-[320px] flex-shrink-0 justify-end pr-8">
+          <div className="w-[240px]">
+            <PulseNavigation />
+          </div>
+        </aside>
+
+        {/* Main Content */}
+        <main className="w-full max-w-[600px] border-x border-border lg:w-[600px]">
+          <LoadingProfile />
+        </main>
+
+        {/* Right Sidebar */}
+        <aside className="hidden lg:flex w-[320px] flex-shrink-0 pl-8">
+          <div className="w-[280px]">
+            <PulseRightSidebar />
+          </div>
+        </aside>
       </div>
     );
   }
@@ -336,6 +383,7 @@ export function ProfilePage(): JSX.Element {
           followersCount={followers.length}
           followingCount={following.length}
           pulsesCount={pulses.length}
+          isLoadingCounts={isLoadingPulses || isLoadingFollowers || isLoadingFollowing}
         />
 
         {/* Tabs */}
@@ -378,7 +426,13 @@ export function ProfilePage(): JSX.Element {
         <div>
           {activeTab === "pulses" && (
             <div>
-              {pulses.length === 0 ? (
+              {isLoadingPulses && pulses.length === 0 ? (
+                <div>
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <LoadingCard key={i} />
+                  ))}
+                </div>
+              ) : pulses.length === 0 ? (
                 <div className="text-center text-sm text-text-secondary py-8 px-4">
                   No pulses yet
                 </div>
@@ -412,7 +466,13 @@ export function ProfilePage(): JSX.Element {
 
           {activeTab === "following" && (
             <div>
-              {following.length === 0 ? (
+              {isLoadingFollowing && following.length === 0 ? (
+                <div>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <LoadingUserItem key={i} />
+                  ))}
+                </div>
+              ) : following.length === 0 ? (
                 <div className="text-center text-sm text-text-secondary py-8 px-4">
                   Not following anyone yet
                 </div>
@@ -450,7 +510,13 @@ export function ProfilePage(): JSX.Element {
 
           {activeTab === "followers" && (
             <div>
-              {followers.length === 0 ? (
+              {isLoadingFollowers && followers.length === 0 ? (
+                <div>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <LoadingUserItem key={i} />
+                  ))}
+                </div>
+              ) : followers.length === 0 ? (
                 <div className="text-center text-sm text-text-secondary py-8 px-4">
                   No followers yet
                 </div>

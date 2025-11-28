@@ -5,6 +5,7 @@ import { PulseNavigation } from "./PulseNavigation";
 import { PulseRightSidebar } from "./PulseRightSidebar";
 import { useFeed } from "./hooks/useFeed";
 import { useAuth } from "../../hooks/useAuth";
+import { LoadingCard, Spinner } from "../../components/ui";
 
 export function PulsePage(): JSX.Element {
   const { user } = useAuth();
@@ -59,8 +60,10 @@ export function PulsePage(): JSX.Element {
         )}
 
         {isLoading && pulses.length === 0 ? (
-          <div className="p-8 text-center text-text-secondary">
-            Loading feed...
+          <div>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <LoadingCard key={i} />
+            ))}
           </div>
         ) : pulses.length === 0 ? (
           <div className="p-8 text-center text-text-secondary">
@@ -86,8 +89,9 @@ export function PulsePage(): JSX.Element {
                   type="button"
                   onClick={loadMore}
                   disabled={isLoading}
-                  className="px-4 py-2 rounded-full bg-surface-card2 hover:bg-surface-card1 text-brand-soft text-sm font-semibold transition-colors disabled:opacity-50"
+                  className="px-4 py-2 rounded-full bg-surface-card2 hover:bg-surface-card1 text-brand-soft text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2 mx-auto"
                 >
+                  {isLoading && <Spinner size="sm" />}
                   {isLoading ? "Loading..." : "Load More"}
                 </button>
               </div>

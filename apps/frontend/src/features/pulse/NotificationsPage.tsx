@@ -2,6 +2,7 @@ import { useNotifications } from "../../hooks/useNotifications";
 import { NotificationItem } from "./NotificationItem";
 import { PulseNavigation } from "./PulseNavigation";
 import { PulseRightSidebar } from "./PulseRightSidebar";
+import { LoadingNotification } from "../../components/ui";
 
 export function NotificationsPage(): JSX.Element {
   const { notifications, unreadCount, isLoading, error, markAsRead, markAllAsRead } = useNotifications();
@@ -44,8 +45,10 @@ export function NotificationsPage(): JSX.Element {
 
         {/* Loading State */}
         {isLoading && notifications.length === 0 ? (
-          <div className="p-8 text-center text-text-secondary">
-            Loading notifications...
+          <div>
+            {Array.from({ length: 8 }).map((_, i) => (
+              <LoadingNotification key={i} />
+            ))}
           </div>
         ) : notifications.length === 0 ? (
           <div className="p-8 text-center">

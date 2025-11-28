@@ -5,6 +5,7 @@ import { PostCard } from "./PostCard";
 import { UnifiedComposer } from "./UnifiedComposer";
 import { PulseNavigation } from "./PulseNavigation";
 import { PulseRightSidebar } from "./PulseRightSidebar";
+import { LoadingCard, Spinner } from "../../components/ui";
 
 export function ThreadView(): JSX.Element {
   const { pulseId } = useParams<{ pulseId: string }>();
@@ -97,8 +98,14 @@ export function ThreadView(): JSX.Element {
 
         {/* Loading State */}
         {isLoading && !parentPulse ? (
-          <div className="p-8 text-center text-text-secondary">
-            Loading thread...
+          <div>
+            <LoadingCard />
+            <div className="border-b border-border px-4 py-3 bg-surface-card1/20">
+              <div className="h-4 w-20 bg-surface-card2 rounded animate-pulse" />
+            </div>
+            {Array.from({ length: 2 }).map((_, i) => (
+              <LoadingCard key={i} />
+            ))}
           </div>
         ) : parentPulse ? (
           <>
@@ -176,8 +183,9 @@ export function ThreadView(): JSX.Element {
                       type="button"
                       onClick={loadMore}
                       disabled={isLoading}
-                      className="px-4 py-2 rounded-full bg-surface-card2 hover:bg-surface-card1 text-brand-soft text-sm font-semibold transition-colors disabled:opacity-50"
+                      className="px-4 py-2 rounded-full bg-surface-card2 hover:bg-surface-card1 text-brand-soft text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2 mx-auto"
                     >
+                      {isLoading && <Spinner size="sm" />}
                       {isLoading ? "Loading..." : "Load More Replies"}
                     </button>
                   </div>

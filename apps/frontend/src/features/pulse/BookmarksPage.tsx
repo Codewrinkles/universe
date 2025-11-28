@@ -4,6 +4,7 @@ import { pulseApi } from "../../services/pulseApi";
 import { PostCard } from "./PostCard";
 import { PulseNavigation } from "./PulseNavigation";
 import { PulseRightSidebar } from "./PulseRightSidebar";
+import { LoadingCard } from "../../components/ui";
 
 export function BookmarksPage(): JSX.Element {
   const [pulses, setPulses] = useState<Pulse[]>([]);
@@ -55,8 +56,10 @@ export function BookmarksPage(): JSX.Element {
 
         {/* Loading State */}
         {isLoading && pulses.length === 0 ? (
-          <div className="p-8 text-center text-text-secondary">
-            Loading bookmarks...
+          <div>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <LoadingCard key={i} />
+            ))}
           </div>
         ) : pulses.length === 0 ? (
           <div className="p-8 text-center">
