@@ -68,6 +68,7 @@ export interface Pulse {
   engagement: PulseEngagement;
   isLikedByCurrentUser: boolean;
   isFollowingAuthor: boolean;
+  isBookmarkedByCurrentUser: boolean;
   parentPulseId?: string | null;
   imageUrl?: string | null;
   linkPreview?: PulseLinkPreview;

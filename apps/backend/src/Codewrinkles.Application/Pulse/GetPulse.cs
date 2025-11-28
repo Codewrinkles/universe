@@ -32,14 +32,20 @@ public sealed class GetPulseQueryHandler : ICommandHandler<GetPulseQuery, PulseD
             throw new PulseNotFoundException(query.PulseId);
         }
 
-        // Check if current user has liked this pulse and is following the author
+        // Check if current user has liked this pulse, bookmarked it, and is following the author
         var isLikedByCurrentUser = false;
+        var isBookmarkedByCurrentUser = false;
         var isFollowingAuthor = false;
         if (query.CurrentUserId.HasValue)
         {
             isLikedByCurrentUser = await _unitOfWork.Pulses.HasUserLikedPulseAsync(
                 query.PulseId,
                 query.CurrentUserId.Value,
+                cancellationToken);
+
+            isBookmarkedByCurrentUser = await _unitOfWork.Bookmarks.IsBookmarkedAsync(
+                query.CurrentUserId.Value,
+                query.PulseId,
                 cancellationToken);
 
             isFollowingAuthor = await _unitOfWork.Follows.IsFollowingAsync(
@@ -51,13 +57,14 @@ public sealed class GetPulseQueryHandler : ICommandHandler<GetPulseQuery, PulseD
         // Load mentions for the pulse
         var mentions = await _unitOfWork.Pulses.GetMentionsForPulsesAsync([pulse.Id], cancellationToken);
 
-        return MapToPulseDto(pulse, isLikedByCurrentUser, isFollowingAuthor, mentions.ToList());
+        return MapToPulseDto(pulse, isLikedByCurrentUser, isFollowingAuthor, isBookmarkedByCurrentUser, mentions.ToList());
     }
 
     private static PulseDto MapToPulseDto(
         Domain.Pulse.Pulse pulse,
         bool isLikedByCurrentUser,
         bool isFollowingAuthor,
+        bool isBookmarkedByCurrentUser,
         List<PulseMention> mentions)
     {
         var mentionDtos = mentions
@@ -83,6 +90,7 @@ public sealed class GetPulseQueryHandler : ICommandHandler<GetPulseQuery, PulseD
             ),
             IsLikedByCurrentUser: isLikedByCurrentUser,
             IsFollowingAuthor: isFollowingAuthor,
+            IsBookmarkedByCurrentUser: isBookmarkedByCurrentUser,
             ParentPulseId: pulse.ParentPulseId,
             RepulsedPulse: pulse.RepulsedPulse is not null
                 ? MapToRepulsedPulseDto(pulse.RepulsedPulse)

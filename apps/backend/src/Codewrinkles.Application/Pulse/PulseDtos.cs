@@ -9,6 +9,7 @@ public sealed record PulseDto(
     PulseEngagementDto Engagement,
     bool IsLikedByCurrentUser,
     bool IsFollowingAuthor,
+    bool IsBookmarkedByCurrentUser,
     Guid? ParentPulseId,
     RepulsedPulseDto? RepulsedPulse,
     string? ImageUrl,

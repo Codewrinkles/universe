@@ -7,6 +7,7 @@ import { PulsePage } from "./features/pulse/PulsePage";
 import { ThreadView } from "./features/pulse/ThreadView";
 import { ProfilePage } from "./features/pulse/ProfilePage";
 import { NotificationsPage } from "./features/pulse/NotificationsPage";
+import { BookmarksPage } from "./features/pulse/BookmarksPage";
 import { TwinPage } from "./features/twin/TwinPage";
 import { SettingsPage } from "./features/settings/SettingsPage";
 import {
@@ -45,6 +46,7 @@ export function App(): JSX.Element {
       <Route path="/" element={<ShellLayout theme={theme} onThemeToggle={toggleTheme} />}>
         <Route path="pulse" element={<PulsePage />} />
         <Route path="pulse/notifications" element={<NotificationsPage />} />
+        <Route path="pulse/bookmarks" element={<BookmarksPage />} />
         <Route path="pulse/u/:handle" element={<ProfilePage />} />
         <Route path="pulse/:pulseId" element={<ThreadView />} />
         <Route path="social" element={<Navigate to="/pulse" replace />} />

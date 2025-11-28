@@ -120,6 +120,7 @@ export function PostCard({ post, onReplyClick, onFollowChange, onDelete }: PostC
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(post.isBookmarkedByCurrentUser);
 
   // Check if current user is the author
   const isAuthor = user?.profileId === author.id;
@@ -153,7 +154,6 @@ export function PostCard({ post, onReplyClick, onFollowChange, onDelete }: PostC
   const replyCount = 'engagement' in post ? post.engagement.replyCount : (post as any).replyCount;
   const repostCount = 'engagement' in post ? post.engagement.repulseCount : (post as any).repostCount;
   const likeCount = 'engagement' in post ? post.engagement.likeCount : (post as any).likeCount;
-  const viewCount = 'engagement' in post ? post.engagement.viewCount : (post as any).viewCount;
 
   // Extract like status
   const isLikedByCurrentUser = 'isLikedByCurrentUser' in post ? post.isLikedByCurrentUser : false;
@@ -200,6 +200,20 @@ export function PostCard({ post, onReplyClick, onFollowChange, onDelete }: PostC
       alert("Failed to delete pulse. Please try again.");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleBookmarkClick = async (): Promise<void> => {
+    try {
+      if (isBookmarked) {
+        await pulseApi.unbookmarkPulse(post.id);
+        setIsBookmarked(false);
+      } else {
+        await pulseApi.bookmarkPulse(post.id);
+        setIsBookmarked(true);
+      }
+    } catch (error) {
+      console.error("Failed to toggle bookmark:", error);
     }
   };
 
@@ -366,10 +380,10 @@ export function PostCard({ post, onReplyClick, onFollowChange, onDelete }: PostC
               initialLikeCount={likeCount}
             />
             <ActionButton
-              icon="📊"
-              count={viewCount}
+              icon={isBookmarked ? "🔖" : "📑"}
               hoverColor="hover:text-brand-soft hover:bg-brand-soft/10"
-              label="Views"
+              label={isBookmarked ? "Remove bookmark" : "Bookmark"}
+              onClick={handleBookmarkClick}
             />
             <ActionButton
               icon="↗️"

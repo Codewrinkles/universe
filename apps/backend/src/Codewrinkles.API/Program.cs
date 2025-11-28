@@ -122,6 +122,7 @@ app.UseStaticFiles();
 app.MapIdentityEndpoints();
 app.MapProfileEndpoints();
 app.MapPulseEndpoints();
+app.MapBookmarkEndpoints();
 app.MapSocialEndpoints();
 app.MapNotificationEndpoints();
 

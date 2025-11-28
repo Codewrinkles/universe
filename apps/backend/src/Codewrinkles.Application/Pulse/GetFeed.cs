@@ -56,13 +56,19 @@ public sealed class GetFeedQueryHandler : ICommandHandler<GetFeedQuery, FeedResp
             nextCursor = EncodeCursor(lastPulse.CreatedAt, lastPulse.Id);
         }
 
-        // Get liked pulse IDs and followed profile IDs for current user (if authenticated)
+        // Get liked pulse IDs, bookmarked pulse IDs, and followed profile IDs for current user (if authenticated)
         HashSet<Guid> likedPulseIds = [];
+        HashSet<Guid> bookmarkedPulseIds = [];
         HashSet<Guid> followingProfileIds = [];
         if (query.CurrentUserId.HasValue)
         {
             var pulseIds = pulsesToReturn.Select(p => p.Id);
             likedPulseIds = await _unitOfWork.Pulses.GetLikedPulseIdsAsync(
+                pulseIds,
+                query.CurrentUserId.Value,
+                cancellationToken);
+
+            bookmarkedPulseIds = await _unitOfWork.Bookmarks.GetBookmarkedPulseIdsAsync(
                 pulseIds,
                 query.CurrentUserId.Value,
                 cancellationToken);
@@ -80,7 +86,7 @@ public sealed class GetFeedQueryHandler : ICommandHandler<GetFeedQuery, FeedResp
         var mentionsByPulse = mentions.GroupBy(m => m.PulseId).ToDictionary(g => g.Key, g => g.ToList());
 
         // Map to DTOs
-        var pulseDtos = pulsesToReturn.Select(p => MapToPulseDto(p, likedPulseIds, followingProfileIds, mentionsByPulse)).ToList();
+        var pulseDtos = pulsesToReturn.Select(p => MapToPulseDto(p, likedPulseIds, followingProfileIds, bookmarkedPulseIds, mentionsByPulse)).ToList();
 
         return new FeedResponse(
             Pulses: pulseDtos,
@@ -93,6 +99,7 @@ public sealed class GetFeedQueryHandler : ICommandHandler<GetFeedQuery, FeedResp
         Domain.Pulse.Pulse pulse,
         HashSet<Guid> likedPulseIds,
         HashSet<Guid> followingProfileIds,
+        HashSet<Guid> bookmarkedPulseIds,
         Dictionary<Guid, List<PulseMention>> mentionsByPulse)
     {
         var mentions = mentionsByPulse.TryGetValue(pulse.Id, out var pulseMentions)
@@ -118,6 +125,7 @@ public sealed class GetFeedQueryHandler : ICommandHandler<GetFeedQuery, FeedResp
             ),
             IsLikedByCurrentUser: likedPulseIds.Contains(pulse.Id),
             IsFollowingAuthor: followingProfileIds.Contains(pulse.AuthorId),
+            IsBookmarkedByCurrentUser: bookmarkedPulseIds.Contains(pulse.Id),
             ParentPulseId: pulse.ParentPulseId,
             RepulsedPulse: pulse.RepulsedPulse is not null
                 ? MapToRepulsedPulseDto(pulse.RepulsedPulse)

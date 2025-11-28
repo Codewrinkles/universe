@@ -32,6 +32,8 @@ export const config = {
       socialSuggestions: `${API_BASE_URL}/api/social/suggestions`,
       searchHandles: (query: string, limit: number = 10) =>
         `${API_BASE_URL}/api/profile/search?q=${encodeURIComponent(query)}&limit=${limit}`,
+      bookmarkPulse: (id: string) => `${API_BASE_URL}/api/pulse/${id}/bookmark`,
+      bookmarks: `${API_BASE_URL}/api/bookmarks`,
     },
   },
   auth: {

@@ -60,15 +60,21 @@ public sealed class GetThreadQueryHandler : ICommandHandler<GetThreadQuery, Thre
             query.PulseId,
             cancellationToken);
 
-        // 5. Get liked pulse IDs and followed profile IDs for current user (parent + all replies)
+        // 5. Get liked pulse IDs, bookmarked pulse IDs, and followed profile IDs for current user (parent + all replies)
         var allPulseIds = new List<Guid> { parentPulse.Id };
         allPulseIds.AddRange(repliesToReturn.Select(r => r.Id));
 
         HashSet<Guid> likedPulseIds = [];
+        HashSet<Guid> bookmarkedPulseIds = [];
         HashSet<Guid> followingProfileIds = [];
         if (query.CurrentUserId.HasValue)
         {
             likedPulseIds = await _unitOfWork.Pulses.GetLikedPulseIdsAsync(
+                allPulseIds,
+                query.CurrentUserId.Value,
+                cancellationToken);
+
+            bookmarkedPulseIds = await _unitOfWork.Bookmarks.GetBookmarkedPulseIdsAsync(
                 allPulseIds,
                 query.CurrentUserId.Value,
                 cancellationToken);
@@ -92,12 +98,14 @@ public sealed class GetThreadQueryHandler : ICommandHandler<GetThreadQuery, Thre
             parentPulse,
             likedPulseIds.Contains(parentPulse.Id),
             followingProfileIds.Contains(parentPulse.AuthorId),
+            bookmarkedPulseIds.Contains(parentPulse.Id),
             mentionsByPulse.TryGetValue(parentPulse.Id, out var parentMentions) ? parentMentions : []);
         var replyDtos = repliesToReturn
             .Select(r => MapToPulseDto(
                 r,
                 likedPulseIds.Contains(r.Id),
                 followingProfileIds.Contains(r.AuthorId),
+                bookmarkedPulseIds.Contains(r.Id),
                 mentionsByPulse.TryGetValue(r.Id, out var replyMentions) ? replyMentions : []))
             .ToList();
 
@@ -114,6 +122,7 @@ public sealed class GetThreadQueryHandler : ICommandHandler<GetThreadQuery, Thre
         Domain.Pulse.Pulse pulse,
         bool isLikedByCurrentUser,
         bool isFollowingAuthor,
+        bool isBookmarkedByCurrentUser,
         List<PulseMention> mentions)
     {
         var mentionDtos = mentions
@@ -139,6 +148,7 @@ public sealed class GetThreadQueryHandler : ICommandHandler<GetThreadQuery, Thre
             ),
             IsLikedByCurrentUser: isLikedByCurrentUser,
             IsFollowingAuthor: isFollowingAuthor,
+            IsBookmarkedByCurrentUser: isBookmarkedByCurrentUser,
             ParentPulseId: pulse.ParentPulseId,
             RepulsedPulse: pulse.RepulsedPulse is not null
                 ? MapToRepulsedPulseDto(pulse.RepulsedPulse)

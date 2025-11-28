@@ -158,4 +158,41 @@ export const pulseApi = {
       method: "GET",
     });
   },
+
+  /**
+   * Bookmark a pulse
+   */
+  bookmarkPulse(pulseId: string): Promise<void> {
+    return apiRequest<void>(config.api.endpoints.bookmarkPulse(pulseId), {
+      method: "POST",
+    });
+  },
+
+  /**
+   * Remove bookmark from a pulse
+   */
+  unbookmarkPulse(pulseId: string): Promise<void> {
+    return apiRequest<void>(config.api.endpoints.bookmarkPulse(pulseId), {
+      method: "DELETE",
+    });
+  },
+
+  /**
+   * Get bookmarked pulses for the current user
+   * ProfileId is extracted from JWT token on the backend
+   */
+  getBookmarkedPulses(params?: { cursor?: string; limit?: number }): Promise<FeedResponse> {
+    const url = new URL(config.api.endpoints.bookmarks);
+
+    if (params?.cursor) {
+      url.searchParams.set("cursor", params.cursor);
+    }
+    if (params?.limit) {
+      url.searchParams.set("limit", params.limit.toString());
+    }
+
+    return apiRequest<FeedResponse>(url.toString(), {
+      method: "GET",
+    });
+  },
 };
