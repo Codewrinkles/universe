@@ -9,7 +9,7 @@ import type { User, RegisterRequest, LoginRequest, UpdateProfileRequest, ChangeP
 import { config } from "../config";
 import { authApi } from "../services/authApi";
 import { profileApi } from "../services/profileApi";
-import { setAuthTokens, clearAuthData } from "../utils/api";
+import { setAuthTokens, clearAuthData, isTokenExpired } from "../utils/api";
 
 interface AuthContextType {
   user: User | null;
@@ -45,8 +45,15 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
         const savedUser = localStorage.getItem(config.auth.userKey);
 
         if (token && savedUser) {
-          const parsedUser = JSON.parse(savedUser) as User;
-          setUser(parsedUser);
+          // Validate token is not expired
+          if (isTokenExpired(token)) {
+            // Token expired, clear auth data
+            clearAuthData();
+          } else {
+            // Token valid, restore user session
+            const parsedUser = JSON.parse(savedUser) as User;
+            setUser(parsedUser);
+          }
         }
       } catch {
         // Invalid stored data, clear it
@@ -123,6 +130,19 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
     clearAuthData();
     setUser(null);
   }, []);
+
+  // Listen for 401 unauthorized events from API calls
+  // Automatically logout user when token expires
+  useEffect(() => {
+    const handleUnauthorized = (): void => {
+      logout();
+    };
+
+    window.addEventListener("auth:unauthorized", handleUnauthorized);
+    return () => {
+      window.removeEventListener("auth:unauthorized", handleUnauthorized);
+    };
+  }, [logout]);
 
   /**
    * Update user profile

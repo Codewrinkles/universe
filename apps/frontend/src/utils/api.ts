@@ -3,6 +3,7 @@
  * Centralized fetch wrapper with error handling and auth token management
  */
 
+import { jwtDecode } from "jwt-decode";
 import type { ApiErrorResponse, ValidationErrorItem } from "../types";
 import { config } from "../config";
 
@@ -74,6 +75,21 @@ export function clearAuthData(): void {
   localStorage.removeItem(config.auth.accessTokenKey);
   localStorage.removeItem(config.auth.refreshTokenKey);
   localStorage.removeItem(config.auth.userKey);
+}
+
+/**
+ * Check if a JWT token is expired
+ * Returns true if token is invalid or expired
+ */
+export function isTokenExpired(token: string): boolean {
+  try {
+    const decoded = jwtDecode<{ exp: number }>(token);
+    // JWT exp is in seconds, Date.now() is in milliseconds
+    return decoded.exp * 1000 < Date.now();
+  } catch {
+    // Invalid token format = treat as expired
+    return true;
+  }
 }
 
 /**
@@ -161,6 +177,12 @@ export async function apiRequest<TResponse>(
   }
 
   if (!response.ok) {
+    // Handle 401 Unauthorized - token expired or invalid
+    if (response.status === 401) {
+      // Emit event to notify auth context to logout user
+      window.dispatchEvent(new CustomEvent("auth:unauthorized"));
+    }
+
     throw await parseErrorResponse(response);
   }
 
