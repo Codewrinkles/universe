@@ -66,6 +66,19 @@ public sealed class PulseConfiguration : IEntityTypeConfiguration<Domain.Pulse.P
         // One-to-one relationships should only be configured on one side
 
         // Indexes
+        // Composite index for GetPulsesByAuthor - covers (AuthorId, IsDeleted, CreatedAt DESC)
+        // This is the most frequently used query pattern for profile pages
+        builder.HasIndex(p => new { p.AuthorId, p.IsDeleted, p.CreatedAt })
+            .IsDescending(false, false, true)
+            .HasDatabaseName("IX_Pulses_AuthorId_IsDeleted_CreatedAt");
+
+        // Composite index for feed queries - covers (IsDeleted, CreatedAt DESC)
+        // Optimizes filtering out deleted pulses while ordering by recency
+        builder.HasIndex(p => new { p.IsDeleted, p.CreatedAt })
+            .IsDescending(false, true)
+            .HasDatabaseName("IX_Pulses_IsDeleted_CreatedAt");
+
+        // Individual indexes kept for specific queries
         builder.HasIndex(p => p.AuthorId)
             .HasDatabaseName("IX_Pulses_AuthorId");
 

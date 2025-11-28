@@ -92,7 +92,9 @@ public sealed class BookmarkRepository : IBookmarkRepository
         // Join with Pulses to get full pulse data
         // Eager load Author, Engagement, RepulsedPulse (for re-pulses), and Image
         // Include must come BEFORE Select to work with EF Core
+        // Filter out deleted pulses in the query (not in memory)
         var bookmarks = await query
+            .Where(b => !b.Pulse.IsDeleted) // Filter deleted pulses in SQL
             .Include(b => b.Pulse)
                 .ThenInclude(p => p.Author)
             .Include(b => b.Pulse)
@@ -107,10 +109,9 @@ public sealed class BookmarkRepository : IBookmarkRepository
             .Take(limit + 1) // Fetch one extra to determine if there are more
             .ToListAsync(cancellationToken);
 
-        // Extract pulses and filter deleted ones
+        // Extract pulses (already filtered for non-deleted in query)
         var pulses = bookmarks
             .Select(b => b.Pulse)
-            .Where(p => !p.IsDeleted)
             .ToList();
 
         var hasMore = pulses.Count > limit;

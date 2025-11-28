@@ -57,34 +57,39 @@ public sealed class GetPulsesByAuthorQueryHandler : ICommandHandler<GetPulsesByA
             nextCursor = EncodeCursor(lastPulse.CreatedAt, lastPulse.Id);
         }
 
-        // Get liked pulse IDs, bookmarked pulse IDs, and followed profile IDs for current user (if authenticated)
+        // Get metadata for pulses in parallel to reduce latency
         HashSet<Guid> likedPulseIds = [];
         HashSet<Guid> bookmarkedPulseIds = [];
         HashSet<Guid> followingProfileIds = [];
+        Dictionary<Guid, List<PulseMention>> mentionsByPulse;
+
         if (query.CurrentUserId.HasValue)
         {
             var pulseIds = pulsesToReturn.Select(p => p.Id);
-            likedPulseIds = await _unitOfWork.Pulses.GetLikedPulseIdsAsync(
-                pulseIds,
-                query.CurrentUserId.Value,
-                cancellationToken);
-
-            bookmarkedPulseIds = await _unitOfWork.Bookmarks.GetBookmarkedPulseIdsAsync(
-                pulseIds,
-                query.CurrentUserId.Value,
-                cancellationToken);
-
             var authorIds = pulsesToReturn.Select(p => p.AuthorId).Distinct();
-            followingProfileIds = await _unitOfWork.Follows.GetFollowingProfileIdsAsync(
-                authorIds,
-                query.CurrentUserId.Value,
-                cancellationToken);
-        }
+            var allPulseIds = pulsesToReturn.Select(p => p.Id).ToList();
 
-        // Load mentions for all pulses (batch load to avoid N+1 queries)
-        var allPulseIds = pulsesToReturn.Select(p => p.Id).ToList();
-        var mentions = await _unitOfWork.Pulses.GetMentionsForPulsesAsync(allPulseIds, cancellationToken);
-        var mentionsByPulse = mentions.GroupBy(m => m.PulseId).ToDictionary(g => g.Key, g => g.ToList());
+            // Execute all metadata queries in parallel for better performance
+            var likesTask = _unitOfWork.Pulses.GetLikedPulseIdsAsync(pulseIds, query.CurrentUserId.Value, cancellationToken);
+            var bookmarksTask = _unitOfWork.Bookmarks.GetBookmarkedPulseIdsAsync(pulseIds, query.CurrentUserId.Value, cancellationToken);
+            var followingTask = _unitOfWork.Follows.GetFollowingProfileIdsAsync(authorIds, query.CurrentUserId.Value, cancellationToken);
+            var mentionsTask = _unitOfWork.Pulses.GetMentionsForPulsesAsync(allPulseIds, cancellationToken);
+
+            await Task.WhenAll(likesTask, bookmarksTask, followingTask, mentionsTask);
+
+            likedPulseIds = await likesTask;
+            bookmarkedPulseIds = await bookmarksTask;
+            followingProfileIds = await followingTask;
+            var mentions = await mentionsTask;
+            mentionsByPulse = mentions.GroupBy(m => m.PulseId).ToDictionary(g => g.Key, g => g.ToList());
+        }
+        else
+        {
+            // Load mentions for unauthenticated users
+            var allPulseIds = pulsesToReturn.Select(p => p.Id).ToList();
+            var mentions = await _unitOfWork.Pulses.GetMentionsForPulsesAsync(allPulseIds, cancellationToken);
+            mentionsByPulse = mentions.GroupBy(m => m.PulseId).ToDictionary(g => g.Key, g => g.ToList());
+        }
 
         // Map to DTOs
         var pulseDtos = pulsesToReturn.Select(p => MapToPulseDto(p, likedPulseIds, followingProfileIds, bookmarkedPulseIds, mentionsByPulse)).ToList();
