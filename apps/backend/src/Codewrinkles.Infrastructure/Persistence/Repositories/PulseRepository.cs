@@ -8,6 +8,7 @@ namespace Codewrinkles.Infrastructure.Persistence.Repositories;
 public sealed class PulseRepository : IPulseRepository
 {
     private readonly ApplicationDbContext _context;
+    private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
     private readonly DbSet<Pulse> _pulses;
     private readonly DbSet<PulseEngagement> _engagements;
     private readonly DbSet<PulseLike> _likes;
@@ -15,9 +16,12 @@ public sealed class PulseRepository : IPulseRepository
     private readonly DbSet<PulseMention> _mentions;
     private readonly DbSet<Follow> _follows;
 
-    public PulseRepository(ApplicationDbContext context)
+    public PulseRepository(
+        ApplicationDbContext context,
+        IDbContextFactory<ApplicationDbContext> contextFactory)
     {
         _context = context;
+        _contextFactory = contextFactory;
         _pulses = context.Set<Pulse>();
         _engagements = context.Set<PulseEngagement>();
         _likes = context.Set<PulseLike>();
@@ -294,5 +298,185 @@ public sealed class PulseRepository : IPulseRepository
             .ToListAsync(cancellationToken);
 
         return mentions;
+    }
+
+    public async Task<FeedData> GetFeedWithMetadataAsync(
+        Guid? currentUserId,
+        int limit,
+        DateTime? beforeCreatedAt,
+        Guid? beforeId,
+        CancellationToken cancellationToken = default)
+    {
+        // Step 1: Get pulses using the existing method (uses scoped DbContext)
+        var pulses = await GetFeedAsync(
+            currentUserId,
+            limit,
+            beforeCreatedAt,
+            beforeId,
+            cancellationToken);
+
+        // Step 2: If no user or no pulses, return early with empty metadata
+        if (!currentUserId.HasValue || pulses.Count == 0)
+        {
+            return new FeedData(
+                Pulses: pulses,
+                LikedPulseIds: [],
+                BookmarkedPulseIds: [],
+                FollowingProfileIds: [],
+                Mentions: []
+            );
+        }
+
+        // Step 3: Prepare data for parallel queries
+        var pulseIds = pulses.Select(p => p.Id).ToList();
+        var authorIds = pulses.Select(p => p.AuthorId).Distinct().ToList();
+        var userId = currentUserId.Value;
+
+        // Step 4: Execute metadata queries in parallel using factory-created DbContexts
+        // Each query gets its own isolated DbContext instance
+        var likesTask = Task.Run(async () =>
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+            var likedPulseIds = await context.Set<PulseLike>()
+                .AsNoTracking()
+                .Where(l => l.ProfileId == userId && pulseIds.Contains(l.PulseId))
+                .Select(l => l.PulseId)
+                .ToListAsync(cancellationToken);
+            return likedPulseIds.ToHashSet();
+        }, cancellationToken);
+
+        var bookmarksTask = Task.Run(async () =>
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+            var bookmarkedPulseIds = await context.Set<PulseBookmark>()
+                .AsNoTracking()
+                .Where(b => b.ProfileId == userId && pulseIds.Contains(b.PulseId))
+                .Select(b => b.PulseId)
+                .ToListAsync(cancellationToken);
+            return bookmarkedPulseIds.ToHashSet();
+        }, cancellationToken);
+
+        var followingTask = Task.Run(async () =>
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+            var followingProfileIds = await context.Set<Follow>()
+                .AsNoTracking()
+                .Where(f => f.FollowerId == userId && authorIds.Contains(f.FollowingId))
+                .Select(f => f.FollowingId)
+                .ToListAsync(cancellationToken);
+            return followingProfileIds.ToHashSet();
+        }, cancellationToken);
+
+        var mentionsTask = Task.Run(async () =>
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+            var mentions = await context.Set<PulseMention>()
+                .AsNoTracking()
+                .Where(m => pulseIds.Contains(m.PulseId))
+                .ToListAsync(cancellationToken);
+            return (IReadOnlyList<PulseMention>)mentions;
+        }, cancellationToken);
+
+        // Step 5: Wait for all parallel queries to complete
+        await Task.WhenAll(likesTask, bookmarksTask, followingTask, mentionsTask);
+
+        // Step 6: Return aggregated results
+        return new FeedData(
+            Pulses: pulses,
+            LikedPulseIds: await likesTask,
+            BookmarkedPulseIds: await bookmarksTask,
+            FollowingProfileIds: await followingTask,
+            Mentions: await mentionsTask
+        );
+    }
+
+    public async Task<FeedData> GetPulsesByAuthorWithMetadataAsync(
+        Guid authorId,
+        Guid? currentUserId,
+        int limit,
+        DateTime? beforeCreatedAt,
+        Guid? beforeId,
+        CancellationToken cancellationToken = default)
+    {
+        // Step 1: Get pulses using the existing method (uses scoped DbContext)
+        var pulses = await GetByAuthorIdAsync(
+            authorId,
+            limit,
+            beforeCreatedAt,
+            beforeId,
+            cancellationToken);
+
+        // Step 2: If no user or no pulses, return early with empty metadata
+        if (!currentUserId.HasValue || pulses.Count == 0)
+        {
+            return new FeedData(
+                Pulses: pulses,
+                LikedPulseIds: [],
+                BookmarkedPulseIds: [],
+                FollowingProfileIds: [],
+                Mentions: []
+            );
+        }
+
+        // Step 3: Prepare data for parallel queries
+        var pulseIds = pulses.Select(p => p.Id).ToList();
+        var authorIds = pulses.Select(p => p.AuthorId).Distinct().ToList();
+        var userId = currentUserId.Value;
+
+        // Step 4: Execute metadata queries in parallel using factory-created DbContexts
+        var likesTask = Task.Run(async () =>
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+            var likedPulseIds = await context.Set<PulseLike>()
+                .AsNoTracking()
+                .Where(l => l.ProfileId == userId && pulseIds.Contains(l.PulseId))
+                .Select(l => l.PulseId)
+                .ToListAsync(cancellationToken);
+            return likedPulseIds.ToHashSet();
+        }, cancellationToken);
+
+        var bookmarksTask = Task.Run(async () =>
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+            var bookmarkedPulseIds = await context.Set<PulseBookmark>()
+                .AsNoTracking()
+                .Where(b => b.ProfileId == userId && pulseIds.Contains(b.PulseId))
+                .Select(b => b.PulseId)
+                .ToListAsync(cancellationToken);
+            return bookmarkedPulseIds.ToHashSet();
+        }, cancellationToken);
+
+        var followingTask = Task.Run(async () =>
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+            var followingProfileIds = await context.Set<Follow>()
+                .AsNoTracking()
+                .Where(f => f.FollowerId == userId && authorIds.Contains(f.FollowingId))
+                .Select(f => f.FollowingId)
+                .ToListAsync(cancellationToken);
+            return followingProfileIds.ToHashSet();
+        }, cancellationToken);
+
+        var mentionsTask = Task.Run(async () =>
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+            var mentions = await context.Set<PulseMention>()
+                .AsNoTracking()
+                .Where(m => pulseIds.Contains(m.PulseId))
+                .ToListAsync(cancellationToken);
+            return (IReadOnlyList<PulseMention>)mentions;
+        }, cancellationToken);
+
+        // Step 5: Wait for all parallel queries to complete
+        await Task.WhenAll(likesTask, bookmarksTask, followingTask, mentionsTask);
+
+        // Step 6: Return aggregated results
+        return new FeedData(
+            Pulses: pulses,
+            LikedPulseIds: await likesTask,
+            BookmarkedPulseIds: await bookmarksTask,
+            FollowingProfileIds: await followingTask,
+            Mentions: await mentionsTask
+        );
     }
 }

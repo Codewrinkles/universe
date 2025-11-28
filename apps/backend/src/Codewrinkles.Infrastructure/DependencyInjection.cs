@@ -19,24 +19,21 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // Database
-        services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
-        {
-            var env = serviceProvider.GetService<IHostEnvironment>();
-            var isDevelopment = env?.IsDevelopment() ?? false;
+        // IMPORTANT: Using BOTH factory (for parallel queries) and scoped DbContext (for normal DI)
+        // Only configure the FACTORY - DbContext will use the factory's configuration
 
+        // DbContext Factory - For parallel query operations in repositories
+        // This is the ONLY place we configure the database connection
+        services.AddDbContextFactory<ApplicationDbContext>(options =>
+        {
             options.UseSqlServer(
                 configuration.GetConnectionString("DefaultConnection"),
                 b => b.MigrationsAssembly(typeof(DependencyInjection).Assembly.FullName));
-
-            // Enable detailed SQL logging in development - TEMPORARILY DISABLED
-            // if (isDevelopment)
-            // {
-            //     options.EnableSensitiveDataLogging(); // Show parameter values
-            //     options.EnableDetailedErrors();       // Show detailed error messages
-            //     options.LogTo(Console.WriteLine, LogLevel.Information); // Log all SQL commands with execution time
-            // }
         });
+
+        // Database - Scoped DbContext for regular operations
+        // NO OPTIONS CONFIGURATION - uses the factory's configuration automatically
+        services.AddDbContext<ApplicationDbContext>();
 
         // Repositories
         services.AddScoped<IIdentityRepository, IdentityRepository>();

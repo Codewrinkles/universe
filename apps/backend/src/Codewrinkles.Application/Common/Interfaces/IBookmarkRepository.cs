@@ -48,4 +48,17 @@ public interface IBookmarkRepository
         DateTime? beforeCreatedAt = null,
         Guid? beforeId = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets bookmarked pulses with all associated metadata in a single repository call.
+    /// Uses parallel queries internally for optimal performance.
+    /// Returns pulses along with liked/following/mentions metadata.
+    /// Bookmarked status is implicit (all returned pulses are bookmarked by definition).
+    /// </summary>
+    Task<FeedData> GetBookmarkedPulsesWithMetadataAsync(
+        Guid profileId,
+        int limit,
+        DateTime? beforeCreatedAt = null,
+        Guid? beforeId = null,
+        CancellationToken cancellationToken = default);
 }

@@ -6,6 +6,18 @@ using PulseMentionEntity = Codewrinkles.Domain.Pulse.PulseMention;
 
 namespace Codewrinkles.Application.Common.Interfaces;
 
+/// <summary>
+/// Aggregated feed data containing pulses and all associated metadata.
+/// Used by GetFeedWithMetadataAsync to return everything in a single call.
+/// </summary>
+public sealed record FeedData(
+    IReadOnlyList<PulseEntity> Pulses,
+    HashSet<Guid> LikedPulseIds,
+    HashSet<Guid> BookmarkedPulseIds,
+    HashSet<Guid> FollowingProfileIds,
+    IReadOnlyList<PulseMentionEntity> Mentions
+);
+
 public interface IPulseRepository
 {
     /// <summary>
@@ -34,11 +46,38 @@ public interface IPulseRepository
         CancellationToken cancellationToken);
 
     /// <summary>
+    /// Get paginated feed with all associated metadata in a single repository call.
+    /// Uses parallel queries internally for optimal performance.
+    /// Returns pulses along with liked/bookmarked/following/mentions metadata.
+    /// If currentUserId is null, metadata sets will be empty.
+    /// </summary>
+    Task<FeedData> GetFeedWithMetadataAsync(
+        Guid? currentUserId,
+        int limit,
+        DateTime? beforeCreatedAt,
+        Guid? beforeId,
+        CancellationToken cancellationToken);
+
+    /// <summary>
     /// Get pulses by author ID, ordered by CreatedAt DESC.
     /// Includes Engagement.
     /// </summary>
     Task<IReadOnlyList<PulseEntity>> GetByAuthorIdAsync(
         Guid authorId,
+        int limit,
+        DateTime? beforeCreatedAt,
+        Guid? beforeId,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Get pulses by author with all associated metadata in a single repository call.
+    /// Uses parallel queries internally for optimal performance.
+    /// Returns pulses along with liked/bookmarked/following/mentions metadata.
+    /// If currentUserId is null, metadata sets will be empty.
+    /// </summary>
+    Task<FeedData> GetPulsesByAuthorWithMetadataAsync(
+        Guid authorId,
+        Guid? currentUserId,
         int limit,
         DateTime? beforeCreatedAt,
         Guid? beforeId,

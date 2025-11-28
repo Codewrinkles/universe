@@ -1,5 +1,6 @@
 using Codewrinkles.Application.Common.Interfaces;
 using Codewrinkles.Domain.Pulse;
+using Codewrinkles.Domain.Social;
 using Microsoft.EntityFrameworkCore;
 
 namespace Codewrinkles.Infrastructure.Persistence.Repositories;
@@ -7,11 +8,15 @@ namespace Codewrinkles.Infrastructure.Persistence.Repositories;
 public sealed class BookmarkRepository : IBookmarkRepository
 {
     private readonly ApplicationDbContext _context;
+    private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
     private readonly DbSet<PulseBookmark> _bookmarks;
 
-    public BookmarkRepository(ApplicationDbContext context)
+    public BookmarkRepository(
+        ApplicationDbContext context,
+        IDbContextFactory<ApplicationDbContext> contextFactory)
     {
         _context = context;
+        _contextFactory = contextFactory;
         _bookmarks = context.Set<PulseBookmark>();
     }
 
@@ -122,5 +127,89 @@ public sealed class BookmarkRepository : IBookmarkRepository
         }
 
         return (pulses, hasMore);
+    }
+
+    public async Task<FeedData> GetBookmarkedPulsesWithMetadataAsync(
+        Guid profileId,
+        int limit,
+        DateTime? beforeCreatedAt = null,
+        Guid? beforeId = null,
+        CancellationToken cancellationToken = default)
+    {
+        // Step 1: Get bookmarked pulses using the existing method (uses scoped DbContext)
+        var (pulses, _) = await GetBookmarkedPulsesAsync(
+            profileId,
+            limit,
+            beforeCreatedAt,
+            beforeId,
+            cancellationToken);
+
+        // Step 2: If no pulses, return early with empty metadata
+        if (pulses.Count == 0)
+        {
+            return new FeedData(
+                Pulses: pulses,
+                LikedPulseIds: [],
+                BookmarkedPulseIds: [],
+                FollowingProfileIds: [],
+                Mentions: []
+            );
+        }
+
+        // Step 3: Prepare data for parallel queries
+        var pulseIds = pulses.Select(p => p.Id).ToList();
+        var authorIds = pulses.Select(p => p.AuthorId).Distinct().ToList();
+
+        // Step 4: Execute metadata queries in parallel using factory-created DbContexts
+        // Note: All pulses are bookmarked by definition, so we just get their IDs
+        var likesTask = Task.Run(async () =>
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+            var likedPulseIds = await context.Set<PulseLike>()
+                .AsNoTracking()
+                .Where(l => l.ProfileId == profileId && pulseIds.Contains(l.PulseId))
+                .Select(l => l.PulseId)
+                .ToListAsync(cancellationToken);
+            return likedPulseIds.ToHashSet();
+        }, cancellationToken);
+
+        var bookmarksTask = Task.Run(async () =>
+        {
+            // All pulses are bookmarked, just return the pulse IDs
+            return pulseIds.ToHashSet();
+        }, cancellationToken);
+
+        var followingTask = Task.Run(async () =>
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+            var followingProfileIds = await context.Set<Follow>()
+                .AsNoTracking()
+                .Where(f => f.FollowerId == profileId && authorIds.Contains(f.FollowingId))
+                .Select(f => f.FollowingId)
+                .ToListAsync(cancellationToken);
+            return followingProfileIds.ToHashSet();
+        }, cancellationToken);
+
+        var mentionsTask = Task.Run(async () =>
+        {
+            await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
+            var mentions = await context.Set<PulseMention>()
+                .AsNoTracking()
+                .Where(m => pulseIds.Contains(m.PulseId))
+                .ToListAsync(cancellationToken);
+            return (IReadOnlyList<PulseMention>)mentions;
+        }, cancellationToken);
+
+        // Step 5: Wait for all parallel queries to complete
+        await Task.WhenAll(likesTask, bookmarksTask, followingTask, mentionsTask);
+
+        // Step 6: Return aggregated results
+        return new FeedData(
+            Pulses: pulses,
+            LikedPulseIds: await likesTask,
+            BookmarkedPulseIds: await bookmarksTask,
+            FollowingProfileIds: await followingTask,
+            Mentions: await mentionsTask
+        );
     }
 }

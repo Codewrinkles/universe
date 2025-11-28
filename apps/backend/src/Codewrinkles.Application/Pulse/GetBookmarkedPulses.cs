@@ -14,11 +14,11 @@ public sealed record GetBookmarkedPulsesQuery(
 
 public sealed class GetBookmarkedPulsesQueryHandler : ICommandHandler<GetBookmarkedPulsesQuery, FeedResponse>
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IBookmarkRepository _bookmarkRepository;
 
-    public GetBookmarkedPulsesQueryHandler(IUnitOfWork unitOfWork)
+    public GetBookmarkedPulsesQueryHandler(IBookmarkRepository bookmarkRepository)
     {
-        _unitOfWork = unitOfWork;
+        _bookmarkRepository = bookmarkRepository;
     }
 
     public async Task<FeedResponse> HandleAsync(
@@ -36,49 +36,39 @@ public sealed class GetBookmarkedPulsesQueryHandler : ICommandHandler<GetBookmar
             beforeId = cursor.Id;
         }
 
-        // Fetch bookmarked pulses from repository
-        var (pulses, hasMore) = await _unitOfWork.Bookmarks.GetBookmarkedPulsesAsync(
+        // Fetch bookmarked pulses and all metadata in single repository call
+        // Repository handles parallel query optimization internally
+        var feedData = await _bookmarkRepository.GetBookmarkedPulsesWithMetadataAsync(
             profileId: query.ProfileId,
             limit: query.Limit,
             beforeCreatedAt: beforeCreatedAt,
             beforeId: beforeId,
             cancellationToken: cancellationToken);
 
+        // Determine if there are more results
+        var hasMore = feedData.Pulses.Count > query.Limit;
+        var pulsesToReturn = hasMore ? feedData.Pulses.Take(query.Limit).ToList() : feedData.Pulses;
+
         // Generate next cursor
         string? nextCursor = null;
-        if (hasMore && pulses.Count > 0)
+        if (hasMore && pulsesToReturn.Count > 0)
         {
-            var lastPulse = pulses.Last();
+            var lastPulse = pulsesToReturn.Last();
             nextCursor = EncodeCursor(lastPulse.CreatedAt, lastPulse.Id);
         }
 
-        // Get liked pulse IDs and followed profile IDs for current user
-        HashSet<Guid> likedPulseIds = [];
-        HashSet<Guid> followingProfileIds = [];
+        // Group mentions by pulse for DTO mapping
+        var mentionsByPulse = feedData.Mentions
+            .GroupBy(m => m.PulseId)
+            .ToDictionary(g => g.Key, g => g.ToList());
 
-        if (pulses.Count > 0)
-        {
-            var pulseIds = pulses.Select(p => p.Id);
-            likedPulseIds = await _unitOfWork.Pulses.GetLikedPulseIdsAsync(
-                pulseIds,
-                query.ProfileId,
-                cancellationToken);
-
-            var authorIds = pulses.Select(p => p.AuthorId).Distinct();
-            followingProfileIds = await _unitOfWork.Follows.GetFollowingProfileIdsAsync(
-                authorIds,
-                query.ProfileId,
-                cancellationToken);
-        }
-
-        // Load mentions for all pulses (batch load to avoid N+1 queries)
-        var allPulseIds = pulses.Select(p => p.Id).ToList();
-        var mentions = await _unitOfWork.Pulses.GetMentionsForPulsesAsync(allPulseIds, cancellationToken);
-        var mentionsByPulse = mentions.GroupBy(m => m.PulseId).ToDictionary(g => g.Key, g => g.ToList());
-
-        // Map to DTOs (all pulses are bookmarked by definition)
-        var bookmarkedPulseIds = pulses.Select(p => p.Id).ToHashSet();
-        var pulseDtos = pulses.Select(p => MapToPulseDto(p, likedPulseIds, followingProfileIds, bookmarkedPulseIds, mentionsByPulse)).ToList();
+        // Map to DTOs
+        var pulseDtos = pulsesToReturn.Select(p => MapToPulseDto(
+            p,
+            feedData.LikedPulseIds,
+            feedData.FollowingProfileIds,
+            feedData.BookmarkedPulseIds,
+            mentionsByPulse)).ToList();
 
         return new FeedResponse(
             Pulses: pulseDtos,
