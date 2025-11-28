@@ -7,6 +7,8 @@ using Codewrinkles.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Codewrinkles.Infrastructure;
@@ -18,11 +20,22 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         // Database
-        services.AddDbContext<ApplicationDbContext>(options =>
+        services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
         {
+            var env = serviceProvider.GetService<IHostEnvironment>();
+            var isDevelopment = env?.IsDevelopment() ?? false;
+
             options.UseSqlServer(
                 configuration.GetConnectionString("DefaultConnection"),
                 b => b.MigrationsAssembly(typeof(DependencyInjection).Assembly.FullName));
+
+            // Enable detailed SQL logging in development - TEMPORARILY DISABLED
+            // if (isDevelopment)
+            // {
+            //     options.EnableSensitiveDataLogging(); // Show parameter values
+            //     options.EnableDetailedErrors();       // Show detailed error messages
+            //     options.LogTo(Console.WriteLine, LogLevel.Information); // Log all SQL commands with execution time
+            // }
         });
 
         // Repositories

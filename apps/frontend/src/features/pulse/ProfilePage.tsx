@@ -190,7 +190,7 @@ export function ProfilePage(): JSX.Element {
     fetchProfile();
   }, [handle]);
 
-  // Fetch pulses when profile is loaded
+  // Fetch all profile data in parallel when profile is loaded
   useEffect(() => {
     if (!profile) return;
 
@@ -214,13 +214,6 @@ export function ProfilePage(): JSX.Element {
         setIsLoadingPulses(false);
       }
     };
-
-    fetchPulses();
-  }, [profile]);
-
-  // Fetch followers when profile is loaded
-  useEffect(() => {
-    if (!profile) return;
 
     const fetchFollowers = async (): Promise<void> => {
       setIsLoadingFollowers(true);
@@ -251,13 +244,6 @@ export function ProfilePage(): JSX.Element {
       }
     };
 
-    fetchFollowers();
-  }, [profile]);
-
-  // Fetch following when profile is loaded
-  useEffect(() => {
-    if (!profile) return;
-
     const fetchFollowing = async (): Promise<void> => {
       setIsLoadingFollowing(true);
       try {
@@ -287,7 +273,12 @@ export function ProfilePage(): JSX.Element {
       }
     };
 
-    fetchFollowing();
+    // Execute all fetches in parallel
+    Promise.all([
+      fetchPulses(),
+      fetchFollowers(),
+      fetchFollowing()
+    ]);
   }, [profile]);
 
   const handleReplyClick = (pulseId: string): void => {

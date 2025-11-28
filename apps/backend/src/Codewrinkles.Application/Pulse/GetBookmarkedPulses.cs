@@ -52,33 +52,29 @@ public sealed class GetBookmarkedPulsesQueryHandler : ICommandHandler<GetBookmar
             nextCursor = EncodeCursor(lastPulse.CreatedAt, lastPulse.Id);
         }
 
-        // Get metadata for pulses in parallel to reduce latency
+        // Get liked pulse IDs and followed profile IDs for current user
         HashSet<Guid> likedPulseIds = [];
         HashSet<Guid> followingProfileIds = [];
-        Dictionary<Guid, List<PulseMention>> mentionsByPulse;
 
         if (pulses.Count > 0)
         {
             var pulseIds = pulses.Select(p => p.Id);
+            likedPulseIds = await _unitOfWork.Pulses.GetLikedPulseIdsAsync(
+                pulseIds,
+                query.ProfileId,
+                cancellationToken);
+
             var authorIds = pulses.Select(p => p.AuthorId).Distinct();
-            var allPulseIds = pulses.Select(p => p.Id).ToList();
-
-            // Execute all metadata queries in parallel for better performance
-            var likesTask = _unitOfWork.Pulses.GetLikedPulseIdsAsync(pulseIds, query.ProfileId, cancellationToken);
-            var followingTask = _unitOfWork.Follows.GetFollowingProfileIdsAsync(authorIds, query.ProfileId, cancellationToken);
-            var mentionsTask = _unitOfWork.Pulses.GetMentionsForPulsesAsync(allPulseIds, cancellationToken);
-
-            await Task.WhenAll(likesTask, followingTask, mentionsTask);
-
-            likedPulseIds = await likesTask;
-            followingProfileIds = await followingTask;
-            var mentions = await mentionsTask;
-            mentionsByPulse = mentions.GroupBy(m => m.PulseId).ToDictionary(g => g.Key, g => g.ToList());
+            followingProfileIds = await _unitOfWork.Follows.GetFollowingProfileIdsAsync(
+                authorIds,
+                query.ProfileId,
+                cancellationToken);
         }
-        else
-        {
-            mentionsByPulse = new Dictionary<Guid, List<PulseMention>>();
-        }
+
+        // Load mentions for all pulses (batch load to avoid N+1 queries)
+        var allPulseIds = pulses.Select(p => p.Id).ToList();
+        var mentions = await _unitOfWork.Pulses.GetMentionsForPulsesAsync(allPulseIds, cancellationToken);
+        var mentionsByPulse = mentions.GroupBy(m => m.PulseId).ToDictionary(g => g.Key, g => g.ToList());
 
         // Map to DTOs (all pulses are bookmarked by definition)
         var bookmarkedPulseIds = pulses.Select(p => p.Id).ToHashSet();

@@ -66,6 +66,24 @@ builder.Services.AddSingleton<IAuthorizationHandler, MustBePulseOwnerHandler>();
 builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
 builder.Services.AddProblemDetails();
 
+// Add response compression (Brotli for modern browsers, Gzip for fallback)
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true; // Enable compression for HTTPS
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProvider>();
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProvider>();
+});
+
+builder.Services.Configure<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProviderOptions>(options =>
+{
+    options.Level = System.IO.Compression.CompressionLevel.Fastest; // Balance speed vs size
+});
+
+builder.Services.Configure<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProviderOptions>(options =>
+{
+    options.Level = System.IO.Compression.CompressionLevel.Fastest;
+});
+
 // Add CORS
 builder.Services.AddCors(options =>
 {
@@ -74,7 +92,8 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("http://localhost:5173") // React frontend
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials();
+            .AllowCredentials()
+            .SetPreflightMaxAge(TimeSpan.FromHours(24)); // Cache preflight responses for 24h
     });
 });
 
@@ -102,6 +121,9 @@ var app = builder.Build();
 
 // Middleware pipeline
 app.UseExceptionHandler();
+
+// Response compression - must be before other middleware that writes to response
+app.UseResponseCompression();
 
 if (app.Environment.IsDevelopment())
 {

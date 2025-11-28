@@ -92,16 +92,12 @@ public static class NotificationEndpoints
             // Extract ProfileId from JWT claims
             var profileId = httpContext.GetCurrentProfileId();
 
-            // Use the GetNotifications query with limit 0 to just get unread count
-            var query = new GetNotificationsQuery(
-                RecipientId: profileId,
-                Offset: 0,
-                Limit: 0
-            );
+            // Use dedicated query handler for unread count (single COUNT query, no unnecessary operations)
+            var query = new GetUnreadCountQuery(RecipientId: profileId);
 
-            var result = await mediator.SendAsync(query, cancellationToken);
+            var unreadCount = await mediator.SendAsync(query, cancellationToken);
 
-            return Results.Ok(new { unreadCount = result.UnreadCount });
+            return Results.Ok(new { unreadCount });
         }
         catch (Exception ex)
         {

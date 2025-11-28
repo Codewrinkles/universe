@@ -111,51 +111,33 @@ public sealed class FollowRepository : IFollowRepository
         int limit,
         CancellationToken cancellationToken)
     {
-        // Step 1: Get all people I'm following
-        var myFollowingIds = await _follows
+        // Optimized single-query approach using subqueries instead of multiple roundtrips
+        // This executes as a single SQL query with joins and subqueries
+
+        // Subquery: People I'm following
+        var myFollowingQuery = _follows
             .Where(f => f.FollowerId == currentUserId)
-            .Select(f => f.FollowingId)
-            .ToListAsync(cancellationToken);
+            .Select(f => f.FollowingId);
 
-        if (myFollowingIds.Count == 0)
-        {
-            // Not following anyone - return empty suggestions
-            return new List<(Profile, int)>();
-        }
-
-        // Step 2: Get people followed by people I follow (2-hop)
-        // Group by suggested profile and count mutual follows
+        // Main query: Get suggested profiles with mutual follow counts
+        // This translates to a single SQL query with JOINs and GROUP BY
         var suggestions = await _follows
-            .Where(f => myFollowingIds.Contains(f.FollowerId)) // My follows' follows
-            .Where(f => f.FollowingId != currentUserId)        // Exclude myself
-            .Where(f => !myFollowingIds.Contains(f.FollowingId)) // Exclude people I already follow
-            .GroupBy(f => f.FollowingId)
+            .Where(f => myFollowingQuery.Contains(f.FollowerId))       // Their followers are people I follow (2-hop)
+            .Where(f => f.FollowingId != currentUserId)                // Exclude myself
+            .Where(f => !myFollowingQuery.Contains(f.FollowingId))     // Exclude people I already follow
+            .GroupBy(f => f.Following)                                  // Group by the Profile entity (not just ID)
             .Select(g => new
             {
-                ProfileId = g.Key,
-                MutualFollowCount = g.Count() // How many of my follows also follow them
+                Profile = g.Key,                                        // The Profile entity
+                MutualFollowCount = g.Count()                           // How many mutual follows
             })
             .OrderByDescending(x => x.MutualFollowCount)
             .Take(limit)
             .ToListAsync(cancellationToken);
 
-        if (suggestions.Count == 0)
-        {
-            return new List<(Profile, int)>();
-        }
-
-        // Step 3: Join with profiles to get user info
-        var profileIds = suggestions.Select(s => s.ProfileId).ToList();
-        var profiles = await _profiles
-            .Where(p => profileIds.Contains(p.Id))
-            .ToListAsync(cancellationToken);
-
-        // Step 4: Combine and return
+        // Map to result tuple
         var result = suggestions
-            .Join(profiles,
-                s => s.ProfileId,
-                p => p.Id,
-                (s, p) => (Profile: p, MutualFollowCount: s.MutualFollowCount))
+            .Select(s => (Profile: s.Profile, MutualFollowCount: s.MutualFollowCount))
             .ToList();
 
         return result;
