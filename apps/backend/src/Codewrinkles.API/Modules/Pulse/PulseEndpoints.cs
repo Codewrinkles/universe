@@ -27,6 +27,10 @@ public static class PulseEndpoints
         group.MapGet("{id:guid}", GetPulse)
             .WithName("GetPulse");
 
+        group.MapDelete("{id:guid}", DeletePulse)
+            .WithName("DeletePulse")
+            .RequireAuthorization();
+
         group.MapPost("{id:guid}/like", LikePulse)
             .WithName("LikePulse")
             .RequireAuthorization();
@@ -475,6 +479,48 @@ public static class PulseEndpoints
             {
                 await image.OpenReadStream().DisposeAsync();
             }
+        }
+    }
+
+    private static async Task<IResult> DeletePulse(
+        HttpContext httpContext,
+        Guid id,
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Extract ProfileId from JWT claims (user can only delete their own pulses)
+            var profileId = httpContext.GetCurrentProfileId();
+
+            var command = new DeletePulseCommand(
+                ProfileId: profileId,
+                PulseId: id
+            );
+
+            var result = await mediator.SendAsync(command, cancellationToken);
+
+            return Results.Ok(new { success = result.Success });
+        }
+        catch (PulseNotFoundException)
+        {
+            return Results.NotFound(new { error = "Pulse not found" });
+        }
+        catch (PulseAlreadyDeletedException)
+        {
+            return Results.Problem(
+                title: "Already Deleted",
+                detail: "This pulse has already been deleted",
+                statusCode: 400
+            );
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Results.Problem(
+                title: "Unauthorized",
+                detail: ex.Message,
+                statusCode: 403
+            );
         }
     }
 }

@@ -80,6 +80,17 @@ export const pulseApi = {
   },
 
   /**
+   * Delete a pulse (soft delete)
+   * ProfileId is extracted from JWT token on the backend
+   * User must be the author of the pulse
+   */
+  deletePulse(id: string): Promise<{ success: boolean }> {
+    return apiRequest<{ success: boolean }>(config.api.endpoints.pulseDelete(id), {
+      method: "DELETE",
+    });
+  },
+
+  /**
    * Create a repulse (quote/repost with commentary)
    * ProfileId is extracted from JWT token on the backend
    */

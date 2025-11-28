@@ -22,6 +22,11 @@ export function PulsePage(): JSX.Element {
     refetch(); // Refresh feed to show updated reply counts
   };
 
+  const handleDelete = (): void => {
+    // Refetch feed to remove deleted pulse
+    refetch();
+  };
+
   return (
     <div className="flex justify-center">
       {/* Left Navigation - container matches right for symmetry */}
@@ -70,6 +75,7 @@ export function PulsePage(): JSX.Element {
                 onReplyClick={handleReplyClick}
                 replyingToPulseId={replyingToPulseId}
                 onReplyCreated={handleReplyCreated}
+                onDelete={handleDelete}
               />
             </div>
 

@@ -1,19 +1,23 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate, Link } from "react-router";
 import type { Post } from "../../types";
 import { PostLinkPreview } from "./PostLinkPreview";
 import { PostRepost } from "./PostRepost";
 import { RepulseModal } from "./RepulseModal";
+import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { formatTimeAgo } from "../../utils/timeUtils";
 import { config } from "../../config";
 import { usePulseLike } from "./hooks/usePulseLike";
 import { FollowButton } from "../social/components/FollowButton";
 import { parseMentions } from "./parseMentions";
+import { pulseApi } from "../../services/pulseApi";
+import { useAuth } from "../../hooks/useAuth";
 
 export interface PostCardProps {
   post: Post;
   onReplyClick?: (pulseId: string) => void;
   onFollowChange?: () => void;
+  onDelete?: (pulseId: string) => void;
 }
 
 function formatCount(count: number): string {
@@ -107,13 +111,35 @@ function LikeButton({ pulseId, initialIsLiked, initialLikeCount }: LikeButtonPro
   );
 }
 
-export function PostCard({ post, onReplyClick, onFollowChange }: PostCardProps): JSX.Element {
+export function PostCard({ post, onReplyClick, onFollowChange, onDelete }: PostCardProps): JSX.Element {
   const { author } = post;
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const menuRef = useRef<HTMLDivElement>(null);
   const [showRepulseModal, setShowRepulseModal] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Check if current user is the author
+  const isAuthor = user?.profileId === author.id;
 
   // Ensure we have a valid handle for profile links
   const profileHandle = author.handle || 'unknown';
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    if (!showMenu) return;
+
+    const handleClickOutside = (event: MouseEvent): void => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMenu]);
 
   // Handle avatar URL - if it's a relative path, prepend base URL
   const avatarUrl = author.avatarUrl
@@ -155,6 +181,26 @@ export function PostCard({ post, onReplyClick, onFollowChange }: PostCardProps):
       ? post.parentPulseId
       : post.id;
     navigate(`/pulse/${targetPulseId}`);
+  };
+
+  const handleDeleteClick = (): void => {
+    setShowMenu(false);
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteConfirm = async (): Promise<void> => {
+    setIsDeleting(true);
+    try {
+      await pulseApi.deletePulse(post.id);
+      setShowDeleteDialog(false);
+      // Notify parent to remove pulse from state
+      onDelete?.(post.id);
+    } catch (error) {
+      console.error("Failed to delete pulse:", error);
+      alert("Failed to delete pulse. Please try again.");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -203,7 +249,7 @@ export function PostCard({ post, onReplyClick, onFollowChange }: PostCardProps):
             </div>
             <div
               onClick={(e) => e.stopPropagation()}
-              className="flex-shrink-0"
+              className="flex items-center gap-2 flex-shrink-0"
             >
               <FollowButton
                 profileId={author.id}
@@ -211,6 +257,38 @@ export function PostCard({ post, onReplyClick, onFollowChange }: PostCardProps):
                 size="sm"
                 onFollowChange={onFollowChange}
               />
+              {/* Three-dot menu for author's own posts */}
+              {isAuthor && (
+                <div className="relative" ref={menuRef}>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowMenu(!showMenu);
+                    }}
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-text-tertiary hover:bg-brand-soft/10 hover:text-brand-soft transition-colors"
+                    aria-label="More options"
+                  >
+                    <span className="text-base">⋯</span>
+                  </button>
+                  {/* Dropdown menu */}
+                  {showMenu && (
+                    <div className="absolute right-0 top-full mt-1 w-48 rounded-xl border border-border bg-surface-card1 shadow-lg z-10">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteClick();
+                        }}
+                        className="flex w-full items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors rounded-xl"
+                      >
+                        <span>🗑️</span>
+                        <span>Delete</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -308,6 +386,14 @@ export function PostCard({ post, onReplyClick, onFollowChange }: PostCardProps):
         post={post}
         onClose={() => setShowRepulseModal(false)}
         onSuccess={onFollowChange}
+      />
+    )}
+    {/* Delete Confirmation Dialog */}
+    {showDeleteDialog && (
+      <DeleteConfirmDialog
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setShowDeleteDialog(false)}
+        isDeleting={isDeleting}
       />
     )}
     </>

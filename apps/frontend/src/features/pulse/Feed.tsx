@@ -8,9 +8,10 @@ export interface FeedProps {
   onReplyClick?: (pulseId: string) => void;
   replyingToPulseId?: string | null;
   onReplyCreated?: () => void;
+  onDelete?: (pulseId: string) => void;
 }
 
-export function Feed({ posts, onFollowChange, onReplyClick, replyingToPulseId, onReplyCreated }: FeedProps): JSX.Element {
+export function Feed({ posts, onFollowChange, onReplyClick, replyingToPulseId, onReplyCreated, onDelete }: FeedProps): JSX.Element {
   return (
     <>
       {posts.map((post) => (
@@ -20,6 +21,7 @@ export function Feed({ posts, onFollowChange, onReplyClick, replyingToPulseId, o
               post={post}
               onFollowChange={onFollowChange}
               onReplyClick={onReplyClick}
+              onDelete={onDelete}
             />
           </div>
           {replyingToPulseId === post.id && (

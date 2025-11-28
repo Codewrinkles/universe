@@ -39,6 +39,16 @@ export function ThreadView(): JSX.Element {
     refetch();
   };
 
+  const handleDelete = (pulseId: string): void => {
+    // If the deleted pulse is the parent, navigate back to feed
+    if (pulseId === parentPulse?.id) {
+      navigate("/pulse");
+    } else {
+      // Otherwise, refetch to update the thread
+      refetch();
+    }
+  };
+
   // Auto-scroll to highlighted reply when it renders
   useEffect(() => {
     if (highlightedReplyId && highlightedReplyRef.current && !isLoading) {
@@ -97,6 +107,7 @@ export function ThreadView(): JSX.Element {
               <PostCard
                 post={parentPulse}
                 onReplyClick={handleReplyClick}
+                onDelete={handleDelete}
               />
             </div>
 
@@ -138,6 +149,7 @@ export function ThreadView(): JSX.Element {
                         <PostCard
                           post={reply}
                           onReplyClick={handleReplyClick}
+                          onDelete={handleDelete}
                         />
                         {/* Inline Reply Composer for this Reply */}
                         {replyingToPulseId === reply.id && (

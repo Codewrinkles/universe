@@ -290,6 +290,11 @@ export function ProfilePage(): JSX.Element {
     }
   };
 
+  const handleDelete = (pulseId: string): void => {
+    // Remove the pulse from the local state
+    setPulses((prevPulses) => prevPulses.filter((p) => p.id !== pulseId));
+  };
+
   const isOwnProfile = currentUser?.profileId === profile?.profileId;
 
   if (isLoading) {
@@ -384,6 +389,7 @@ export function ProfilePage(): JSX.Element {
                       <PostCard
                         post={pulse}
                         onReplyClick={handleReplyClick}
+                        onDelete={handleDelete}
                       />
                     </div>
                     {replyingToPulseId === pulse.id && (
