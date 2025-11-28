@@ -818,10 +818,10 @@ public static class SocialEndpoints
 
 ---
 
-### Phase 4: Frontend Infrastructure
+### Phase 4: Frontend Infrastructure ✅ COMPLETED
 
-#### Step 4.1: API Service
-- [ ] Create `services/socialApi.ts`:
+#### Step 4.1: API Service ✅
+- [x] Create `services/socialApi.ts`:
 
 ```typescript
 import type {
@@ -877,8 +877,8 @@ export const socialApi = {
 };
 ```
 
-#### Step 4.2: TypeScript Types
-- [ ] Add to `types.ts`:
+#### Step 4.2: TypeScript Types ✅
+- [x] Add to `types.ts`:
 
 ```typescript
 // Social/Follow Types
@@ -932,8 +932,8 @@ export interface SuggestedProfilesResponse {
 }
 ```
 
-#### Step 4.3: Core Hooks
-- [ ] Create `features/social/hooks/useFollow.ts`:
+#### Step 4.3: Core Hooks ✅
+- [x] Create `features/social/hooks/useFollow.ts`:
 
 ```typescript
 import { useState, useCallback } from "react";
@@ -1000,17 +1000,17 @@ export function useFollow(): UseFollowResult {
 }
 ```
 
-- [ ] Create `features/social/hooks/useIsFollowing.ts`
-- [ ] Create `features/social/hooks/useFollowers.ts`
-- [ ] Create `features/social/hooks/useFollowing.ts`
-- [ ] Create `features/social/hooks/useSuggestedProfiles.ts`
+- [x] Create `features/social/hooks/useIsFollowing.ts`
+- [x] Create `features/social/hooks/useFollowers.ts`
+- [x] Create `features/social/hooks/useFollowing.ts`
+- [x] Create `features/social/hooks/useSuggestedProfiles.ts`
 
 ---
 
-### Phase 5: Frontend Components
+### Phase 5: Frontend Components ✅ COMPLETED
 
-#### Step 5.1: FollowButton Component
-- [ ] Create `features/social/components/FollowButton.tsx`:
+#### Step 5.1: FollowButton Component ✅
+- [x] Create `features/social/components/FollowButton.tsx`:
 
 ```typescript
 import { useState, useEffect } from "react";
@@ -1095,20 +1095,20 @@ export function FollowButton({ profileId, onFollowChange }: FollowButtonProps): 
 }
 ```
 
-#### Step 5.2: Lists Components
-- [ ] Create `features/social/components/FollowersList.tsx`:
+#### Step 5.2: Lists Components ✅
+- [x] Create `features/social/components/FollowersList.tsx`:
   - Display followers with infinite scroll
   - Use `useFollowers` hook
   - Show avatar, name, handle, bio
   - Include follow button for each
 
-- [ ] Create `features/social/components/FollowingList.tsx`:
+- [x] Create `features/social/components/FollowingList.tsx`:
   - Display following with infinite scroll
   - Use `useFollowing` hook
   - Similar structure to FollowersList
 
-#### Step 5.3: Suggested Profiles
-- [ ] Update `features/pulse/WhoToFollow.tsx`:
+#### Step 5.3: Suggested Profiles ✅
+- [x] Update `features/pulse/WhoToFollow.tsx`:
   - Use `useSuggestedProfiles` hook instead of mock data
   - Display mutual follow count ("Followed by X people you follow")
   - Wire up `FollowButton` component

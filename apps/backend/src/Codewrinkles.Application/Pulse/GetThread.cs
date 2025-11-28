@@ -59,23 +59,33 @@ public sealed class GetThreadQueryHandler : ICommandHandler<GetThreadQuery, Thre
             query.PulseId,
             cancellationToken);
 
-        // 5. Get liked pulse IDs for current user (parent + all replies)
+        // 5. Get liked pulse IDs and followed profile IDs for current user (parent + all replies)
         var allPulseIds = new List<Guid> { parentPulse.Id };
         allPulseIds.AddRange(repliesToReturn.Select(r => r.Id));
 
         HashSet<Guid> likedPulseIds = [];
+        HashSet<Guid> followingProfileIds = [];
         if (query.CurrentUserId.HasValue)
         {
             likedPulseIds = await _unitOfWork.Pulses.GetLikedPulseIdsAsync(
                 allPulseIds,
                 query.CurrentUserId.Value,
                 cancellationToken);
+
+            var allAuthorIds = new List<Guid> { parentPulse.AuthorId };
+            allAuthorIds.AddRange(repliesToReturn.Select(r => r.AuthorId));
+            var uniqueAuthorIds = allAuthorIds.Distinct();
+
+            followingProfileIds = await _unitOfWork.Follows.GetFollowingProfileIdsAsync(
+                uniqueAuthorIds,
+                query.CurrentUserId.Value,
+                cancellationToken);
         }
 
         // 6. Map to DTOs
-        var parentDto = MapToPulseDto(parentPulse, likedPulseIds.Contains(parentPulse.Id));
+        var parentDto = MapToPulseDto(parentPulse, likedPulseIds.Contains(parentPulse.Id), followingProfileIds.Contains(parentPulse.AuthorId));
         var replyDtos = repliesToReturn
-            .Select(r => MapToPulseDto(r, likedPulseIds.Contains(r.Id)))
+            .Select(r => MapToPulseDto(r, likedPulseIds.Contains(r.Id), followingProfileIds.Contains(r.AuthorId)))
             .ToList();
 
         return new ThreadResponse(
@@ -87,7 +97,7 @@ public sealed class GetThreadQueryHandler : ICommandHandler<GetThreadQuery, Thre
         );
     }
 
-    private static PulseDto MapToPulseDto(Domain.Pulse.Pulse pulse, bool isLikedByCurrentUser)
+    private static PulseDto MapToPulseDto(Domain.Pulse.Pulse pulse, bool isLikedByCurrentUser, bool isFollowingAuthor)
     {
         return new PulseDto(
             Id: pulse.Id,
@@ -107,6 +117,7 @@ public sealed class GetThreadQueryHandler : ICommandHandler<GetThreadQuery, Thre
                 ViewCount: pulse.Engagement.ViewCount
             ),
             IsLikedByCurrentUser: isLikedByCurrentUser,
+            IsFollowingAuthor: isFollowingAuthor,
             ParentPulseId: pulse.ParentPulseId,
             RepulsedPulse: pulse.RepulsedPulse is not null
                 ? MapToRepulsedPulseDto(pulse.RepulsedPulse)

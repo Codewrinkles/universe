@@ -39,6 +39,13 @@ export function App(): JSX.Element {
 
   return (
     <Routes>
+      {/* Public routes with Shell layout - accessible without authentication */}
+      <Route path="/" element={<ShellLayout theme={theme} onThemeToggle={toggleTheme} />}>
+        <Route path="pulse" element={<PulsePage />} />
+        <Route path="pulse/:pulseId" element={<ThreadView />} />
+        <Route path="social" element={<Navigate to="/pulse" replace />} />
+      </Route>
+
       {/* Protected routes - require authentication */}
       <Route
         path="/"
@@ -49,11 +56,8 @@ export function App(): JSX.Element {
         }
       >
         <Route index element={<HomePage />} />
-        <Route path="pulse" element={<PulsePage />} />
-        <Route path="pulse/:pulseId" element={<ThreadView />} />
         <Route path="nova" element={<TwinPage />} />
         {/* Redirects for old routes */}
-        <Route path="social" element={<Navigate to="/pulse" replace />} />
         <Route path="learn" element={<Navigate to="/nova" replace />} />
         <Route path="twin" element={<Navigate to="/nova" replace />} />
         <Route path="settings" element={<SettingsPage />}>
@@ -71,7 +75,7 @@ export function App(): JSX.Element {
       <Route path="/register" element={<RegisterPage />} />
 
       {/* Catch-all redirect */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/pulse" replace />} />
     </Routes>
   );
 }

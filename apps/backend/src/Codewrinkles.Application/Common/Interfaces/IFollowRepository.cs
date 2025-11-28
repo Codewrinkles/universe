@@ -38,6 +38,11 @@ public interface IFollowRepository
         int limit,
         CancellationToken cancellationToken);
 
+    Task<HashSet<Guid>> GetFollowingProfileIdsAsync(
+        IEnumerable<Guid> profileIds,
+        Guid followerId,
+        CancellationToken cancellationToken);
+
     Task<Follow?> FindFollowAsync(
         Guid followerId,
         Guid followingId,

@@ -6,10 +6,12 @@ import { PostRepost } from "./PostRepost";
 import { formatTimeAgo } from "../../utils/timeUtils";
 import { config } from "../../config";
 import { usePulseLike } from "./hooks/usePulseLike";
+import { FollowButton } from "../social/components/FollowButton";
 
 export interface PostCardProps {
   post: Post;
   onReplyClick?: (pulseId: string) => void;
+  onFollowChange?: () => void;
 }
 
 function formatCount(count: number): string {
@@ -103,7 +105,7 @@ function LikeButton({ pulseId, initialIsLiked, initialLikeCount }: LikeButtonPro
   );
 }
 
-export function PostCard({ post, onReplyClick }: PostCardProps): JSX.Element {
+export function PostCard({ post, onReplyClick, onFollowChange }: PostCardProps): JSX.Element {
   const { author } = post;
   const navigate = useNavigate();
 
@@ -173,13 +175,26 @@ export function PostCard({ post, onReplyClick }: PostCardProps): JSX.Element {
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Header */}
-          <div className="flex items-center gap-1 text-sm">
-            <span className="font-semibold text-text-primary hover:underline truncate">
-              {author.name}
-            </span>
-            <span className="text-text-tertiary truncate">@{author.handle}</span>
-            <span className="text-text-tertiary">·</span>
-            <span className="text-text-tertiary hover:underline">{timeAgo}</span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1 text-sm min-w-0">
+              <span className="font-semibold text-text-primary hover:underline truncate">
+                {author.name}
+              </span>
+              <span className="text-text-tertiary truncate">@{author.handle}</span>
+              <span className="text-text-tertiary">·</span>
+              <span className="text-text-tertiary hover:underline">{timeAgo}</span>
+            </div>
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="flex-shrink-0"
+            >
+              <FollowButton
+                profileId={author.id}
+                initialIsFollowing={post.isFollowingAuthor}
+                size="sm"
+                onFollowChange={onFollowChange}
+              />
+            </div>
           </div>
 
           {/* Post text content */}

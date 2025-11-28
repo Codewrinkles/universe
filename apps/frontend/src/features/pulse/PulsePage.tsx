@@ -5,8 +5,10 @@ import { PulseNavigation } from "./PulseNavigation";
 import { PulseRightSidebar } from "./PulseRightSidebar";
 import { useFeed } from "./hooks/useFeed";
 import { useCreatePulse } from "./hooks/useCreatePulse";
+import { useAuth } from "../../hooks/useAuth";
 
 export function PulsePage(): JSX.Element {
+  const { user } = useAuth();
   const [composerValue, setComposerValue] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const maxChars = 300; // Updated to match backend limit
@@ -42,20 +44,22 @@ export function PulsePage(): JSX.Element {
 
       {/* Main Content */}
       <main className="w-full max-w-[600px] border-x border-border lg:w-[600px]">
-        {/* Composer */}
-        <div className="border-b border-border p-4">
-          <Composer
-            value={composerValue}
-            onChange={setComposerValue}
-            maxChars={maxChars}
-            isOverLimit={isOverLimit}
-            charsLeft={charsLeft}
-            onSubmit={handleSubmit}
-            isSubmitting={isCreating}
-            selectedImage={selectedImage}
-            onImageSelect={setSelectedImage}
-          />
-        </div>
+        {/* Composer - only show if authenticated */}
+        {user && (
+          <div className="border-b border-border p-4">
+            <Composer
+              value={composerValue}
+              onChange={setComposerValue}
+              maxChars={maxChars}
+              isOverLimit={isOverLimit}
+              charsLeft={charsLeft}
+              onSubmit={handleSubmit}
+              isSubmitting={isCreating}
+              selectedImage={selectedImage}
+              onImageSelect={setSelectedImage}
+            />
+          </div>
+        )}
 
         {/* Feed */}
         {error && (
@@ -75,7 +79,7 @@ export function PulsePage(): JSX.Element {
         ) : (
           <>
             <div className="divide-y divide-border">
-              <Feed posts={pulses} />
+              <Feed posts={pulses} onFollowChange={refetch} />
             </div>
 
             {/* Load More Button */}

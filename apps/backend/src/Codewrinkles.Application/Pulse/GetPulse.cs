@@ -31,20 +31,26 @@ public sealed class GetPulseQueryHandler : ICommandHandler<GetPulseQuery, PulseD
             throw new PulseNotFoundException(query.PulseId);
         }
 
-        // Check if current user has liked this pulse
+        // Check if current user has liked this pulse and is following the author
         var isLikedByCurrentUser = false;
+        var isFollowingAuthor = false;
         if (query.CurrentUserId.HasValue)
         {
             isLikedByCurrentUser = await _unitOfWork.Pulses.HasUserLikedPulseAsync(
                 query.PulseId,
                 query.CurrentUserId.Value,
                 cancellationToken);
+
+            isFollowingAuthor = await _unitOfWork.Follows.IsFollowingAsync(
+                query.CurrentUserId.Value,
+                pulse.AuthorId,
+                cancellationToken);
         }
 
-        return MapToPulseDto(pulse, isLikedByCurrentUser);
+        return MapToPulseDto(pulse, isLikedByCurrentUser, isFollowingAuthor);
     }
 
-    private static PulseDto MapToPulseDto(Domain.Pulse.Pulse pulse, bool isLikedByCurrentUser)
+    private static PulseDto MapToPulseDto(Domain.Pulse.Pulse pulse, bool isLikedByCurrentUser, bool isFollowingAuthor)
     {
         return new PulseDto(
             Id: pulse.Id,
@@ -64,6 +70,7 @@ public sealed class GetPulseQueryHandler : ICommandHandler<GetPulseQuery, PulseD
                 ViewCount: pulse.Engagement.ViewCount
             ),
             IsLikedByCurrentUser: isLikedByCurrentUser,
+            IsFollowingAuthor: isFollowingAuthor,
             ParentPulseId: pulse.ParentPulseId,
             RepulsedPulse: pulse.RepulsedPulse is not null
                 ? MapToRepulsedPulseDto(pulse.RepulsedPulse)

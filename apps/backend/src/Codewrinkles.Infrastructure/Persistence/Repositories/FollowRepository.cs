@@ -161,6 +161,27 @@ public sealed class FollowRepository : IFollowRepository
         return result;
     }
 
+    public async Task<HashSet<Guid>> GetFollowingProfileIdsAsync(
+        IEnumerable<Guid> profileIds,
+        Guid followerId,
+        CancellationToken cancellationToken)
+    {
+        var profileIdList = profileIds.ToList();
+
+        if (profileIdList.Count == 0)
+        {
+            return [];
+        }
+
+        var followingProfileIds = await _follows
+            .AsNoTracking()
+            .Where(f => f.FollowerId == followerId && profileIdList.Contains(f.FollowingId))
+            .Select(f => f.FollowingId)
+            .ToListAsync(cancellationToken);
+
+        return [.. followingProfileIds];
+    }
+
     public Task<Follow?> FindFollowAsync(
         Guid followerId,
         Guid followingId,

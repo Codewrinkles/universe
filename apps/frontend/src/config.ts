@@ -19,6 +19,11 @@ export const config = {
       pulseLike: (id: string) => `${API_BASE_URL}/api/pulse/${id}/like`,
       pulseReply: (parentId: string) => `${API_BASE_URL}/api/pulse/${parentId}/reply`,
       pulseThread: (id: string) => `${API_BASE_URL}/api/pulse/${id}/thread`,
+      socialFollow: (profileId: string) => `${API_BASE_URL}/api/social/${profileId}/follow`,
+      socialFollowers: (profileId: string) => `${API_BASE_URL}/api/social/${profileId}/followers`,
+      socialFollowing: (profileId: string) => `${API_BASE_URL}/api/social/${profileId}/following`,
+      socialIsFollowing: (profileId: string) => `${API_BASE_URL}/api/social/${profileId}/is-following`,
+      socialSuggestions: `${API_BASE_URL}/api/social/suggestions`,
     },
   },
   auth: {

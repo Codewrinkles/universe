@@ -60,18 +60,37 @@ public sealed class PulseRepository : IPulseRepository
                 .Select(f => f.FollowingId)
                 .ToListAsync(cancellationToken);
 
-            // Step 2: Include my own ID (see my own pulses)
-            followingIds.Add(currentUserId.Value);
+            // Step 2: Check if user is following anyone
+            if (followingIds.Count == 0)
+            {
+                // NOT FOLLOWING ANYONE: Show public feed (all pulses)
+                // This solves the "cold start problem" for new users
+                query = _pulses
+                    .AsNoTracking()
+                    .Include(p => p.Author)
+                    .Include(p => p.Engagement)
+                    .Include(p => p.Image)
+                    .Include(p => p.RepulsedPulse)
+                        .ThenInclude(rp => rp!.Author)
+                    .Where(p => !p.IsDeleted);
+            }
+            else
+            {
+                // FOLLOWING USERS: Show personalized feed (followed users + own pulses)
 
-            // Step 3: Get pulses from followed users + myself
-            query = _pulses
-                .AsNoTracking()
-                .Include(p => p.Author)
-                .Include(p => p.Engagement)
-                .Include(p => p.Image)
-                .Include(p => p.RepulsedPulse)
-                    .ThenInclude(rp => rp!.Author)
-                .Where(p => !p.IsDeleted && followingIds.Contains(p.AuthorId));
+                // Include my own ID (see my own pulses)
+                followingIds.Add(currentUserId.Value);
+
+                // Get pulses from followed users + myself
+                query = _pulses
+                    .AsNoTracking()
+                    .Include(p => p.Author)
+                    .Include(p => p.Engagement)
+                    .Include(p => p.Image)
+                    .Include(p => p.RepulsedPulse)
+                        .ThenInclude(rp => rp!.Author)
+                    .Where(p => !p.IsDeleted && followingIds.Contains(p.AuthorId));
+            }
         }
         else
         {

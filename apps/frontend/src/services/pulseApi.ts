@@ -12,24 +12,19 @@ export const pulseApi = {
    * Create a new pulse
    */
   createPulse(content: string, image: File | null): Promise<CreatePulseResponse> {
-    // Use FormData if image is provided, otherwise use JSON
-    if (image) {
-      const formData = new FormData();
-      formData.append("content", content);
-      formData.append("image", image);
+    // Always use FormData (backend expects multipart/form-data)
+    const formData = new FormData();
+    formData.append("content", content);
 
-      return apiRequest<CreatePulseResponse>(config.api.endpoints.pulse, {
-        method: "POST",
-        body: formData,
-        // Don't set Content-Type header - browser will set it with boundary
-        headers: {},
-      });
+    if (image) {
+      formData.append("image", image);
     }
 
-    // No image - use JSON
     return apiRequest<CreatePulseResponse>(config.api.endpoints.pulse, {
       method: "POST",
-      body: JSON.stringify({ content }),
+      body: formData,
+      // Don't set Content-Type header - browser will set it with boundary
+      headers: {},
     });
   },
 

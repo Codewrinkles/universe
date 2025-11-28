@@ -62,6 +62,7 @@ export interface Pulse {
   createdAt: string;
   engagement: PulseEngagement;
   isLikedByCurrentUser: boolean;
+  isFollowingAuthor: boolean;
   parentPulseId?: string | null;
   imageUrl?: string | null;
   linkPreview?: PulseLinkPreview;
@@ -199,6 +200,63 @@ export interface ChangePasswordRequest {
 
 export interface ChangePasswordResponse {
   success: boolean;
+}
+
+// ============================================
+// Social/Follow Types (matching backend DTOs)
+// ============================================
+
+export interface FollowResult {
+  success: boolean;
+}
+
+export interface FollowerDto {
+  profileId: string;
+  name: string;
+  handle: string;
+  avatarUrl: string | null;
+  bio: string | null;
+  followedAt: string;
+}
+
+export interface FollowingDto {
+  profileId: string;
+  name: string;
+  handle: string;
+  avatarUrl: string | null;
+  bio: string | null;
+  followedAt: string;
+}
+
+export interface ProfileSuggestion {
+  profileId: string;
+  name: string;
+  handle: string;
+  avatarUrl: string | null;
+  bio: string | null;
+  mutualFollowCount: number;
+}
+
+export interface FollowersResponse {
+  followers: FollowerDto[];
+  totalCount: number;
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
+export interface FollowingResponse {
+  following: FollowingDto[];
+  totalCount: number;
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
+export interface SuggestedProfilesResponse {
+  suggestions: ProfileSuggestion[];
+}
+
+export interface IsFollowingResponse {
+  isFollowing: boolean;
 }
 
 export interface ApiErrorResponse {
