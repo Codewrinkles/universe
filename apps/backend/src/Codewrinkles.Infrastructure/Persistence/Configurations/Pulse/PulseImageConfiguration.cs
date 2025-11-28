@@ -42,9 +42,11 @@ public sealed class PulseImageConfiguration : IEntityTypeConfiguration<Domain.Pu
             .HasDatabaseName("IX_PulseImages_PulseId");
 
         // Relationship - one-to-one with Pulse
+        // Configure on the dependent side (PulseImage has the FK)
         builder.HasOne(i => i.Pulse)
-            .WithOne()
+            .WithOne(p => p.Image)
             .HasForeignKey<Domain.Pulse.PulseImage>(i => i.PulseId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired(false);
     }
 }

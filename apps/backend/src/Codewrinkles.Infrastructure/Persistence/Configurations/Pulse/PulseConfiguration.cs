@@ -62,11 +62,8 @@ public sealed class PulseConfiguration : IEntityTypeConfiguration<Domain.Pulse.P
             .OnDelete(DeleteBehavior.Cascade)
             .IsRequired();
 
-        builder.HasOne(p => p.Image)
-            .WithOne(i => i.Pulse)
-            .HasForeignKey<Domain.Pulse.PulseImage>(i => i.PulseId)
-            .OnDelete(DeleteBehavior.Cascade)
-            .IsRequired(false);
+        // Note: Image relationship is configured in PulseImageConfiguration
+        // One-to-one relationships should only be configured on one side
 
         // Indexes
         builder.HasIndex(p => p.AuthorId)

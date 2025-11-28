@@ -4,16 +4,19 @@ using Codewrinkles.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace Codewrinkles.Infrastructure.Migrations
+namespace Codewrinkles.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251128092126_FixPulseImageRelationship")]
+    partial class FixPulseImageRelationship
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -244,6 +247,9 @@ namespace Codewrinkles.Infrastructure.Migrations
                     b.Property<Guid>("PulseId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("PulseId1")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Url")
                         .IsRequired()
                         .HasMaxLength(2048)
@@ -257,6 +263,10 @@ namespace Codewrinkles.Infrastructure.Migrations
                     b.HasIndex("PulseId")
                         .IsUnique()
                         .HasDatabaseName("IX_PulseImages_PulseId");
+
+                    b.HasIndex("PulseId1")
+                        .IsUnique()
+                        .HasFilter("[PulseId1] IS NOT NULL");
 
                     b.ToTable("PulseImages", "pulse");
                 });
@@ -333,9 +343,14 @@ namespace Codewrinkles.Infrastructure.Migrations
             modelBuilder.Entity("Codewrinkles.Domain.Pulse.PulseImage", b =>
                 {
                     b.HasOne("Codewrinkles.Domain.Pulse.Pulse", "Pulse")
-                        .WithOne("Image")
+                        .WithOne()
                         .HasForeignKey("Codewrinkles.Domain.Pulse.PulseImage", "PulseId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Codewrinkles.Domain.Pulse.Pulse", null)
+                        .WithOne("Image")
+                        .HasForeignKey("Codewrinkles.Domain.Pulse.PulseImage", "PulseId1");
 
                     b.Navigation("Pulse");
                 });
