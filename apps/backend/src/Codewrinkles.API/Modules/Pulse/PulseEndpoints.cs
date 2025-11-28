@@ -22,6 +22,14 @@ public static class PulseEndpoints
 
         group.MapGet("{id:guid}", GetPulse)
             .WithName("GetPulse");
+
+        group.MapPost("{id:guid}/like", LikePulse)
+            .WithName("LikePulse")
+            .RequireAuthorization();
+
+        group.MapDelete("{id:guid}/like", UnlikePulse)
+            .WithName("UnlikePulse")
+            .RequireAuthorization();
     }
 
     private static async Task<IResult> CreatePulse(
@@ -125,6 +133,74 @@ public static class PulseEndpoints
         catch (PulseNotFoundException)
         {
             return Results.NotFound();
+        }
+    }
+
+    private static async Task<IResult> LikePulse(
+        HttpContext httpContext,
+        Guid id,
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Extract ProfileId from JWT claims (user can only like as themselves)
+            var profileId = httpContext.GetCurrentProfileId();
+
+            var command = new LikePulseCommand(
+                PulseId: id,
+                ProfileId: profileId
+            );
+
+            var result = await mediator.SendAsync(command, cancellationToken);
+
+            return Results.Ok(new { success = result.Success });
+        }
+        catch (PulseNotFoundException)
+        {
+            return Results.NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Results.Problem(
+                title: "Invalid Operation",
+                detail: ex.Message,
+                statusCode: 400
+            );
+        }
+    }
+
+    private static async Task<IResult> UnlikePulse(
+        HttpContext httpContext,
+        Guid id,
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Extract ProfileId from JWT claims (user can only unlike as themselves)
+            var profileId = httpContext.GetCurrentProfileId();
+
+            var command = new UnlikePulseCommand(
+                PulseId: id,
+                ProfileId: profileId
+            );
+
+            var result = await mediator.SendAsync(command, cancellationToken);
+
+            return Results.Ok(new { success = result.Success });
+        }
+        catch (PulseNotFoundException)
+        {
+            return Results.NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Results.Problem(
+                title: "Invalid Operation",
+                detail: ex.Message,
+                statusCode: 400
+            );
         }
     }
 }

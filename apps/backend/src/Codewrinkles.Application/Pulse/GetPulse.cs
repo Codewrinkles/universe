@@ -31,10 +31,20 @@ public sealed class GetPulseQueryHandler : ICommandHandler<GetPulseQuery, PulseD
             throw new PulseNotFoundException(query.PulseId);
         }
 
-        return MapToPulseDto(pulse, query.CurrentUserId);
+        // Check if current user has liked this pulse
+        var isLikedByCurrentUser = false;
+        if (query.CurrentUserId.HasValue)
+        {
+            isLikedByCurrentUser = await _unitOfWork.Pulses.HasUserLikedPulseAsync(
+                query.PulseId,
+                query.CurrentUserId.Value,
+                cancellationToken);
+        }
+
+        return MapToPulseDto(pulse, isLikedByCurrentUser);
     }
 
-    private static PulseDto MapToPulseDto(Domain.Pulse.Pulse pulse, Guid? currentUserId)
+    private static PulseDto MapToPulseDto(Domain.Pulse.Pulse pulse, bool isLikedByCurrentUser)
     {
         return new PulseDto(
             Id: pulse.Id,
@@ -53,7 +63,7 @@ public sealed class GetPulseQueryHandler : ICommandHandler<GetPulseQuery, PulseD
                 LikeCount: pulse.Engagement.LikeCount,
                 ViewCount: pulse.Engagement.ViewCount
             ),
-            IsLikedByCurrentUser: false, // TODO: Implement in Phase 8 (Likes)
+            IsLikedByCurrentUser: isLikedByCurrentUser,
             RepulsedPulse: pulse.RepulsedPulse is not null
                 ? MapToRepulsedPulseDto(pulse.RepulsedPulse)
                 : null

@@ -55,8 +55,19 @@ public sealed class GetFeedQueryHandler : ICommandHandler<GetFeedQuery, FeedResp
             nextCursor = EncodeCursor(lastPulse.CreatedAt, lastPulse.Id);
         }
 
+        // Get liked pulse IDs for current user (if authenticated)
+        HashSet<Guid> likedPulseIds = [];
+        if (query.CurrentUserId.HasValue)
+        {
+            var pulseIds = pulsesToReturn.Select(p => p.Id);
+            likedPulseIds = await _unitOfWork.Pulses.GetLikedPulseIdsAsync(
+                pulseIds,
+                query.CurrentUserId.Value,
+                cancellationToken);
+        }
+
         // Map to DTOs
-        var pulseDtos = pulsesToReturn.Select(p => MapToPulseDto(p, query.CurrentUserId)).ToList();
+        var pulseDtos = pulsesToReturn.Select(p => MapToPulseDto(p, likedPulseIds)).ToList();
 
         return new FeedResponse(
             Pulses: pulseDtos,
@@ -65,7 +76,7 @@ public sealed class GetFeedQueryHandler : ICommandHandler<GetFeedQuery, FeedResp
         );
     }
 
-    private static PulseDto MapToPulseDto(Domain.Pulse.Pulse pulse, Guid? currentUserId)
+    private static PulseDto MapToPulseDto(Domain.Pulse.Pulse pulse, HashSet<Guid> likedPulseIds)
     {
         return new PulseDto(
             Id: pulse.Id,
@@ -84,7 +95,7 @@ public sealed class GetFeedQueryHandler : ICommandHandler<GetFeedQuery, FeedResp
                 LikeCount: pulse.Engagement.LikeCount,
                 ViewCount: pulse.Engagement.ViewCount
             ),
-            IsLikedByCurrentUser: false, // TODO: Implement in Phase 8 (Likes)
+            IsLikedByCurrentUser: likedPulseIds.Contains(pulse.Id),
             RepulsedPulse: pulse.RepulsedPulse is not null
                 ? MapToRepulsedPulseDto(pulse.RepulsedPulse)
                 : null

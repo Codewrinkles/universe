@@ -16,6 +16,7 @@ export const config = {
       avatar: (profileId: string) => `${API_BASE_URL}/api/identity/profile/${profileId}/avatar`,
       pulse: `${API_BASE_URL}/api/pulse`,
       pulseById: (id: string) => `${API_BASE_URL}/api/pulse/${id}`,
+      pulseLike: (id: string) => `${API_BASE_URL}/api/pulse/${id}/like`,
     },
   },
   auth: {

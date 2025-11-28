@@ -9,17 +9,19 @@ public sealed class PulseRepository : IPulseRepository
     private readonly ApplicationDbContext _context;
     private readonly DbSet<Pulse> _pulses;
     private readonly DbSet<PulseEngagement> _engagements;
+    private readonly DbSet<PulseLike> _likes;
 
     public PulseRepository(ApplicationDbContext context)
     {
         _context = context;
         _pulses = context.Set<Pulse>();
         _engagements = context.Set<PulseEngagement>();
+        _likes = context.Set<PulseLike>();
     }
 
-    public Task<Pulse?> FindByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Pulse?> FindByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return _pulses.FindAsync([id], cancellationToken: cancellationToken).AsTask();
+        return await _pulses.FindAsync([id], cancellationToken: cancellationToken);
     }
 
     public Task<Pulse?> FindByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default)
@@ -105,10 +107,64 @@ public sealed class PulseRepository : IPulseRepository
         _engagements.Add(engagement);
     }
 
+    public async Task<PulseEngagement?> FindEngagementAsync(Guid pulseId, CancellationToken cancellationToken = default)
+    {
+        return await _engagements.FindAsync([pulseId], cancellationToken: cancellationToken);
+    }
+
     public void Delete(Pulse pulse)
     {
         // Soft delete - mark as deleted (domain entity handles this)
         // No need to call Remove, just update the entity
         _pulses.Update(pulse);
+    }
+
+    public async Task<PulseLike?> FindLikeAsync(
+        Guid pulseId,
+        Guid profileId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _likes.FindAsync([pulseId, profileId], cancellationToken: cancellationToken);
+    }
+
+    public Task<bool> HasUserLikedPulseAsync(
+        Guid pulseId,
+        Guid profileId,
+        CancellationToken cancellationToken = default)
+    {
+        return _likes.AnyAsync(
+            l => l.PulseId == pulseId && l.ProfileId == profileId,
+            cancellationToken);
+    }
+
+    public async Task<HashSet<Guid>> GetLikedPulseIdsAsync(
+        IEnumerable<Guid> pulseIds,
+        Guid profileId,
+        CancellationToken cancellationToken = default)
+    {
+        var pulseIdList = pulseIds.ToList();
+
+        if (pulseIdList.Count == 0)
+        {
+            return [];
+        }
+
+        var likedPulseIds = await _likes
+            .AsNoTracking()
+            .Where(l => l.ProfileId == profileId && pulseIdList.Contains(l.PulseId))
+            .Select(l => l.PulseId)
+            .ToListAsync(cancellationToken);
+
+        return [.. likedPulseIds];
+    }
+
+    public void CreateLike(PulseLike like)
+    {
+        _likes.Add(like);
+    }
+
+    public void DeleteLike(PulseLike like)
+    {
+        _likes.Remove(like);
     }
 }

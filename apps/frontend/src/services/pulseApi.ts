@@ -48,4 +48,24 @@ export const pulseApi = {
       method: "GET",
     });
   },
+
+  /**
+   * Like a pulse
+   * ProfileId is extracted from JWT token on the backend
+   */
+  likePulse(id: string): Promise<{ success: boolean }> {
+    return apiRequest<{ success: boolean }>(config.api.endpoints.pulseLike(id), {
+      method: "POST",
+    });
+  },
+
+  /**
+   * Unlike a pulse
+   * ProfileId is extracted from JWT token on the backend
+   */
+  unlikePulse(id: string): Promise<{ success: boolean }> {
+    return apiRequest<{ success: boolean }>(config.api.endpoints.pulseLike(id), {
+      method: "DELETE",
+    });
+  },
 };

@@ -309,6 +309,77 @@ public void Configure(EntityTypeBuilder<Identity> builder)
 
 ---
 
+### 🚨 CRITICAL: C# Async/Await Patterns
+
+**✅ ALWAYS USE `async`/`await` - NEVER USE `.AsTask()` OR OTHER WORKAROUNDS**
+
+This is a **non-negotiable standard** for all asynchronous code in the backend.
+
+**Anti-Pattern (NEVER DO THIS):**
+```csharp
+// ❌ WRONG - Using .AsTask() to convert ValueTask to Task
+public Task<Profile?> FindByIdAsync(Guid id, CancellationToken cancellationToken = default)
+{
+    return _profiles.FindAsync([id], cancellationToken: cancellationToken).AsTask();
+}
+
+// ❌ WRONG - Returning task directly without async/await
+public Task<Identity?> FindByIdAsync(Guid id)
+{
+    return _identities.FindAsync([id]).AsTask();
+}
+```
+
+**The Correct Pattern:**
+```csharp
+// ✅ CORRECT - Standard async/await pattern
+public async Task<Profile?> FindByIdAsync(Guid id, CancellationToken cancellationToken = default)
+{
+    return await _profiles.FindAsync([id], cancellationToken: cancellationToken);
+}
+
+// ✅ CORRECT - Compiler handles ValueTask<T> → Task<T> conversion automatically
+public async Task<Identity?> FindByIdAsync(Guid id, CancellationToken cancellationToken = default)
+{
+    return await _identities.FindAsync([id], cancellationToken: cancellationToken);
+}
+```
+
+**Why This Matters:**
+- ✅ **Idiomatic C#**: async/await is the standard, readable pattern
+- ✅ **Compiler optimized**: The compiler handles conversions efficiently
+- ✅ **Consistent**: Same pattern across the entire codebase
+- ✅ **Debuggable**: Stack traces are cleaner with async/await
+- ✅ **Maintainable**: Other developers expect async/await, not workarounds
+- ❌ `.AsTask()` is a code smell indicating unnecessary manual conversion
+- ❌ Non-standard patterns make code harder to understand and maintain
+
+**Technical Note:**
+- EF Core methods like `FindAsync()` return `ValueTask<T>` for performance
+- When your interface requires `Task<T>`, use `async`/`await`
+- The compiler automatically converts `ValueTask<T>` to `Task<T>`
+- **NO manual conversion needed** - async/await handles it
+
+**Rules:**
+1. ✅ **ALWAYS** use `async`/`await` for asynchronous methods
+2. ✅ **ALWAYS** include `CancellationToken` parameter (defaults to `default`)
+3. ❌ **NEVER** use `.AsTask()` - use async/await instead
+4. ❌ **NEVER** use other workarounds like `Task.FromResult()` for async methods
+5. ❌ **NEVER** return tasks directly without await (except fire-and-forget scenarios)
+6. ⚠️ **Any exceptions to this rule must be discussed and approved first**
+
+**When Exceptions Might Apply (rare, require approval):**
+- Performance-critical hot paths where async state machine overhead is measured and significant
+- Implementing interface methods that require synchronous execution
+- Fire-and-forget scenarios (even then, use `_ = Task.Run(...)` pattern)
+
+**Before using any alternative pattern:**
+1. Measure and prove the performance impact
+2. Document why async/await is insufficient
+3. Get explicit approval from the team
+
+---
+
 ### TypeScript
 - ✅ Strict mode enabled in `tsconfig.json`
 - ✅ ALL strictness flags enabled (strictNullChecks, noImplicitAny, etc.)
@@ -876,4 +947,4 @@ app.MapPost("/api/users", CreateUser)
 
 ---
 
-**Last Updated**: 2025-11-26 (update this when making significant changes)
+**Last Updated**: 2025-11-28 (update this when making significant changes)

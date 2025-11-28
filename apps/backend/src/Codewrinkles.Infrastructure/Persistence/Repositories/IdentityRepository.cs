@@ -40,9 +40,9 @@ public sealed class IdentityRepository : IIdentityRepository
             .FirstOrDefaultAsync(i => i.EmailNormalized == emailNormalized, cancellationToken);
     }
 
-    public Task<Identity?> FindByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Identity?> FindByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return _identities.FindAsync([id], cancellationToken: cancellationToken).AsTask();
+        return await _identities.FindAsync([id], cancellationToken: cancellationToken);
     }
 
     public void Register(Identity identity)

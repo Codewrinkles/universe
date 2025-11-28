@@ -1,5 +1,6 @@
 using PulseEntity = Codewrinkles.Domain.Pulse.Pulse;
 using PulseEngagementEntity = Codewrinkles.Domain.Pulse.PulseEngagement;
+using PulseLikeEntity = Codewrinkles.Domain.Pulse.PulseLike;
 
 namespace Codewrinkles.Application.Common.Interfaces;
 
@@ -51,8 +52,52 @@ public interface IPulseRepository
     void CreateEngagement(PulseEngagementEntity engagement);
 
     /// <summary>
+    /// Find pulse engagement by pulse ID (with tracking for updates).
+    /// Returns null if not found.
+    /// </summary>
+    Task<PulseEngagementEntity?> FindEngagementAsync(Guid pulseId, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Delete a pulse (soft delete will be handled by domain entity).
     /// Does not save to database - call UnitOfWork.SaveChangesAsync().
     /// </summary>
     void Delete(PulseEntity pulse);
+
+    /// <summary>
+    /// Find a like by pulse ID and profile ID.
+    /// Returns null if not found.
+    /// </summary>
+    Task<PulseLikeEntity?> FindLikeAsync(
+        Guid pulseId,
+        Guid profileId,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Check if a user has liked a pulse.
+    /// </summary>
+    Task<bool> HasUserLikedPulseAsync(
+        Guid pulseId,
+        Guid profileId,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Get liked pulse IDs for a user from a set of pulse IDs.
+    /// Returns a set of pulse IDs that the user has liked.
+    /// </summary>
+    Task<HashSet<Guid>> GetLikedPulseIdsAsync(
+        IEnumerable<Guid> pulseIds,
+        Guid profileId,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Create a new like.
+    /// Does not save to database - call UnitOfWork.SaveChangesAsync().
+    /// </summary>
+    void CreateLike(PulseLikeEntity like);
+
+    /// <summary>
+    /// Delete a like.
+    /// Does not save to database - call UnitOfWork.SaveChangesAsync().
+    /// </summary>
+    void DeleteLike(PulseLikeEntity like);
 }

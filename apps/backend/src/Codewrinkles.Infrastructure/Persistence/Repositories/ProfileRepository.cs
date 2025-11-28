@@ -44,9 +44,9 @@ public sealed class ProfileRepository : IProfileRepository
             .FirstOrDefaultAsync(p => p.IdentityId == identityId, cancellationToken);
     }
 
-    public Task<Profile?> FindByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Profile?> FindByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return _profiles.FindAsync([id], cancellationToken: cancellationToken).AsTask();
+        return await _profiles.FindAsync([id], cancellationToken: cancellationToken);
     }
 
     public void Create(Profile profile)
