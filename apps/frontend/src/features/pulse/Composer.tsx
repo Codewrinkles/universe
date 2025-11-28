@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { config } from "../../config";
 
@@ -9,16 +10,46 @@ export interface ComposerProps {
   charsLeft: number;
   onSubmit?: () => void;
   isSubmitting?: boolean;
+  selectedImage?: File | null;
+  onImageSelect?: (file: File | null) => void;
 }
 
-export function Composer({ value, onChange, maxChars, isOverLimit, charsLeft, onSubmit, isSubmitting = false }: ComposerProps): JSX.Element {
+export function Composer({ value, onChange, maxChars, isOverLimit, charsLeft, onSubmit, isSubmitting = false, onImageSelect }: ComposerProps): JSX.Element {
   const { user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const handleSubmit = (): void => {
     if (value.trim().length === 0 || isOverLimit || isSubmitting) {
       return;
     }
     onSubmit?.();
+  };
+
+  const handleImageButtonClick = (): void => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      onImageSelect?.(file);
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = (): void => {
+    onImageSelect?.(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const avatarUrl = user?.avatarUrl
@@ -46,10 +77,35 @@ export function Composer({ value, onChange, maxChars, isOverLimit, charsLeft, on
           placeholder="What's happening?"
           className="w-full resize-none bg-transparent text-lg text-text-primary placeholder:text-text-tertiary focus:outline-none"
         />
-        <div className="flex items-center justify-between border-t border-border pt-3">
-          <div className="flex items-center gap-1">
+        {imagePreview && (
+          <div className="relative inline-block rounded-xl overflow-hidden border border-border">
+            <img
+              src={imagePreview}
+              alt="Selected"
+              className="max-h-96 rounded-xl object-contain"
+            />
             <button
               type="button"
+              onClick={handleRemoveImage}
+              className="absolute top-2 right-2 rounded-full bg-black/70 p-1.5 text-white hover:bg-black/90 transition-colors"
+              title="Remove image"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+        <div className="flex items-center justify-between border-t border-border pt-3">
+          <div className="flex items-center gap-1">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={handleImageButtonClick}
               className="rounded-full p-2 text-brand-soft hover:bg-brand-soft/10 transition-colors"
               title="Add image"
             >

@@ -8,7 +8,8 @@ public sealed record PulseDto(
     DateTime CreatedAt,
     PulseEngagementDto Engagement,
     bool IsLikedByCurrentUser,
-    RepulsedPulseDto? RepulsedPulse
+    RepulsedPulseDto? RepulsedPulse,
+    string? ImageUrl
 );
 
 public sealed record PulseAuthorDto(

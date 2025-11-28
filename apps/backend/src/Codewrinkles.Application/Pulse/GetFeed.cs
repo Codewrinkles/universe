@@ -98,7 +98,8 @@ public sealed class GetFeedQueryHandler : ICommandHandler<GetFeedQuery, FeedResp
             IsLikedByCurrentUser: likedPulseIds.Contains(pulse.Id),
             RepulsedPulse: pulse.RepulsedPulse is not null
                 ? MapToRepulsedPulseDto(pulse.RepulsedPulse)
-                : null
+                : null,
+            ImageUrl: pulse.Image?.Url
         );
     }
 

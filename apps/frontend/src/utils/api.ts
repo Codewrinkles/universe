@@ -153,9 +153,14 @@ export async function apiRequest<TResponse>(
   const token = getAccessToken();
 
   const headers: HeadersInit = {
-    "Content-Type": "application/json",
     ...options.headers,
   };
+
+  // Only set Content-Type if body is not FormData
+  // (FormData sets its own Content-Type with boundary)
+  if (!(options.body instanceof FormData)) {
+    (headers as Record<string, string>)["Content-Type"] = "application/json";
+  }
 
   if (token) {
     (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;

@@ -62,6 +62,12 @@ public sealed class PulseConfiguration : IEntityTypeConfiguration<Domain.Pulse.P
             .OnDelete(DeleteBehavior.Cascade)
             .IsRequired();
 
+        builder.HasOne(p => p.Image)
+            .WithOne(i => i.Pulse)
+            .HasForeignKey<Domain.Pulse.PulseImage>(i => i.PulseId)
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired(false);
+
         // Indexes
         builder.HasIndex(p => p.AuthorId)
             .HasDatabaseName("IX_Pulses_AuthorId");

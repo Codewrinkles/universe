@@ -9,7 +9,7 @@ import { pulseApi } from "../../../services/pulseApi";
 import { useAuth } from "../../../hooks/useAuth";
 
 interface UseCreatePulseResult {
-  createPulse: (content: string) => Promise<CreatePulseResponse>;
+  createPulse: (content: string, image?: File | null) => Promise<CreatePulseResponse>;
   isCreating: boolean;
   error: string | null;
 }
@@ -20,7 +20,7 @@ export function useCreatePulse(): UseCreatePulseResult {
   const [error, setError] = useState<string | null>(null);
 
   const createPulse = useCallback(
-    async (content: string): Promise<CreatePulseResponse> => {
+    async (content: string, image?: File | null): Promise<CreatePulseResponse> => {
       if (!user?.profileId) {
         throw new Error("User not authenticated");
       }
@@ -30,9 +30,7 @@ export function useCreatePulse(): UseCreatePulseResult {
 
       try {
         // AuthorId is extracted from JWT token on the backend
-        const response = await pulseApi.createPulse({
-          content,
-        });
+        const response = await pulseApi.createPulse(content, image ?? null);
 
         return response;
       } catch (err) {

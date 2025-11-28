@@ -19,6 +19,7 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<Pulse> Pulses => Set<Pulse>();
     public DbSet<PulseEngagement> PulseEngagements => Set<PulseEngagement>();
     public DbSet<PulseLike> PulseLikes => Set<PulseLike>();
+    public DbSet<PulseImage> PulseImages => Set<PulseImage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

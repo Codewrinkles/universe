@@ -1,6 +1,7 @@
 using PulseEntity = Codewrinkles.Domain.Pulse.Pulse;
 using PulseEngagementEntity = Codewrinkles.Domain.Pulse.PulseEngagement;
 using PulseLikeEntity = Codewrinkles.Domain.Pulse.PulseLike;
+using PulseImageEntity = Codewrinkles.Domain.Pulse.PulseImage;
 
 namespace Codewrinkles.Application.Common.Interfaces;
 
@@ -100,4 +101,10 @@ public interface IPulseRepository
     /// Does not save to database - call UnitOfWork.SaveChangesAsync().
     /// </summary>
     void DeleteLike(PulseLikeEntity like);
+
+    /// <summary>
+    /// Create a pulse image.
+    /// Does not save to database - call UnitOfWork.SaveChangesAsync().
+    /// </summary>
+    void CreateImage(PulseImageEntity image);
 }

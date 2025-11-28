@@ -53,6 +53,7 @@ public static class DependencyInjection
 
         // Application Services
         services.AddScoped<IAvatarService, AvatarService>();
+        services.AddScoped<IPulseImageService, PulseImageService>();
 
         return services;
     }

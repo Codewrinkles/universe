@@ -3,7 +3,7 @@
  * Handles pulse-related API calls (create, fetch feed, fetch single)
  */
 
-import type { CreatePulseRequest, CreatePulseResponse, FeedResponse, Pulse } from "../types";
+import type { CreatePulseResponse, FeedResponse, Pulse } from "../types";
 import { config } from "../config";
 import { apiRequest } from "../utils/api";
 
@@ -11,10 +11,25 @@ export const pulseApi = {
   /**
    * Create a new pulse
    */
-  createPulse(data: CreatePulseRequest): Promise<CreatePulseResponse> {
+  createPulse(content: string, image: File | null): Promise<CreatePulseResponse> {
+    // Use FormData if image is provided, otherwise use JSON
+    if (image) {
+      const formData = new FormData();
+      formData.append("content", content);
+      formData.append("image", image);
+
+      return apiRequest<CreatePulseResponse>(config.api.endpoints.pulse, {
+        method: "POST",
+        body: formData,
+        // Don't set Content-Type header - browser will set it with boundary
+        headers: {},
+      });
+    }
+
+    // No image - use JSON
     return apiRequest<CreatePulseResponse>(config.api.endpoints.pulse, {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify({ content }),
     });
   },
 

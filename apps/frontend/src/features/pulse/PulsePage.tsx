@@ -8,6 +8,7 @@ import { useCreatePulse } from "./hooks/useCreatePulse";
 
 export function PulsePage(): JSX.Element {
   const [composerValue, setComposerValue] = useState("");
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const maxChars = 300; // Updated to match backend limit
   const charsLeft = maxChars - composerValue.length;
   const isOverLimit = charsLeft < 0;
@@ -20,8 +21,9 @@ export function PulsePage(): JSX.Element {
 
   const handleSubmit = async (): Promise<void> => {
     try {
-      await createPulse(composerValue);
+      await createPulse(composerValue, selectedImage);
       setComposerValue(""); // Clear composer after successful post
+      setSelectedImage(null); // Clear selected image
       refetch(); // Refresh feed to show new pulse
     } catch (err) {
       // Error is already handled by the hook
@@ -50,6 +52,8 @@ export function PulsePage(): JSX.Element {
             charsLeft={charsLeft}
             onSubmit={handleSubmit}
             isSubmitting={isCreating}
+            selectedImage={selectedImage}
+            onImageSelect={setSelectedImage}
           />
         </div>
 

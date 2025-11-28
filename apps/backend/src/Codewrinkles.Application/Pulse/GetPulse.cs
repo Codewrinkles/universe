@@ -66,7 +66,8 @@ public sealed class GetPulseQueryHandler : ICommandHandler<GetPulseQuery, PulseD
             IsLikedByCurrentUser: isLikedByCurrentUser,
             RepulsedPulse: pulse.RepulsedPulse is not null
                 ? MapToRepulsedPulseDto(pulse.RepulsedPulse)
-                : null
+                : null,
+            ImageUrl: pulse.Image?.Url
         );
     }
 

@@ -15,7 +15,8 @@ public static class PulseEndpoints
 
         group.MapPost("", CreatePulse)
             .WithName("CreatePulse")
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .DisableAntiforgery();
 
         group.MapGet("", GetFeed)
             .WithName("GetFeed");
@@ -34,7 +35,8 @@ public static class PulseEndpoints
 
     private static async Task<IResult> CreatePulse(
         HttpContext httpContext,
-        [FromBody] CreatePulseRequest request,
+        [FromForm] string content,
+        [FromForm] IFormFile? image,
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
@@ -43,9 +45,17 @@ public static class PulseEndpoints
             // Extract ProfileId from JWT claims (user can only create pulses as themselves)
             var authorId = httpContext.GetCurrentProfileId();
 
+            // Open image stream if provided
+            Stream? imageStream = null;
+            if (image is not null)
+            {
+                imageStream = image.OpenReadStream();
+            }
+
             var command = new CreatePulseCommand(
                 AuthorId: authorId,
-                Content: request.Content
+                Content: content,
+                ImageStream: imageStream
             );
 
             var result = await mediator.SendAsync(command, cancellationToken);
@@ -54,7 +64,8 @@ public static class PulseEndpoints
             {
                 pulseId = result.PulseId,
                 content = result.Content,
-                createdAt = result.CreatedAt
+                createdAt = result.CreatedAt,
+                imageUrl = result.ImageUrl
             });
         }
         catch (InvalidOperationException ex)
@@ -64,6 +75,14 @@ public static class PulseEndpoints
                 detail: ex.Message,
                 statusCode: 400
             );
+        }
+        finally
+        {
+            // Dispose the image stream if it was opened
+            if (image is not null)
+            {
+                await image.OpenReadStream().DisposeAsync();
+            }
         }
     }
 
@@ -204,7 +223,3 @@ public static class PulseEndpoints
         }
     }
 }
-
-public sealed record CreatePulseRequest(
-    string Content
-);

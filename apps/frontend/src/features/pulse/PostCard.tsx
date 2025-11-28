@@ -1,6 +1,5 @@
 import { useState } from "react";
 import type { Post } from "../../types";
-import { PostImages } from "./PostImages";
 import { PostLinkPreview } from "./PostLinkPreview";
 import { PostRepost } from "./PostRepost";
 import { formatTimeAgo } from "../../utils/timeUtils";
@@ -160,11 +159,14 @@ export function PostCard({ post }: PostCardProps): JSX.Element {
           )}
 
           {/* Photo attachment */}
-          {'image' in post && post.image && (
-            <PostImages images={[post.image]} />
-          )}
-          {(post as any).images && (post as any).images.length > 0 && (
-            <PostImages images={(post as any).images} />
+          {post.imageUrl && (
+            <div className="mt-3 rounded-2xl overflow-hidden border border-border">
+              <img
+                src={`${config.api.baseUrl}${post.imageUrl}`}
+                alt="Pulse attachment"
+                className="w-full object-contain max-h-[500px]"
+              />
+            </div>
           )}
 
           {/* Link preview */}

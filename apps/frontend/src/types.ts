@@ -62,7 +62,7 @@ export interface Pulse {
   createdAt: string;
   engagement: PulseEngagement;
   isLikedByCurrentUser: boolean;
-  image?: PulseImage;
+  imageUrl?: string | null;
   linkPreview?: PulseLinkPreview;
   repulsedPulse?: RepulsedPulse;
 }
@@ -81,6 +81,7 @@ export interface CreatePulseResponse {
   pulseId: string;
   content: string;
   createdAt: string;
+  imageUrl?: string | null;
 }
 
 // Legacy Post types (deprecated - use Pulse types above)

@@ -10,6 +10,7 @@ public sealed class PulseRepository : IPulseRepository
     private readonly DbSet<Pulse> _pulses;
     private readonly DbSet<PulseEngagement> _engagements;
     private readonly DbSet<PulseLike> _likes;
+    private readonly DbSet<PulseImage> _images;
 
     public PulseRepository(ApplicationDbContext context)
     {
@@ -17,6 +18,7 @@ public sealed class PulseRepository : IPulseRepository
         _pulses = context.Set<Pulse>();
         _engagements = context.Set<PulseEngagement>();
         _likes = context.Set<PulseLike>();
+        _images = context.Set<PulseImage>();
     }
 
     public async Task<Pulse?> FindByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -30,6 +32,7 @@ public sealed class PulseRepository : IPulseRepository
             .AsNoTracking()
             .Include(p => p.Author)
             .Include(p => p.Engagement)
+            .Include(p => p.Image)
             .Include(p => p.RepulsedPulse)
                 .ThenInclude(rp => rp!.Author)
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
@@ -45,6 +48,7 @@ public sealed class PulseRepository : IPulseRepository
             .AsNoTracking()
             .Include(p => p.Author)
             .Include(p => p.Engagement)
+            .Include(p => p.Image)
             .Include(p => p.RepulsedPulse)
                 .ThenInclude(rp => rp!.Author)
             .Where(p => !p.IsDeleted);
@@ -76,6 +80,7 @@ public sealed class PulseRepository : IPulseRepository
         var query = _pulses
             .AsNoTracking()
             .Include(p => p.Engagement)
+            .Include(p => p.Image)
             .Include(p => p.RepulsedPulse)
                 .ThenInclude(rp => rp!.Author)
             .Where(p => p.AuthorId == authorId && !p.IsDeleted);
@@ -166,5 +171,10 @@ public sealed class PulseRepository : IPulseRepository
     public void DeleteLike(PulseLike like)
     {
         _likes.Remove(like);
+    }
+
+    public void CreateImage(PulseImage image)
+    {
+        _images.Add(image);
     }
 }
