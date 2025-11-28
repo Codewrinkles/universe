@@ -29,8 +29,8 @@ export function useCreatePulse(): UseCreatePulseResult {
       setError(null);
 
       try {
+        // AuthorId is extracted from JWT token on the backend
         const response = await pulseApi.createPulse({
-          authorId: user.profileId,
           content,
         });
 

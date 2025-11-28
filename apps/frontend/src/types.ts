@@ -74,7 +74,6 @@ export interface FeedResponse {
 }
 
 export interface CreatePulseRequest {
-  authorId: string;
   content: string;
 }
 
@@ -184,7 +183,6 @@ export interface UploadAvatarResponse {
 
 // Change Password API types
 export interface ChangePasswordRequest {
-  identityId: string;
   currentPassword: string;
   newPassword: string;
 }

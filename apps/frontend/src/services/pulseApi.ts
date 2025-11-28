@@ -20,8 +20,9 @@ export const pulseApi = {
 
   /**
    * Get paginated feed of pulses
+   * CurrentUserId is extracted from JWT token on the backend (if authenticated)
    */
-  getFeed(params?: { cursor?: string; limit?: number; currentUserId?: string }): Promise<FeedResponse> {
+  getFeed(params?: { cursor?: string; limit?: number }): Promise<FeedResponse> {
     const url = new URL(config.api.endpoints.pulse);
 
     if (params?.cursor) {
@@ -29,9 +30,6 @@ export const pulseApi = {
     }
     if (params?.limit) {
       url.searchParams.set("limit", params.limit.toString());
-    }
-    if (params?.currentUserId) {
-      url.searchParams.set("currentUserId", params.currentUserId);
     }
 
     return apiRequest<FeedResponse>(url.toString(), {
@@ -41,13 +39,10 @@ export const pulseApi = {
 
   /**
    * Get single pulse by ID
+   * CurrentUserId is extracted from JWT token on the backend (if authenticated)
    */
-  getPulse(id: string, currentUserId?: string): Promise<Pulse> {
+  getPulse(id: string): Promise<Pulse> {
     const url = new URL(config.api.endpoints.pulseById(id));
-
-    if (currentUserId) {
-      url.searchParams.set("currentUserId", currentUserId);
-    }
 
     return apiRequest<Pulse>(url.toString(), {
       method: "GET",

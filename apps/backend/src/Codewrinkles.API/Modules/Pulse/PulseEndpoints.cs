@@ -1,4 +1,5 @@
 using Codewrinkles.Application.Pulse;
+using Codewrinkles.API.Extensions;
 using Codewrinkles.Domain.Pulse.Exceptions;
 using Kommand.Abstractions;
 using Microsoft.AspNetCore.Mvc;
@@ -13,7 +14,8 @@ public static class PulseEndpoints
             .WithTags("Pulse");
 
         group.MapPost("", CreatePulse)
-            .WithName("CreatePulse");
+            .WithName("CreatePulse")
+            .RequireAuthorization();
 
         group.MapGet("", GetFeed)
             .WithName("GetFeed");
@@ -23,14 +25,18 @@ public static class PulseEndpoints
     }
 
     private static async Task<IResult> CreatePulse(
+        HttpContext httpContext,
         [FromBody] CreatePulseRequest request,
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
         try
         {
+            // Extract ProfileId from JWT claims (user can only create pulses as themselves)
+            var authorId = httpContext.GetCurrentProfileId();
+
             var command = new CreatePulseCommand(
-                AuthorId: request.AuthorId,
+                AuthorId: authorId,
                 Content: request.Content
             );
 
@@ -54,9 +60,9 @@ public static class PulseEndpoints
     }
 
     private static async Task<IResult> GetFeed(
+        HttpContext httpContext,
         [FromQuery] string? cursor,
         [FromQuery] int limit,
-        [FromQuery] Guid? currentUserId,
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
@@ -67,6 +73,9 @@ public static class PulseEndpoints
             {
                 limit = 20;
             }
+
+            // Extract ProfileId from JWT if present (optional auth for feeds)
+            var currentUserId = httpContext.GetCurrentProfileIdOrNull();
 
             var query = new GetFeedQuery(
                 CurrentUserId: currentUserId,
@@ -94,13 +103,16 @@ public static class PulseEndpoints
     }
 
     private static async Task<IResult> GetPulse(
+        HttpContext httpContext,
         Guid id,
-        [FromQuery] Guid? currentUserId,
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
         try
         {
+            // Extract ProfileId from JWT if present (optional auth)
+            var currentUserId = httpContext.GetCurrentProfileIdOrNull();
+
             var query = new GetPulseQuery(
                 PulseId: id,
                 CurrentUserId: currentUserId
@@ -118,6 +130,5 @@ public static class PulseEndpoints
 }
 
 public sealed record CreatePulseRequest(
-    Guid AuthorId,
     string Content
 );

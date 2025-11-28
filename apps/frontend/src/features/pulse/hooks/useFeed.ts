@@ -6,7 +6,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { Pulse } from "../../../types";
 import { pulseApi } from "../../../services/pulseApi";
-import { useAuth } from "../../../hooks/useAuth";
 
 interface UseFeedResult {
   pulses: Pulse[];
@@ -18,7 +17,6 @@ interface UseFeedResult {
 }
 
 export function useFeed(): UseFeedResult {
-  const { user } = useAuth();
   const [pulses, setPulses] = useState<Pulse[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
@@ -31,10 +29,10 @@ export function useFeed(): UseFeedResult {
       setError(null);
 
       try {
+        // CurrentUserId is extracted from JWT token on the backend (if authenticated)
         const response = await pulseApi.getFeed({
           cursor: nextCursor,
           limit: 20,
-          currentUserId: user?.profileId,
         });
 
         setPulses((prev) => (nextCursor ? [...prev, ...response.pulses] : response.pulses));
@@ -46,7 +44,7 @@ export function useFeed(): UseFeedResult {
         setIsLoading(false);
       }
     },
-    [user?.profileId]
+    []
   );
 
   const loadMore = useCallback(() => {

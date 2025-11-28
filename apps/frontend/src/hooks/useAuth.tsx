@@ -180,6 +180,7 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
   /**
    * Change user password
    * Requires current password verification
+   * IdentityId is extracted from JWT token on the backend
    */
   const changePassword = useCallback(async (currentPassword: string, newPassword: string): Promise<void> => {
     if (!user) {
@@ -187,7 +188,6 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
     }
 
     const request: ChangePasswordRequest = {
-      identityId: user.identityId,
       currentPassword,
       newPassword,
     };

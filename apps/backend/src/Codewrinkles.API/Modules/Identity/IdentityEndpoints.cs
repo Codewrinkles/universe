@@ -1,4 +1,5 @@
 using Codewrinkles.Application.Users;
+using Codewrinkles.API.Extensions;
 using Kommand.Abstractions;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,14 +19,17 @@ public static class IdentityEndpoints
             .WithName("LoginUser");
 
         group.MapPut("/profile/{profileId:guid}", UpdateProfile)
-            .WithName("UpdateProfile");
+            .WithName("UpdateProfile")
+            .RequireAuthorization("MustBeProfileOwner");
 
         group.MapPost("/profile/{profileId:guid}/avatar", UploadAvatar)
             .WithName("UploadAvatar")
+            .RequireAuthorization("MustBeProfileOwner")
             .DisableAntiforgery();
 
         group.MapPost("/change-password", ChangePassword)
-            .WithName("ChangePassword");
+            .WithName("ChangePassword")
+            .RequireAuthorization();
     }
 
     private static async Task<IResult> RegisterUser(
@@ -197,14 +201,18 @@ public static class IdentityEndpoints
     }
 
     private static async Task<IResult> ChangePassword(
+        HttpContext httpContext,
         [FromBody] ChangePasswordRequest request,
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
         try
         {
+            // Extract IdentityId from JWT claims (user can only change their own password)
+            var identityId = httpContext.GetCurrentIdentityId();
+
             var command = new ChangePasswordCommand(
-                IdentityId: request.IdentityId,
+                IdentityId: identityId,
                 CurrentPassword: request.CurrentPassword,
                 NewPassword: request.NewPassword
             );
@@ -247,7 +255,6 @@ public sealed record UpdateProfileRequest(
 );
 
 public sealed record ChangePasswordRequest(
-    Guid IdentityId,
     string CurrentPassword,
     string NewPassword
 );
