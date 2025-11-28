@@ -24,6 +24,8 @@ export const config = {
       socialFollowing: (profileId: string) => `${API_BASE_URL}/api/social/${profileId}/following`,
       socialIsFollowing: (profileId: string) => `${API_BASE_URL}/api/social/${profileId}/is-following`,
       socialSuggestions: `${API_BASE_URL}/api/social/suggestions`,
+      searchHandles: (query: string, limit: number = 10) =>
+        `${API_BASE_URL}/api/profile/search?q=${encodeURIComponent(query)}&limit=${limit}`,
     },
   },
   auth: {

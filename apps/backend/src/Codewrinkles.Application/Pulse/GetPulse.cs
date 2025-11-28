@@ -1,5 +1,6 @@
 using Kommand.Abstractions;
 using Codewrinkles.Application.Common.Interfaces;
+using Codewrinkles.Domain.Pulse;
 using Codewrinkles.Domain.Pulse.Exceptions;
 
 namespace Codewrinkles.Application.Pulse;
@@ -47,11 +48,22 @@ public sealed class GetPulseQueryHandler : ICommandHandler<GetPulseQuery, PulseD
                 cancellationToken);
         }
 
-        return MapToPulseDto(pulse, isLikedByCurrentUser, isFollowingAuthor);
+        // Load mentions for the pulse
+        var mentions = await _unitOfWork.Pulses.GetMentionsForPulsesAsync([pulse.Id], cancellationToken);
+
+        return MapToPulseDto(pulse, isLikedByCurrentUser, isFollowingAuthor, mentions.ToList());
     }
 
-    private static PulseDto MapToPulseDto(Domain.Pulse.Pulse pulse, bool isLikedByCurrentUser, bool isFollowingAuthor)
+    private static PulseDto MapToPulseDto(
+        Domain.Pulse.Pulse pulse,
+        bool isLikedByCurrentUser,
+        bool isFollowingAuthor,
+        List<PulseMention> mentions)
     {
+        var mentionDtos = mentions
+            .Select(m => new MentionDto(m.ProfileId, m.Handle))
+            .ToList();
+
         return new PulseDto(
             Id: pulse.Id,
             Author: new PulseAuthorDto(
@@ -75,7 +87,8 @@ public sealed class GetPulseQueryHandler : ICommandHandler<GetPulseQuery, PulseD
             RepulsedPulse: pulse.RepulsedPulse is not null
                 ? MapToRepulsedPulseDto(pulse.RepulsedPulse)
                 : null,
-            ImageUrl: pulse.Image?.Url
+            ImageUrl: pulse.Image?.Url,
+            Mentions: mentionDtos
         );
     }
 

@@ -3,30 +3,49 @@ import { useAuth } from "../../hooks/useAuth";
 import { config } from "../../config";
 import { useHandleSearch } from "./useHandleSearch";
 import { MentionAutocomplete } from "./MentionAutocomplete";
+import { useCreatePulse } from "./hooks/useCreatePulse";
+import { useCreateReply } from "./hooks/useCreateReply";
 
-export interface ComposerProps {
-  value: string;
-  onChange: (value: string) => void;
-  maxChars: number;
-  isOverLimit: boolean;
-  charsLeft: number;
-  onSubmit?: () => void;
-  isSubmitting?: boolean;
-  selectedImage?: File | null;
-  onImageSelect?: (file: File | null) => void;
+export interface UnifiedComposerProps {
+  mode: "post" | "reply";
+  parentPulseId?: string;
+  onSuccess?: () => void;
+  placeholder?: string;
+  rows?: number;
+  focusedRows?: number;
 }
 
-export function Composer({ value, onChange, maxChars, isOverLimit, charsLeft, onSubmit, isSubmitting = false, selectedImage, onImageSelect }: ComposerProps): JSX.Element {
+export function UnifiedComposer({
+  mode,
+  parentPulseId,
+  onSuccess,
+  placeholder = "What's happening?",
+  rows = 3,
+  focusedRows = 8,
+}: UnifiedComposerProps): JSX.Element {
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // State
+  const [value, setValue] = useState("");
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [showMentions, setShowMentions] = useState(false);
   const [mentionPosition, setMentionPosition] = useState({ top: 0, left: 0 });
-  const { results, search, clearResults } = useHandleSearch();
 
-  // Clear preview when selectedImage is cleared by parent
+  // Hooks
+  const { results, search, clearResults } = useHandleSearch();
+  const { createPulse, isCreating: isCreatingPulse } = useCreatePulse();
+  const { createReply, isCreating: isCreatingReply, error: replyError } = useCreateReply();
+
+  const maxChars = 300;
+  const charsLeft = maxChars - value.length;
+  const isOverLimit = charsLeft < 0;
+  const isSubmitting = mode === "post" ? isCreatingPulse : isCreatingReply;
+
+  // Clear preview when selectedImage is cleared
   useEffect(() => {
     if (selectedImage === null) {
       setImagePreview(null);
@@ -72,11 +91,27 @@ export function Composer({ value, onChange, maxChars, isOverLimit, charsLeft, on
     }
   }, [value, search, clearResults]);
 
-  const handleSubmit = (): void => {
+  const handleSubmit = async (): Promise<void> => {
     if (value.trim().length === 0 || isOverLimit || isSubmitting) {
       return;
     }
-    onSubmit?.();
+
+    try {
+      if (mode === "post") {
+        await createPulse(value, selectedImage);
+      } else if (mode === "reply" && parentPulseId) {
+        await createReply(parentPulseId, value, selectedImage);
+      }
+
+      // Clear form on success
+      setValue("");
+      setSelectedImage(null);
+      setImagePreview(null);
+      onSuccess?.();
+    } catch (err) {
+      // Error is handled by the hooks
+      console.error(`Failed to ${mode}:`, err);
+    }
   };
 
   const handleImageButtonClick = (): void => {
@@ -86,7 +121,7 @@ export function Composer({ value, onChange, maxChars, isOverLimit, charsLeft, on
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const file = e.target.files?.[0];
     if (file && file.type.startsWith("image/")) {
-      onImageSelect?.(file);
+      setSelectedImage(file);
 
       // Create preview
       const reader = new FileReader();
@@ -98,7 +133,7 @@ export function Composer({ value, onChange, maxChars, isOverLimit, charsLeft, on
   };
 
   const handleRemoveImage = (): void => {
-    onImageSelect?.(null);
+    setSelectedImage(null);
     setImagePreview(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -115,7 +150,7 @@ export function Composer({ value, onChange, maxChars, isOverLimit, charsLeft, on
     if (mentionMatch) {
       const mentionStart = textBeforeCursor.lastIndexOf("@");
       const newText = textBeforeCursor.slice(0, mentionStart) + `@${handle} ` + textAfterCursor;
-      onChange(newText);
+      setValue(newText);
 
       // Move cursor after the mention
       setTimeout(() => {
@@ -132,6 +167,9 @@ export function Composer({ value, onChange, maxChars, isOverLimit, charsLeft, on
   const avatarUrl = user?.avatarUrl
     ? `${config.api.baseUrl}${user.avatarUrl}`
     : null;
+
+  const buttonText = mode === "post" ? "Post" : "Reply";
+  const submittingText = mode === "post" ? "Posting..." : "Replying...";
 
   return (
     <div className="flex gap-3">
@@ -150,11 +188,11 @@ export function Composer({ value, onChange, maxChars, isOverLimit, charsLeft, on
         <textarea
           ref={textareaRef}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => setValue(e.target.value)}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          rows={isFocused || value.length > 0 ? 8 : 3}
-          placeholder="What's happening?"
+          rows={isFocused || value.length > 0 ? focusedRows : rows}
+          placeholder={placeholder}
           className="w-full resize-none bg-transparent text-lg text-text-primary placeholder:text-text-tertiary focus:outline-none transition-all custom-scrollbar"
         />
         {showMentions && results.length > 0 && (
@@ -180,6 +218,9 @@ export function Composer({ value, onChange, maxChars, isOverLimit, charsLeft, on
               ✕
             </button>
           </div>
+        )}
+        {mode === "reply" && replyError && (
+          <div className="text-sm text-red-400">{replyError}</div>
         )}
         <div className="flex items-center justify-between border-t border-border pt-3">
           <div className="flex items-center gap-1">
@@ -264,7 +305,7 @@ export function Composer({ value, onChange, maxChars, isOverLimit, charsLeft, on
                   : "bg-brand-soft text-black hover:bg-brand"
               }`}
             >
-              {isSubmitting ? "Posting..." : "Post"}
+              {isSubmitting ? submittingText : buttonText}
             </button>
           </div>
         </div>

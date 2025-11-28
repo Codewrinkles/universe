@@ -1,38 +1,17 @@
 import { useState } from "react";
-import { Composer } from "./Composer";
+import { UnifiedComposer } from "./UnifiedComposer";
 import { Feed } from "./Feed";
 import { PulseNavigation } from "./PulseNavigation";
 import { PulseRightSidebar } from "./PulseRightSidebar";
 import { useFeed } from "./hooks/useFeed";
-import { useCreatePulse } from "./hooks/useCreatePulse";
 import { useAuth } from "../../hooks/useAuth";
 
 export function PulsePage(): JSX.Element {
   const { user } = useAuth();
-  const [composerValue, setComposerValue] = useState("");
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [replyingToPulseId, setReplyingToPulseId] = useState<string | null>(null);
-  const maxChars = 300; // Updated to match backend limit
-  const charsLeft = maxChars - composerValue.length;
-  const isOverLimit = charsLeft < 0;
 
   // Fetch feed data
   const { pulses, isLoading, error, hasMore, loadMore, refetch } = useFeed();
-
-  // Create pulse mutation
-  const { createPulse, isCreating } = useCreatePulse();
-
-  const handleSubmit = async (): Promise<void> => {
-    try {
-      await createPulse(composerValue, selectedImage);
-      setComposerValue(""); // Clear composer after successful post
-      setSelectedImage(null); // Clear selected image
-      refetch(); // Refresh feed to show new pulse
-    } catch (err) {
-      // Error is already handled by the hook
-      console.error("Failed to create pulse:", err);
-    }
-  };
 
   const handleReplyClick = (pulseId: string): void => {
     setReplyingToPulseId(pulseId);
@@ -57,16 +36,12 @@ export function PulsePage(): JSX.Element {
         {/* Composer - only show if authenticated */}
         {user && (
           <div className="border-b border-border p-4">
-            <Composer
-              value={composerValue}
-              onChange={setComposerValue}
-              maxChars={maxChars}
-              isOverLimit={isOverLimit}
-              charsLeft={charsLeft}
-              onSubmit={handleSubmit}
-              isSubmitting={isCreating}
-              selectedImage={selectedImage}
-              onImageSelect={setSelectedImage}
+            <UnifiedComposer
+              mode="post"
+              onSuccess={refetch}
+              placeholder="What's happening?"
+              rows={3}
+              focusedRows={8}
             />
           </div>
         )}

@@ -12,6 +12,7 @@ public sealed class PulseRepository : IPulseRepository
     private readonly DbSet<PulseEngagement> _engagements;
     private readonly DbSet<PulseLike> _likes;
     private readonly DbSet<PulseImage> _images;
+    private readonly DbSet<PulseMention> _mentions;
     private readonly DbSet<Follow> _follows;
 
     public PulseRepository(ApplicationDbContext context)
@@ -21,6 +22,7 @@ public sealed class PulseRepository : IPulseRepository
         _engagements = context.Set<PulseEngagement>();
         _likes = context.Set<PulseLike>();
         _images = context.Set<PulseImage>();
+        _mentions = context.Set<PulseMention>();
         _follows = context.Set<Follow>();
     }
 
@@ -268,5 +270,29 @@ public sealed class PulseRepository : IPulseRepository
         return _pulses
             .AsNoTracking()
             .CountAsync(p => p.ParentPulseId == parentPulseId && !p.IsDeleted, cancellationToken);
+    }
+
+    public void CreateMention(PulseMention mention)
+    {
+        _mentions.Add(mention);
+    }
+
+    public async Task<IReadOnlyList<PulseMention>> GetMentionsForPulsesAsync(
+        IEnumerable<Guid> pulseIds,
+        CancellationToken cancellationToken = default)
+    {
+        var pulseIdList = pulseIds.ToList();
+
+        if (pulseIdList.Count == 0)
+        {
+            return [];
+        }
+
+        var mentions = await _mentions
+            .AsNoTracking()
+            .Where(m => pulseIdList.Contains(m.PulseId))
+            .ToListAsync(cancellationToken);
+
+        return mentions;
     }
 }

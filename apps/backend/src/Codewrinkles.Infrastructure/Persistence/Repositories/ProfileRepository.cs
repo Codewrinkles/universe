@@ -53,4 +53,37 @@ public sealed class ProfileRepository : IProfileRepository
     {
         _profiles.Add(profile);
     }
+
+    public async Task<IReadOnlyList<Profile>> SearchByHandleAsync(
+        string searchTerm,
+        int limit,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedSearch = searchTerm.Trim().ToLowerInvariant();
+
+        var profiles = await _profiles
+            .AsNoTracking()
+            .Where(p => p.Handle != null && p.Handle.StartsWith(normalizedSearch))
+            .OrderBy(p => p.Handle)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+
+        return profiles;
+    }
+
+    public async Task<IReadOnlyList<Profile>> FindByHandlesAsync(
+        IEnumerable<string> handles,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedHandles = handles
+            .Select(h => h.Trim().ToLowerInvariant())
+            .ToList();
+
+        var profiles = await _profiles
+            .AsNoTracking()
+            .Where(p => p.Handle != null && normalizedHandles.Contains(p.Handle))
+            .ToListAsync(cancellationToken);
+
+        return profiles;
+    }
 }

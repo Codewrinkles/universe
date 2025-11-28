@@ -11,7 +11,13 @@ public sealed record PulseDto(
     bool IsFollowingAuthor,
     Guid? ParentPulseId,
     RepulsedPulseDto? RepulsedPulse,
-    string? ImageUrl
+    string? ImageUrl,
+    List<MentionDto> Mentions
+);
+
+public sealed record MentionDto(
+    Guid ProfileId,
+    string Handle
 );
 
 public sealed record PulseAuthorDto(

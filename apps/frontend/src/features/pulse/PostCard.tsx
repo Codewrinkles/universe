@@ -7,6 +7,7 @@ import { formatTimeAgo } from "../../utils/timeUtils";
 import { config } from "../../config";
 import { usePulseLike } from "./hooks/usePulseLike";
 import { FollowButton } from "../social/components/FollowButton";
+import { parseMentions } from "./parseMentions";
 
 export interface PostCardProps {
   post: Post;
@@ -213,7 +214,21 @@ export function PostCard({ post, onReplyClick, onFollowChange }: PostCardProps):
           {/* Post text content */}
           {post.content && (
             <p className="mt-1 text-[15px] leading-normal text-text-primary whitespace-pre-wrap">
-              {post.content}
+              {parseMentions(post.content, post.mentions || []).map((part, index) => {
+                if (part.type === "mention" && part.handle) {
+                  return (
+                    <Link
+                      key={index}
+                      to={`/pulse/u/${part.handle}`}
+                      className="text-brand-soft hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {part.content}
+                    </Link>
+                  );
+                }
+                return <span key={index}>{part.content}</span>;
+              })}
             </p>
           )}
 

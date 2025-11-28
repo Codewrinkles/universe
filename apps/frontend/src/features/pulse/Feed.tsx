@@ -1,6 +1,6 @@
 import type { Post } from "../../types";
 import { PostCard } from "./PostCard";
-import { ReplyComposer } from "./ReplyComposer";
+import { UnifiedComposer } from "./UnifiedComposer";
 
 export interface FeedProps {
   posts: Post[];
@@ -24,9 +24,13 @@ export function Feed({ posts, onFollowChange, onReplyClick, replyingToPulseId, o
           </div>
           {replyingToPulseId === post.id && (
             <div className="border-b border-border bg-surface-card1/30 px-4 py-3">
-              <ReplyComposer
+              <UnifiedComposer
+                mode="reply"
                 parentPulseId={post.id}
-                onReplyCreated={onReplyCreated}
+                onSuccess={onReplyCreated}
+                placeholder="Post your reply"
+                rows={2}
+                focusedRows={4}
               />
             </div>
           )}

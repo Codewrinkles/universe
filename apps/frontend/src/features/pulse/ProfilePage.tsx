@@ -5,6 +5,7 @@ import { config } from "../../config";
 import { PulseNavigation } from "./PulseNavigation";
 import { PulseRightSidebar } from "./PulseRightSidebar";
 import { PostCard } from "./PostCard";
+import { UnifiedComposer } from "./UnifiedComposer";
 import type { User, Pulse, FollowerDto, FollowingDto } from "../../types";
 
 interface ProfileHeaderProps {
@@ -129,6 +130,7 @@ export function ProfilePage(): JSX.Element {
   const [following, setFollowing] = useState<FollowingDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [replyingToPulseId, setReplyingToPulseId] = useState<string | null>(null);
 
   // Fetch profile by handle
   useEffect(() => {
@@ -258,6 +260,36 @@ export function ProfilePage(): JSX.Element {
     fetchFollowing();
   }, [profile]);
 
+  const handleReplyClick = (pulseId: string): void => {
+    setReplyingToPulseId(pulseId);
+  };
+
+  const handleReplyCreated = (): void => {
+    setReplyingToPulseId(null);
+    // Refetch pulses to update reply counts
+    if (profile) {
+      const fetchPulses = async (): Promise<void> => {
+        try {
+          const token = localStorage.getItem(config.auth.accessTokenKey);
+          const response = await fetch(`${config.api.baseUrl}/api/pulse/author/${profile.profileId}?limit=20`, {
+            headers: {
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            setPulses(data.pulses || []);
+          }
+        } catch (err) {
+          console.error("Error fetching pulses:", err);
+        }
+      };
+
+      fetchPulses();
+    }
+  };
+
   const isOwnProfile = currentUser?.profileId === profile?.profileId;
 
   if (isLoading) {
@@ -347,8 +379,25 @@ export function ProfilePage(): JSX.Element {
                 </div>
               ) : (
                 pulses.map((pulse) => (
-                  <div key={pulse.id} className="border-b border-border">
-                    <PostCard post={pulse} />
+                  <div key={pulse.id}>
+                    <div className="border-b border-border">
+                      <PostCard
+                        post={pulse}
+                        onReplyClick={handleReplyClick}
+                      />
+                    </div>
+                    {replyingToPulseId === pulse.id && (
+                      <div className="border-b border-border bg-surface-card1/30 px-4 py-3">
+                        <UnifiedComposer
+                          mode="reply"
+                          parentPulseId={pulse.id}
+                          onSuccess={handleReplyCreated}
+                          placeholder="Post your reply"
+                          rows={2}
+                          focusedRows={4}
+                        />
+                      </div>
+                    )}
                   </div>
                 ))
               )}

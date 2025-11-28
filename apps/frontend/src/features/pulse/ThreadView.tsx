@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router";
 import { useThread } from "./hooks/useThread";
 import { PostCard } from "./PostCard";
-import { ReplyComposer } from "./ReplyComposer";
+import { UnifiedComposer } from "./UnifiedComposer";
 import { PulseNavigation } from "./PulseNavigation";
 import { PulseRightSidebar } from "./PulseRightSidebar";
 
@@ -103,9 +103,13 @@ export function ThreadView(): JSX.Element {
             {/* Inline Reply Composer for Parent Pulse */}
             {replyingToPulseId === parentPulse.id && (
               <div className="border-b border-border p-4 bg-surface-card1/30">
-                <ReplyComposer
+                <UnifiedComposer
+                  mode="reply"
                   parentPulseId={pulseId}
-                  onReplyCreated={handleReplyCreated}
+                  onSuccess={handleReplyCreated}
+                  placeholder="Post your reply"
+                  rows={2}
+                  focusedRows={4}
                 />
               </div>
             )}
@@ -138,9 +142,13 @@ export function ThreadView(): JSX.Element {
                         {/* Inline Reply Composer for this Reply */}
                         {replyingToPulseId === reply.id && (
                           <div className="p-4 bg-surface-card1/30 border-t border-border">
-                            <ReplyComposer
+                            <UnifiedComposer
+                              mode="reply"
                               parentPulseId={pulseId}
-                              onReplyCreated={handleReplyCreated}
+                              onSuccess={handleReplyCreated}
+                              placeholder="Post your reply"
+                              rows={2}
+                              focusedRows={4}
                             />
                           </div>
                         )}

@@ -1,4 +1,5 @@
 using System.Data;
+using System.Text.RegularExpressions;
 using Kommand.Abstractions;
 using Codewrinkles.Application.Common.Interfaces;
 using Codewrinkles.Domain.Pulse;
@@ -23,13 +24,16 @@ public sealed class CreatePulseCommandHandler
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPulseImageService _pulseImageService;
+    private readonly IProfileRepository _profileRepository;
 
     public CreatePulseCommandHandler(
         IUnitOfWork unitOfWork,
-        IPulseImageService pulseImageService)
+        IPulseImageService pulseImageService,
+        IProfileRepository profileRepository)
     {
         _unitOfWork = unitOfWork;
         _pulseImageService = pulseImageService;
+        _profileRepository = profileRepository;
     }
 
     public async Task<CreatePulseResult> HandleAsync(
@@ -86,8 +90,21 @@ public sealed class CreatePulseCommandHandler
             _unitOfWork.Pulses.CreateEngagement(engagement);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+            // 4. Extract and create mentions
+            var mentionedHandles = ExtractMentions(pulse.Content);
+            if (mentionedHandles.Count > 0)
+            {
+                var mentionedProfiles = await _profileRepository.FindByHandlesAsync(mentionedHandles, cancellationToken);
+                foreach (var profile in mentionedProfiles)
+                {
+                    var mention = PulseMention.Create(pulse.Id, profile.Id, profile.Handle!);
+                    _unitOfWork.Pulses.CreateMention(mention);
+                }
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }
+
             // Commit transaction - all entities created successfully
-            // Database state is now consistent: Pulse + Engagement + (optional) PulseImage
+            // Database state is now consistent: Pulse + Engagement + (optional) PulseImage + (optional) Mentions
             await transaction.CommitAsync(cancellationToken);
         }
         catch
@@ -111,5 +128,17 @@ public sealed class CreatePulseCommandHandler
             CreatedAt: pulse.CreatedAt,
             ImageUrl: imageUrl
         );
+    }
+
+    private static List<string> ExtractMentions(string content)
+    {
+        // Regex to match @handle (alphanumeric + underscore, 3-30 chars)
+        var mentionPattern = @"@(\w{3,30})";
+        var matches = Regex.Matches(content, mentionPattern);
+
+        return matches
+            .Select(m => m.Groups[1].Value.ToLowerInvariant())
+            .Distinct()
+            .ToList();
     }
 }

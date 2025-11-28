@@ -21,6 +21,7 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<PulseEngagement> PulseEngagements => Set<PulseEngagement>();
     public DbSet<PulseLike> PulseLikes => Set<PulseLike>();
     public DbSet<PulseImage> PulseImages => Set<PulseImage>();
+    public DbSet<PulseMention> PulseMentions => Set<PulseMention>();
 
     // Social schema
     public DbSet<Follow> Follows => Set<Follow>();

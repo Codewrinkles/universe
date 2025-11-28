@@ -13,6 +13,9 @@ public static class ProfileEndpoints
 
         group.MapGet("/handle/{handle}", GetProfileByHandle)
             .WithName("GetProfileByHandle");
+
+        group.MapGet("/search", SearchHandles)
+            .WithName("SearchHandles");
     }
 
     private static async Task<IResult> GetProfileByHandle(
@@ -40,5 +43,35 @@ public static class ProfileEndpoints
         {
             return Results.NotFound();
         }
+    }
+
+    private static async Task<IResult> SearchHandles(
+        [FromQuery] string q,
+        [FromQuery] int limit,
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        // Validate query parameter
+        if (string.IsNullOrWhiteSpace(q))
+        {
+            return Results.BadRequest(new { error = "Search term is required" });
+        }
+
+        // Enforce limit bounds
+        var effectiveLimit = Math.Clamp(limit > 0 ? limit : 10, 1, 20);
+
+        var query = new SearchHandlesQuery(q, effectiveLimit);
+        var result = await mediator.SendAsync(query, cancellationToken);
+
+        return Results.Ok(new
+        {
+            handles = result.Handles.Select(h => new
+            {
+                profileId = h.ProfileId,
+                handle = h.Handle,
+                name = h.Name,
+                avatarUrl = h.AvatarUrl
+            })
+        });
     }
 }

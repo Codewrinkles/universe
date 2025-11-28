@@ -2,6 +2,8 @@ import { useRef, useState, useEffect } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { config } from "../../config";
 import { useCreateReply } from "./hooks/useCreateReply";
+import { useHandleSearch } from "./useHandleSearch";
+import { MentionAutocomplete } from "./MentionAutocomplete";
 
 export interface ReplyComposerProps {
   parentPulseId: string;
@@ -15,10 +17,14 @@ export function ReplyComposer({
   const { user } = useAuth();
   const { createReply, isCreating, error } = useCreateReply();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [value, setValue] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
+  const [showMentions, setShowMentions] = useState(false);
+  const [mentionPosition, setMentionPosition] = useState({ top: 0, left: 0 });
+  const { results, search, clearResults } = useHandleSearch();
 
   const maxChars = 300;
   const charsLeft = maxChars - value.length;
@@ -33,6 +39,42 @@ export function ReplyComposer({
       }
     }
   }, [selectedImage]);
+
+  // Detect mentions and trigger autocomplete
+  useEffect(() => {
+    const cursorPosition = textareaRef.current?.selectionStart ?? 0;
+    const textBeforeCursor = value.slice(0, cursorPosition);
+    const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
+
+    if (mentionMatch && mentionMatch[1] !== undefined) {
+      const searchTerm = mentionMatch[1];
+      search(searchTerm);
+      setShowMentions(true);
+
+      // Calculate autocomplete position near the cursor
+      if (textareaRef.current) {
+        const textarea = textareaRef.current;
+        const rect = textarea.getBoundingClientRect();
+
+        // Get the number of newlines before cursor to estimate line position
+        const textBeforeCursor = value.slice(0, cursorPosition);
+        const lines = textBeforeCursor.split('\n');
+        const currentLineIndex = lines.length - 1;
+        const lineHeight = 24; // Approximate line height in pixels
+
+        // Position below the current line
+        const topOffset = currentLineIndex * lineHeight + lineHeight;
+
+        setMentionPosition({
+          top: rect.top + topOffset + 8,
+          left: rect.left + 16, // Add some left padding
+        });
+      }
+    } else {
+      setShowMentions(false);
+      clearResults();
+    }
+  }, [value, search, clearResults]);
 
   const handleSubmit = async (): Promise<void> => {
     if (value.trim().length === 0 || isOverLimit || isCreating) {
@@ -78,6 +120,30 @@ export function ReplyComposer({
     }
   };
 
+  const handleMentionSelect = (handle: string): void => {
+    const cursorPosition = textareaRef.current?.selectionStart ?? 0;
+    const textBeforeCursor = value.slice(0, cursorPosition);
+    const textAfterCursor = value.slice(cursorPosition);
+
+    // Replace the partial mention with the full handle
+    const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
+    if (mentionMatch) {
+      const mentionStart = textBeforeCursor.lastIndexOf("@");
+      const newText = textBeforeCursor.slice(0, mentionStart) + `@${handle} ` + textAfterCursor;
+      setValue(newText);
+
+      // Move cursor after the mention
+      setTimeout(() => {
+        const newCursorPos = mentionStart + handle.length + 2; // +2 for @ and space
+        textareaRef.current?.setSelectionRange(newCursorPos, newCursorPos);
+        textareaRef.current?.focus();
+      }, 0);
+    }
+
+    setShowMentions(false);
+    clearResults();
+  };
+
   const avatarUrl = user?.avatarUrl
     ? `${config.api.baseUrl}${user.avatarUrl}`
     : null;
@@ -95,8 +161,9 @@ export function ReplyComposer({
           {user?.name?.charAt(0).toUpperCase() ?? "?"}
         </div>
       )}
-      <div className="flex-1 space-y-3">
+      <div className="flex-1 space-y-3 relative">
         <textarea
+          ref={textareaRef}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onFocus={() => setIsFocused(true)}
@@ -105,6 +172,13 @@ export function ReplyComposer({
           placeholder="Post your reply"
           className="w-full resize-none bg-transparent text-[15px] text-text-primary placeholder:text-text-tertiary focus:outline-none transition-all custom-scrollbar"
         />
+        {showMentions && results.length > 0 && (
+          <MentionAutocomplete
+            results={results}
+            onSelect={handleMentionSelect}
+            position={mentionPosition}
+          />
+        )}
         {imagePreview && (
           <div className="relative inline-block rounded-xl overflow-hidden border border-border">
             <img

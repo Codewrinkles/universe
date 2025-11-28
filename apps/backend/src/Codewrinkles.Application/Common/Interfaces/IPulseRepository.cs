@@ -2,6 +2,7 @@ using PulseEntity = Codewrinkles.Domain.Pulse.Pulse;
 using PulseEngagementEntity = Codewrinkles.Domain.Pulse.PulseEngagement;
 using PulseLikeEntity = Codewrinkles.Domain.Pulse.PulseLike;
 using PulseImageEntity = Codewrinkles.Domain.Pulse.PulseImage;
+using PulseMentionEntity = Codewrinkles.Domain.Pulse.PulseMention;
 
 namespace Codewrinkles.Application.Common.Interfaces;
 
@@ -129,4 +130,18 @@ public interface IPulseRepository
     Task<int> GetReplyCountAsync(
         Guid parentPulseId,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Create a pulse mention.
+    /// Does not save to database - call UnitOfWork.SaveChangesAsync().
+    /// </summary>
+    void CreateMention(PulseMentionEntity mention);
+
+    /// <summary>
+    /// Get mentions for a list of pulse IDs.
+    /// Returns all mentions for the given pulses.
+    /// </summary>
+    Task<IReadOnlyList<PulseMentionEntity>> GetMentionsForPulsesAsync(
+        IEnumerable<Guid> pulseIds,
+        CancellationToken cancellationToken = default);
 }

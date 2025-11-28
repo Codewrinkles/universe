@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using Kommand.Abstractions;
 using Codewrinkles.Application.Common.Interfaces;
+using Codewrinkles.Domain.Pulse;
 
 namespace Codewrinkles.Application.Pulse;
 
@@ -74,8 +75,13 @@ public sealed class GetPulsesByAuthorQueryHandler : ICommandHandler<GetPulsesByA
                 cancellationToken);
         }
 
+        // Load mentions for all pulses (batch load to avoid N+1 queries)
+        var allPulseIds = pulsesToReturn.Select(p => p.Id).ToList();
+        var mentions = await _unitOfWork.Pulses.GetMentionsForPulsesAsync(allPulseIds, cancellationToken);
+        var mentionsByPulse = mentions.GroupBy(m => m.PulseId).ToDictionary(g => g.Key, g => g.ToList());
+
         // Map to DTOs
-        var pulseDtos = pulsesToReturn.Select(p => MapToPulseDto(p, likedPulseIds, followingProfileIds)).ToList();
+        var pulseDtos = pulsesToReturn.Select(p => MapToPulseDto(p, likedPulseIds, followingProfileIds, mentionsByPulse)).ToList();
 
         return new FeedResponse(
             Pulses: pulseDtos,
@@ -84,8 +90,16 @@ public sealed class GetPulsesByAuthorQueryHandler : ICommandHandler<GetPulsesByA
         );
     }
 
-    private static PulseDto MapToPulseDto(Domain.Pulse.Pulse pulse, HashSet<Guid> likedPulseIds, HashSet<Guid> followingProfileIds)
+    private static PulseDto MapToPulseDto(
+        Domain.Pulse.Pulse pulse,
+        HashSet<Guid> likedPulseIds,
+        HashSet<Guid> followingProfileIds,
+        Dictionary<Guid, List<PulseMention>> mentionsByPulse)
     {
+        var mentions = mentionsByPulse.TryGetValue(pulse.Id, out var pulseMentions)
+            ? pulseMentions.Select(m => new MentionDto(m.ProfileId, m.Handle)).ToList()
+            : [];
+
         return new PulseDto(
             Id: pulse.Id,
             Author: new PulseAuthorDto(
@@ -109,7 +123,8 @@ public sealed class GetPulsesByAuthorQueryHandler : ICommandHandler<GetPulsesByA
             RepulsedPulse: pulse.RepulsedPulse is not null
                 ? MapToRepulsedPulseDto(pulse.RepulsedPulse)
                 : null,
-            ImageUrl: pulse.Image?.Url
+            ImageUrl: pulse.Image?.Url,
+            Mentions: mentions
         );
     }
 

@@ -33,4 +33,21 @@ public interface IProfileRepository
     /// Does not save to database - call UnitOfWork.SaveChangesAsync().
     /// </summary>
     void Create(Profile profile);
+
+    /// <summary>
+    /// Search profiles by handle prefix (case-insensitive).
+    /// Returns profiles ordered alphabetically by handle.
+    /// </summary>
+    Task<IReadOnlyList<Profile>> SearchByHandleAsync(
+        string searchTerm,
+        int limit,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Find profiles by multiple handles (case-insensitive).
+    /// Returns profiles that match any of the provided handles.
+    /// </summary>
+    Task<IReadOnlyList<Profile>> FindByHandlesAsync(
+        IEnumerable<string> handles,
+        CancellationToken cancellationToken = default);
 }

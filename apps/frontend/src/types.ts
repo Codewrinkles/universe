@@ -54,6 +54,11 @@ export interface RepulsedPulse {
   linkPreview?: PulseLinkPreview;
 }
 
+export interface Mention {
+  profileId: string;
+  handle: string;
+}
+
 export interface Pulse {
   id: string;
   author: PulseAuthor;
@@ -67,6 +72,7 @@ export interface Pulse {
   imageUrl?: string | null;
   linkPreview?: PulseLinkPreview;
   repulsedPulse?: RepulsedPulse;
+  mentions: Mention[];
 }
 
 export interface FeedResponse {
@@ -265,6 +271,17 @@ export interface SuggestedProfilesResponse {
 
 export interface IsFollowingResponse {
   isFollowing: boolean;
+}
+
+export interface HandleSearchResult {
+  profileId: string;
+  handle: string;
+  name: string;
+  avatarUrl: string | null;
+}
+
+export interface SearchHandlesResponse {
+  handles: HandleSearchResult[];
 }
 
 export interface ApiErrorResponse {

@@ -1,5 +1,6 @@
 using Kommand.Abstractions;
 using Codewrinkles.Application.Common.Interfaces;
+using Codewrinkles.Domain.Pulse;
 using Codewrinkles.Domain.Pulse.Exceptions;
 
 namespace Codewrinkles.Application.Pulse;
@@ -82,10 +83,22 @@ public sealed class GetThreadQueryHandler : ICommandHandler<GetThreadQuery, Thre
                 cancellationToken);
         }
 
+        // Load mentions for all pulses (parent + replies)
+        var mentions = await _unitOfWork.Pulses.GetMentionsForPulsesAsync(allPulseIds, cancellationToken);
+        var mentionsByPulse = mentions.GroupBy(m => m.PulseId).ToDictionary(g => g.Key, g => g.ToList());
+
         // 6. Map to DTOs
-        var parentDto = MapToPulseDto(parentPulse, likedPulseIds.Contains(parentPulse.Id), followingProfileIds.Contains(parentPulse.AuthorId));
+        var parentDto = MapToPulseDto(
+            parentPulse,
+            likedPulseIds.Contains(parentPulse.Id),
+            followingProfileIds.Contains(parentPulse.AuthorId),
+            mentionsByPulse.TryGetValue(parentPulse.Id, out var parentMentions) ? parentMentions : []);
         var replyDtos = repliesToReturn
-            .Select(r => MapToPulseDto(r, likedPulseIds.Contains(r.Id), followingProfileIds.Contains(r.AuthorId)))
+            .Select(r => MapToPulseDto(
+                r,
+                likedPulseIds.Contains(r.Id),
+                followingProfileIds.Contains(r.AuthorId),
+                mentionsByPulse.TryGetValue(r.Id, out var replyMentions) ? replyMentions : []))
             .ToList();
 
         return new ThreadResponse(
@@ -97,8 +110,16 @@ public sealed class GetThreadQueryHandler : ICommandHandler<GetThreadQuery, Thre
         );
     }
 
-    private static PulseDto MapToPulseDto(Domain.Pulse.Pulse pulse, bool isLikedByCurrentUser, bool isFollowingAuthor)
+    private static PulseDto MapToPulseDto(
+        Domain.Pulse.Pulse pulse,
+        bool isLikedByCurrentUser,
+        bool isFollowingAuthor,
+        List<PulseMention> mentions)
     {
+        var mentionDtos = mentions
+            .Select(m => new MentionDto(m.ProfileId, m.Handle))
+            .ToList();
+
         return new PulseDto(
             Id: pulse.Id,
             Author: new PulseAuthorDto(
@@ -122,7 +143,8 @@ public sealed class GetThreadQueryHandler : ICommandHandler<GetThreadQuery, Thre
             RepulsedPulse: pulse.RepulsedPulse is not null
                 ? MapToRepulsedPulseDto(pulse.RepulsedPulse)
                 : null,
-            ImageUrl: pulse.Image?.Url
+            ImageUrl: pulse.Image?.Url,
+            Mentions: mentionDtos
         );
     }
 
