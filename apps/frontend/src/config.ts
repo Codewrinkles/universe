@@ -17,6 +17,8 @@ export const config = {
       pulse: `${API_BASE_URL}/api/pulse`,
       pulseById: (id: string) => `${API_BASE_URL}/api/pulse/${id}`,
       pulseLike: (id: string) => `${API_BASE_URL}/api/pulse/${id}/like`,
+      pulseReply: (parentId: string) => `${API_BASE_URL}/api/pulse/${parentId}/reply`,
+      pulseThread: (id: string) => `${API_BASE_URL}/api/pulse/${id}/thread`,
     },
   },
   auth: {

@@ -4,44 +4,87 @@ using Codewrinkles.Domain.Pulse.Exceptions;
 
 namespace Codewrinkles.Application.Pulse;
 
-public sealed record GetPulseQuery(
+public sealed record GetThreadQuery(
     Guid PulseId,
-    Guid? CurrentUserId
-) : ICommand<PulseDto>;
+    Guid? CurrentUserId,
+    int Limit = 20,
+    DateTime? BeforeCreatedAt = null,
+    Guid? BeforeId = null
+) : ICommand<ThreadResponse>;
 
-public sealed class GetPulseQueryHandler : ICommandHandler<GetPulseQuery, PulseDto>
+public sealed class GetThreadQueryHandler : ICommandHandler<GetThreadQuery, ThreadResponse>
 {
     private readonly IUnitOfWork _unitOfWork;
 
-    public GetPulseQueryHandler(IUnitOfWork unitOfWork)
+    public GetThreadQueryHandler(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<PulseDto> HandleAsync(
-        GetPulseQuery query,
+    public async Task<ThreadResponse> HandleAsync(
+        GetThreadQuery query,
         CancellationToken cancellationToken)
     {
-        var pulse = await _unitOfWork.Pulses.FindByIdWithDetailsAsync(
+        // 1. Get parent pulse with details
+        var parentPulse = await _unitOfWork.Pulses.FindByIdWithDetailsAsync(
             query.PulseId,
             cancellationToken);
 
-        if (pulse is null)
+        if (parentPulse is null)
         {
             throw new PulseNotFoundException(query.PulseId);
         }
 
-        // Check if current user has liked this pulse
-        var isLikedByCurrentUser = false;
+        // 2. Get replies with pagination
+        var replies = await _unitOfWork.Pulses.GetRepliesByParentIdAsync(
+            query.PulseId,
+            query.Limit + 1, // Fetch one extra to check if there are more
+            query.BeforeCreatedAt,
+            query.BeforeId,
+            cancellationToken);
+
+        // 3. Calculate pagination info
+        var hasMore = replies.Count > query.Limit;
+        var repliesToReturn = hasMore ? replies.Take(query.Limit).ToList() : replies;
+
+        string? nextCursor = null;
+        if (hasMore && repliesToReturn.Count > 0)
+        {
+            var lastReply = repliesToReturn[^1];
+            nextCursor = $"{lastReply.CreatedAt:O}_{lastReply.Id}";
+        }
+
+        // 4. Get total reply count
+        var totalReplyCount = await _unitOfWork.Pulses.GetReplyCountAsync(
+            query.PulseId,
+            cancellationToken);
+
+        // 5. Get liked pulse IDs for current user (parent + all replies)
+        var allPulseIds = new List<Guid> { parentPulse.Id };
+        allPulseIds.AddRange(repliesToReturn.Select(r => r.Id));
+
+        HashSet<Guid> likedPulseIds = [];
         if (query.CurrentUserId.HasValue)
         {
-            isLikedByCurrentUser = await _unitOfWork.Pulses.HasUserLikedPulseAsync(
-                query.PulseId,
+            likedPulseIds = await _unitOfWork.Pulses.GetLikedPulseIdsAsync(
+                allPulseIds,
                 query.CurrentUserId.Value,
                 cancellationToken);
         }
 
-        return MapToPulseDto(pulse, isLikedByCurrentUser);
+        // 6. Map to DTOs
+        var parentDto = MapToPulseDto(parentPulse, likedPulseIds.Contains(parentPulse.Id));
+        var replyDtos = repliesToReturn
+            .Select(r => MapToPulseDto(r, likedPulseIds.Contains(r.Id)))
+            .ToList();
+
+        return new ThreadResponse(
+            ParentPulse: parentDto,
+            Replies: replyDtos,
+            TotalReplyCount: totalReplyCount,
+            NextCursor: nextCursor,
+            HasMore: hasMore
+        );
     }
 
     private static PulseDto MapToPulseDto(Domain.Pulse.Pulse pulse, bool isLikedByCurrentUser)

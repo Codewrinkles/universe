@@ -177,4 +177,44 @@ public sealed class PulseRepository : IPulseRepository
     {
         _images.Add(image);
     }
+
+    public Task<IReadOnlyList<Pulse>> GetRepliesByParentIdAsync(
+        Guid parentPulseId,
+        int limit,
+        DateTime? beforeCreatedAt,
+        Guid? beforeId,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _pulses
+            .AsNoTracking()
+            .Include(p => p.Author)
+            .Include(p => p.Engagement)
+            .Include(p => p.Image)
+            .Where(p => p.ParentPulseId == parentPulseId && !p.IsDeleted);
+
+        // Cursor-based pagination (chronological order - oldest first for threads)
+        if (beforeCreatedAt.HasValue && beforeId.HasValue)
+        {
+            query = query.Where(p =>
+                p.CreatedAt > beforeCreatedAt.Value ||
+                (p.CreatedAt == beforeCreatedAt.Value && p.Id.CompareTo(beforeId.Value) > 0));
+        }
+
+        query = query
+            .OrderBy(p => p.CreatedAt)  // ASC for chronological thread reading
+            .ThenBy(p => p.Id)
+            .Take(limit);
+
+        return query.ToListAsync<Pulse>(cancellationToken)
+            .ContinueWith(t => (IReadOnlyList<Pulse>)t.Result, cancellationToken);
+    }
+
+    public Task<int> GetReplyCountAsync(
+        Guid parentPulseId,
+        CancellationToken cancellationToken = default)
+    {
+        return _pulses
+            .AsNoTracking()
+            .CountAsync(p => p.ParentPulseId == parentPulseId && !p.IsDeleted, cancellationToken);
+    }
 }

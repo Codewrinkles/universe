@@ -4,6 +4,7 @@ import { useAuth } from "./hooks/useAuth";
 import { ShellLayout } from "./features/shell/ShellLayout";
 import { HomePage } from "./features/home/HomePage";
 import { PulsePage } from "./features/pulse/PulsePage";
+import { ThreadView } from "./features/pulse/ThreadView";
 import { TwinPage } from "./features/twin/TwinPage";
 import { SettingsPage } from "./features/settings/SettingsPage";
 import {
@@ -49,6 +50,7 @@ export function App(): JSX.Element {
       >
         <Route index element={<HomePage />} />
         <Route path="pulse" element={<PulsePage />} />
+        <Route path="pulse/:pulseId" element={<ThreadView />} />
         <Route path="nova" element={<TwinPage />} />
         {/* Redirects for old routes */}
         <Route path="social" element={<Navigate to="/pulse" replace />} />

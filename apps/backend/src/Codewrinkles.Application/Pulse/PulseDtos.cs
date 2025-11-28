@@ -8,6 +8,7 @@ public sealed record PulseDto(
     DateTime CreatedAt,
     PulseEngagementDto Engagement,
     bool IsLikedByCurrentUser,
+    Guid? ParentPulseId,
     RepulsedPulseDto? RepulsedPulse,
     string? ImageUrl
 );
@@ -36,6 +37,14 @@ public sealed record RepulsedPulseDto(
 
 public sealed record FeedResponse(
     IReadOnlyList<PulseDto> Pulses,
+    string? NextCursor,
+    bool HasMore
+);
+
+public sealed record ThreadResponse(
+    PulseDto ParentPulse,
+    IReadOnlyList<PulseDto> Replies,
+    int TotalReplyCount,
     string? NextCursor,
     bool HasMore
 );

@@ -107,4 +107,23 @@ public interface IPulseRepository
     /// Does not save to database - call UnitOfWork.SaveChangesAsync().
     /// </summary>
     void CreateImage(PulseImageEntity image);
+
+    /// <summary>
+    /// Get all replies for a parent pulse, ordered by CreatedAt ASC.
+    /// Includes Author, Engagement, and Image for each reply.
+    /// Excludes deleted replies.
+    /// </summary>
+    Task<IReadOnlyList<PulseEntity>> GetRepliesByParentIdAsync(
+        Guid parentPulseId,
+        int limit,
+        DateTime? beforeCreatedAt,
+        Guid? beforeId,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Get count of replies for a parent pulse (excludes deleted).
+    /// </summary>
+    Task<int> GetReplyCountAsync(
+        Guid parentPulseId,
+        CancellationToken cancellationToken);
 }

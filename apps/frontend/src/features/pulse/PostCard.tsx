@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import type { Post } from "../../types";
 import { PostLinkPreview } from "./PostLinkPreview";
 import { PostRepost } from "./PostRepost";
@@ -8,6 +9,7 @@ import { usePulseLike } from "./hooks/usePulseLike";
 
 export interface PostCardProps {
   post: Post;
+  onReplyClick?: (pulseId: string) => void;
 }
 
 function formatCount(count: number): string {
@@ -101,8 +103,9 @@ function LikeButton({ pulseId, initialIsLiked, initialLikeCount }: LikeButtonPro
   );
 }
 
-export function PostCard({ post }: PostCardProps): JSX.Element {
+export function PostCard({ post, onReplyClick }: PostCardProps): JSX.Element {
   const { author } = post;
+  const navigate = useNavigate();
 
   // Handle avatar URL - if it's a relative path, prepend base URL
   const avatarUrl = author.avatarUrl
@@ -121,8 +124,36 @@ export function PostCard({ post }: PostCardProps): JSX.Element {
   // Extract like status
   const isLikedByCurrentUser = 'isLikedByCurrentUser' in post ? post.isLikedByCurrentUser : false;
 
+  const handleCardClick = (): void => {
+    // If this is a reply, navigate to the parent thread and highlight this reply
+    if (post.type === "reply" && post.parentPulseId) {
+      navigate(`/pulse/${post.parentPulseId}?highlight=${post.id}`);
+      return;
+    }
+
+    // Otherwise, navigate to this pulse's own thread
+    navigate(`/pulse/${post.id}`);
+  };
+
+  const handleReplyButtonClick = (): void => {
+    // If onReplyClick prop is provided (we're in ThreadView), use it
+    if (onReplyClick) {
+      onReplyClick(post.id);
+      return;
+    }
+
+    // Otherwise, navigate to the thread (we're in feed view)
+    const targetPulseId = post.type === "reply" && post.parentPulseId
+      ? post.parentPulseId
+      : post.id;
+    navigate(`/pulse/${targetPulseId}`);
+  };
+
   return (
-    <article className="px-4 py-3 hover:bg-surface-card1/50 transition-colors cursor-pointer">
+    <article
+      className="px-4 py-3 hover:bg-surface-card1/50 transition-colors cursor-pointer"
+      onClick={handleCardClick}
+    >
       <div className="flex gap-3">
         {/* Avatar */}
         <div className="flex-shrink-0">
@@ -196,6 +227,7 @@ export function PostCard({ post }: PostCardProps): JSX.Element {
               count={replyCount}
               hoverColor="hover:text-sky-400 hover:bg-sky-400/10"
               label="Reply"
+              onClick={handleReplyButtonClick}
             />
             <ActionButton
               icon="🔄"

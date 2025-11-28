@@ -62,6 +62,7 @@ export interface Pulse {
   createdAt: string;
   engagement: PulseEngagement;
   isLikedByCurrentUser: boolean;
+  parentPulseId?: string | null;
   imageUrl?: string | null;
   linkPreview?: PulseLinkPreview;
   repulsedPulse?: RepulsedPulse;
@@ -69,6 +70,14 @@ export interface Pulse {
 
 export interface FeedResponse {
   pulses: Pulse[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
+export interface ThreadResponse {
+  parentPulse: Pulse;
+  replies: Pulse[];
+  totalReplyCount: number;
   nextCursor: string | null;
   hasMore: boolean;
 }
