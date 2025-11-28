@@ -21,7 +21,8 @@ export function useIsFollowing(profileId: string): UseIsFollowingResult {
   const [error, setError] = useState<string | null>(null);
 
   const fetchFollowStatus = async (): Promise<void> => {
-    if (!user?.profileId) {
+    // Don't fetch if profileId is empty (happens when initialIsFollowing is provided)
+    if (!profileId || !user?.profileId) {
       setIsFollowing(false);
       return;
     }

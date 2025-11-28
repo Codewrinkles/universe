@@ -34,6 +34,16 @@ public sealed partial class UpdateProfileValidator : IValidator<UpdateProfileCom
             ValidateBio(request.Bio);
         }
 
+        if (!string.IsNullOrWhiteSpace(request.Location))
+        {
+            ValidateLocation(request.Location);
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.WebsiteUrl))
+        {
+            ValidateWebsiteUrl(request.WebsiteUrl);
+        }
+
         // If basic validation fails, return early
         if (_errors.Count > 0)
         {
@@ -104,6 +114,35 @@ public sealed partial class UpdateProfileValidator : IValidator<UpdateProfileCom
             _errors.Add(new ValidationError(
                 nameof(UpdateProfileCommand.Bio),
                 "Bio must be 500 characters or less"));
+        }
+    }
+
+    private void ValidateLocation(string location)
+    {
+        if (location.Length > 100)
+        {
+            _errors.Add(new ValidationError(
+                nameof(UpdateProfileCommand.Location),
+                "Location must be 100 characters or less"));
+        }
+    }
+
+    private void ValidateWebsiteUrl(string websiteUrl)
+    {
+        if (websiteUrl.Length > 500)
+        {
+            _errors.Add(new ValidationError(
+                nameof(UpdateProfileCommand.WebsiteUrl),
+                "Website URL must be 500 characters or less"));
+        }
+
+        // Basic URL format validation
+        if (!Uri.TryCreate(websiteUrl, UriKind.Absolute, out var uri) ||
+            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        {
+            _errors.Add(new ValidationError(
+                nameof(UpdateProfileCommand.WebsiteUrl),
+                "Website URL must be a valid HTTP or HTTPS URL"));
         }
     }
 

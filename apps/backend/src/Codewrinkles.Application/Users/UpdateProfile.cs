@@ -7,7 +7,9 @@ public sealed record UpdateProfileCommand(
     Guid ProfileId,
     string Name,
     string? Bio,
-    string? Handle
+    string? Handle,
+    string? Location,
+    string? WebsiteUrl
 ) : ICommand<UpdateProfileResult>;
 
 public sealed record UpdateProfileResult(
@@ -15,7 +17,9 @@ public sealed record UpdateProfileResult(
     string Name,
     string? Handle,
     string? Bio,
-    string? AvatarUrl
+    string? AvatarUrl,
+    string? Location,
+    string? WebsiteUrl
 );
 
 public sealed class ProfileNotFoundException : Exception
@@ -57,7 +61,9 @@ public sealed class UpdateProfileCommandHandler
         profile.UpdateProfileDetails(
             name: command.Name,
             bio: command.Bio,
-            handle: command.Handle);
+            handle: command.Handle,
+            location: command.Location,
+            websiteUrl: command.WebsiteUrl);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -67,7 +73,9 @@ public sealed class UpdateProfileCommandHandler
             Name: profile.Name,
             Handle: profile.Handle,
             Bio: profile.Bio,
-            AvatarUrl: profile.AvatarUrl
+            AvatarUrl: profile.AvatarUrl,
+            Location: profile.Location,
+            WebsiteUrl: profile.WebsiteUrl
         );
     }
 }

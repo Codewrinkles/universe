@@ -119,6 +119,7 @@ app.UseStaticFiles();
 
 // Map endpoints
 app.MapIdentityEndpoints();
+app.MapProfileEndpoints();
 app.MapPulseEndpoints();
 app.MapSocialEndpoints();
 

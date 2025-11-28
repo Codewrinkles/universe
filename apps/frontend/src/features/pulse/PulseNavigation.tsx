@@ -1,6 +1,5 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
-import { config } from "../../config";
 
 interface NavItemProps {
   to: string;
@@ -35,10 +34,6 @@ function NavItem({ to, icon, label, badge }: NavItemProps): JSX.Element {
 export function PulseNavigation(): JSX.Element {
   const { user } = useAuth();
 
-  const avatarUrl = user?.avatarUrl
-    ? `${config.api.baseUrl}${user.avatarUrl}?t=${Date.now()}`
-    : null;
-
   return (
     <nav className="sticky top-20 z-10 space-y-1">
       <NavItem to="/pulse" icon="🏠" label="Home" />
@@ -46,7 +41,7 @@ export function PulseNavigation(): JSX.Element {
       <NavItem to="/pulse/notifications" icon="🔔" label="Notifications" badge={3} />
       <NavItem to="/pulse/messages" icon="✉️" label="Messages" />
       <NavItem to="/pulse/bookmarks" icon="🔖" label="Bookmarks" />
-      <NavItem to="/pulse/profile" icon="👤" label="Profile" />
+      {user?.handle && <NavItem to={`/pulse/u/${user.handle}`} icon="👤" label="Profile" />}
 
       <div className="pt-4">
         <button
@@ -56,32 +51,6 @@ export function PulseNavigation(): JSX.Element {
           <span className="hidden xl:inline">Post</span>
           <span className="xl:hidden text-lg">✏️</span>
         </button>
-      </div>
-
-      {/* User profile card at bottom */}
-      <div className="pt-6">
-        <div className="flex items-center gap-3 rounded-full px-3 py-2 hover:bg-surface-card1 transition-colors cursor-pointer">
-          {avatarUrl ? (
-            <img
-              src={avatarUrl}
-              alt={user?.name ?? "Profile"}
-              className="h-10 w-10 rounded-full object-cover"
-            />
-          ) : (
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-card2 border border-border text-sm font-semibold text-text-primary">
-              {user?.name?.charAt(0).toUpperCase() ?? "?"}
-            </div>
-          )}
-          <div className="hidden xl:flex flex-col min-w-0">
-            <span className="text-sm font-medium text-text-primary truncate">
-              {user?.name ?? "Guest"}
-            </span>
-            <span className="text-xs text-text-tertiary truncate">
-              @{user?.handle ?? "guest"}
-            </span>
-          </div>
-          <span className="hidden xl:inline ml-auto text-text-tertiary">⋯</span>
-        </div>
       </div>
     </nav>
   );

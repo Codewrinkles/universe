@@ -5,6 +5,7 @@ import { ShellLayout } from "./features/shell/ShellLayout";
 import { HomePage } from "./features/home/HomePage";
 import { PulsePage } from "./features/pulse/PulsePage";
 import { ThreadView } from "./features/pulse/ThreadView";
+import { ProfilePage } from "./features/pulse/ProfilePage";
 import { TwinPage } from "./features/twin/TwinPage";
 import { SettingsPage } from "./features/settings/SettingsPage";
 import {
@@ -42,6 +43,7 @@ export function App(): JSX.Element {
       {/* Public routes with Shell layout - accessible without authentication */}
       <Route path="/" element={<ShellLayout theme={theme} onThemeToggle={toggleTheme} />}>
         <Route path="pulse" element={<PulsePage />} />
+        <Route path="pulse/u/:handle" element={<ProfilePage />} />
         <Route path="pulse/:pulseId" element={<ThreadView />} />
         <Route path="social" element={<Navigate to="/pulse" replace />} />
       </Route>

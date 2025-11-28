@@ -15,6 +15,8 @@ public sealed class Profile
     public string? Handle { get; private set; }
     public string? Bio { get; private set; }
     public string? AvatarUrl { get; private set; }
+    public string? Location { get; private set; }
+    public string? WebsiteUrl { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime UpdatedAt { get; private set; }
 
@@ -38,6 +40,8 @@ public sealed class Profile
             Handle = finalHandle,
             Bio = null,
             AvatarUrl = null,
+            Location = null,
+            WebsiteUrl = null,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -56,7 +60,7 @@ public sealed class Profile
         UpdatedAt = DateTime.UtcNow;
     }
 
-    public void UpdateProfileDetails(string name, string? bio, string? handle)
+    public void UpdateProfileDetails(string name, string? bio, string? handle, string? location, string? websiteUrl)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
@@ -67,6 +71,9 @@ public sealed class Profile
         {
             Handle = handle.Trim().ToLowerInvariant();
         }
+
+        Location = string.IsNullOrWhiteSpace(location) ? null : location.Trim();
+        WebsiteUrl = string.IsNullOrWhiteSpace(websiteUrl) ? null : websiteUrl.Trim();
 
         UpdatedAt = DateTime.UtcNow;
     }

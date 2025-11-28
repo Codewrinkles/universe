@@ -85,6 +85,8 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
       handle: response.handle,
       bio: null,
       avatarUrl: null,
+      location: null,
+      websiteUrl: null,
     };
 
     // Store user data
@@ -113,6 +115,8 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
       handle: response.handle,
       bio: response.bio,
       avatarUrl: response.avatarUrl,
+      location: response.location,
+      websiteUrl: response.websiteUrl,
     };
 
     // Store user data
@@ -162,6 +166,8 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
       handle: response.handle,
       bio: response.bio,
       avatarUrl: response.avatarUrl,
+      location: response.location,
+      websiteUrl: response.websiteUrl,
     };
 
     // Persist to localStorage

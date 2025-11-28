@@ -67,6 +67,8 @@ export function SettingsProfile(): JSX.Element {
   const [name, setName] = useState(user?.name ?? "");
   const [handle, setHandle] = useState(user?.handle ?? "");
   const [bio, setBio] = useState(user?.bio ?? "");
+  const [location, setLocation] = useState(user?.location ?? "");
+  const [websiteUrl, setWebsiteUrl] = useState(user?.websiteUrl ?? "");
 
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
@@ -76,7 +78,9 @@ export function SettingsProfile(): JSX.Element {
   const hasChanges =
     name !== (user?.name ?? "") ||
     handle !== (user?.handle ?? "") ||
-    bio !== (user?.bio ?? "");
+    bio !== (user?.bio ?? "") ||
+    location !== (user?.location ?? "") ||
+    websiteUrl !== (user?.websiteUrl ?? "");
 
   const handleSave = async (): Promise<void> => {
     if (!hasChanges) return;
@@ -90,6 +94,8 @@ export function SettingsProfile(): JSX.Element {
         name,
         handle: handle || null,
         bio: bio || null,
+        location: location || null,
+        websiteUrl: websiteUrl || null,
       });
       setSuccess("Profile updated successfully");
     } catch (err) {
@@ -222,6 +228,24 @@ export function SettingsProfile(): JSX.Element {
             value={bio}
             onChange={setBio}
             placeholder="A short bio about yourself..."
+            maxLength={500}
+            disabled={isSaving}
+          />
+        </div>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <Field
+            label="Location"
+            value={location}
+            onChange={setLocation}
+            placeholder="City, Country"
+            maxLength={100}
+            disabled={isSaving}
+          />
+          <Field
+            label="Website URL"
+            value={websiteUrl}
+            onChange={setWebsiteUrl}
+            placeholder="https://example.com"
             maxLength={500}
             disabled={isSaving}
           />

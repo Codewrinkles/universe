@@ -11,6 +11,7 @@ export function PulsePage(): JSX.Element {
   const { user } = useAuth();
   const [composerValue, setComposerValue] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [replyingToPulseId, setReplyingToPulseId] = useState<string | null>(null);
   const maxChars = 300; // Updated to match backend limit
   const charsLeft = maxChars - composerValue.length;
   const isOverLimit = charsLeft < 0;
@@ -31,6 +32,15 @@ export function PulsePage(): JSX.Element {
       // Error is already handled by the hook
       console.error("Failed to create pulse:", err);
     }
+  };
+
+  const handleReplyClick = (pulseId: string): void => {
+    setReplyingToPulseId(pulseId);
+  };
+
+  const handleReplyCreated = (): void => {
+    setReplyingToPulseId(null);
+    refetch(); // Refresh feed to show updated reply counts
   };
 
   return (
@@ -79,7 +89,13 @@ export function PulsePage(): JSX.Element {
         ) : (
           <>
             <div className="divide-y divide-border">
-              <Feed posts={pulses} onFollowChange={refetch} />
+              <Feed
+                posts={pulses}
+                onFollowChange={refetch}
+                onReplyClick={handleReplyClick}
+                replyingToPulseId={replyingToPulseId}
+                onReplyCreated={handleReplyCreated}
+              />
             </div>
 
             {/* Load More Button */}

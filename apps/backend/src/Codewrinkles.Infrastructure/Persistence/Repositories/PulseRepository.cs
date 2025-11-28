@@ -130,6 +130,7 @@ public sealed class PulseRepository : IPulseRepository
     {
         var query = _pulses
             .AsNoTracking()
+            .Include(p => p.Author)
             .Include(p => p.Engagement)
             .Include(p => p.Image)
             .Include(p => p.RepulsedPulse)

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, Link } from "react-router";
 import type { Post } from "../../types";
 import { PostLinkPreview } from "./PostLinkPreview";
 import { PostRepost } from "./PostRepost";
@@ -109,6 +109,9 @@ export function PostCard({ post, onReplyClick, onFollowChange }: PostCardProps):
   const { author } = post;
   const navigate = useNavigate();
 
+  // Ensure we have a valid handle for profile links
+  const profileHandle = author.handle || 'unknown';
+
   // Handle avatar URL - if it's a relative path, prepend base URL
   const avatarUrl = author.avatarUrl
     ? (author.avatarUrl.startsWith('http') ? author.avatarUrl : `${config.api.baseUrl}${author.avatarUrl}`)
@@ -177,10 +180,20 @@ export function PostCard({ post, onReplyClick, onFollowChange }: PostCardProps):
           {/* Header */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1 text-sm min-w-0">
-              <span className="font-semibold text-text-primary hover:underline truncate">
+              <Link
+                to={`/pulse/u/${profileHandle}`}
+                onClick={(e) => e.stopPropagation()}
+                className="font-semibold text-text-primary hover:underline truncate"
+              >
                 {author.name}
-              </span>
-              <span className="text-text-tertiary truncate">@{author.handle}</span>
+              </Link>
+              <Link
+                to={`/pulse/u/${profileHandle}`}
+                onClick={(e) => e.stopPropagation()}
+                className="text-text-tertiary hover:underline truncate"
+              >
+                @{profileHandle}
+              </Link>
               <span className="text-text-tertiary">·</span>
               <span className="text-text-tertiary hover:underline">{timeAgo}</span>
             </div>

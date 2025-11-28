@@ -119,7 +119,9 @@ public static class IdentityEndpoints
                 ProfileId: profileId,
                 Name: request.Name,
                 Bio: request.Bio,
-                Handle: request.Handle
+                Handle: request.Handle,
+                Location: request.Location,
+                WebsiteUrl: request.WebsiteUrl
             );
 
             var result = await mediator.SendAsync(command, cancellationToken);
@@ -130,7 +132,9 @@ public static class IdentityEndpoints
                 name = result.Name,
                 handle = result.Handle,
                 bio = result.Bio,
-                avatarUrl = result.AvatarUrl
+                avatarUrl = result.AvatarUrl,
+                location = result.Location,
+                websiteUrl = result.WebsiteUrl
             });
         }
         catch (ProfileNotFoundException)
@@ -251,7 +255,9 @@ public sealed record LoginUserRequest(
 public sealed record UpdateProfileRequest(
     string Name,
     string? Bio,
-    string? Handle
+    string? Handle,
+    string? Location,
+    string? WebsiteUrl
 );
 
 public sealed record ChangePasswordRequest(

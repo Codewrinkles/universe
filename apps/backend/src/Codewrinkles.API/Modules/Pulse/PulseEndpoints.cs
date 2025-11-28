@@ -21,6 +21,9 @@ public static class PulseEndpoints
         group.MapGet("", GetFeed)
             .WithName("GetFeed");
 
+        group.MapGet("author/{authorId:guid}", GetPulsesByAuthor)
+            .WithName("GetPulsesByAuthor");
+
         group.MapGet("{id:guid}", GetPulse)
             .WithName("GetPulse");
 
@@ -113,6 +116,51 @@ public static class PulseEndpoints
             var currentUserId = httpContext.GetCurrentProfileIdOrNull();
 
             var query = new GetFeedQuery(
+                CurrentUserId: currentUserId,
+                Cursor: cursor,
+                Limit: limit
+            );
+
+            var result = await mediator.SendAsync(query, cancellationToken);
+
+            return Results.Ok(new
+            {
+                pulses = result.Pulses,
+                nextCursor = result.NextCursor,
+                hasMore = result.HasMore
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Results.Problem(
+                title: "Invalid Cursor",
+                detail: ex.Message,
+                statusCode: 400
+            );
+        }
+    }
+
+    private static async Task<IResult> GetPulsesByAuthor(
+        HttpContext httpContext,
+        Guid authorId,
+        [FromQuery] string? cursor,
+        [FromQuery] int limit,
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Default limit to 20 if not provided or invalid
+            if (limit <= 0 || limit > 100)
+            {
+                limit = 20;
+            }
+
+            // Extract ProfileId from JWT if present (optional auth)
+            var currentUserId = httpContext.GetCurrentProfileIdOrNull();
+
+            var query = new GetPulsesByAuthorQuery(
+                AuthorId: authorId,
                 CurrentUserId: currentUserId,
                 Cursor: cursor,
                 Limit: limit

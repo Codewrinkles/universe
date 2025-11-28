@@ -158,6 +158,8 @@ export interface LoginResponse {
   handle: string | null;
   bio: string | null;
   avatarUrl: string | null;
+  location: string | null;
+  websiteUrl: string | null;
   accessToken: string;
   refreshToken: string;
 }
@@ -170,6 +172,8 @@ export interface User {
   handle: string | null;
   bio: string | null;
   avatarUrl: string | null;
+  location: string | null;
+  websiteUrl: string | null;
 }
 
 // Profile API types
@@ -177,6 +181,8 @@ export interface UpdateProfileRequest {
   name: string;
   bio: string | null;
   handle: string | null;
+  location: string | null;
+  websiteUrl: string | null;
 }
 
 export interface UpdateProfileResponse {
@@ -185,6 +191,8 @@ export interface UpdateProfileResponse {
   handle: string | null;
   bio: string | null;
   avatarUrl: string | null;
+  location: string | null;
+  websiteUrl: string | null;
 }
 
 export interface UploadAvatarResponse {

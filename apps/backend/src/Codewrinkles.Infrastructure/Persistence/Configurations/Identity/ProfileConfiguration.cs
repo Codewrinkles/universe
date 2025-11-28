@@ -39,6 +39,14 @@ public sealed class ProfileConfiguration : IEntityTypeConfiguration<Profile>
             .HasMaxLength(1000)
             .IsRequired(false);
 
+        builder.Property(p => p.Location)
+            .HasMaxLength(100)
+            .IsRequired(false);
+
+        builder.Property(p => p.WebsiteUrl)
+            .HasMaxLength(500)
+            .IsRequired(false);
+
         builder.Property(p => p.CreatedAt)
             .IsRequired()
             .HasDefaultValueSql("GETUTCDATE()");
