@@ -57,6 +57,20 @@ public sealed class LikePulseCommandHandler
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+            // Create notification (only if not liking own pulse)
+            // Get pulse to check author
+            var pulse = await _unitOfWork.Pulses.FindByIdAsync(command.PulseId, cancellationToken);
+            if (pulse is not null && pulse.AuthorId != command.ProfileId)
+            {
+                var notification = Domain.Notification.Notification.CreateLikeNotification(
+                    recipientId: pulse.AuthorId,
+                    actorId: command.ProfileId,
+                    pulseId: pulse.Id);
+
+                _unitOfWork.Notifications.Create(notification);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }
+
             // Commit transaction - like created and count incremented successfully
             await transaction.CommitAsync(cancellationToken);
         }

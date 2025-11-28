@@ -2,6 +2,7 @@ using Codewrinkles.Application;
 using Codewrinkles.Infrastructure;
 using Codewrinkles.Infrastructure.Options;
 using Codewrinkles.API.Modules.Identity;
+using Codewrinkles.API.Modules.Notification;
 using Codewrinkles.API.Modules.Pulse;
 using Codewrinkles.API.Modules.Social;
 using Codewrinkles.API.ExceptionHandlers;
@@ -122,5 +123,6 @@ app.MapIdentityEndpoints();
 app.MapProfileEndpoints();
 app.MapPulseEndpoints();
 app.MapSocialEndpoints();
+app.MapNotificationEndpoints();
 
 app.Run();

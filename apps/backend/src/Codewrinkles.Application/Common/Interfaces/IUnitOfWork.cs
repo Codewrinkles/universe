@@ -8,6 +8,7 @@ public interface IUnitOfWork : IAsyncDisposable
     IProfileRepository Profiles { get; }
     IPulseRepository Pulses { get; }
     IFollowRepository Follows { get; }
+    INotificationRepository Notifications { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 

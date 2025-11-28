@@ -1,4 +1,5 @@
 using Codewrinkles.Domain.Identity;
+using Codewrinkles.Domain.Notification;
 using Codewrinkles.Domain.Pulse;
 using Codewrinkles.Domain.Social;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +26,9 @@ public sealed class ApplicationDbContext : DbContext
 
     // Social schema
     public DbSet<Follow> Follows => Set<Follow>();
+
+    // Notification schema
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

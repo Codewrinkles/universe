@@ -92,6 +92,16 @@ public sealed class CreateRepulseCommandHandler
                 {
                     var mention = PulseMention.Create(repulse.Id, profile.Id, profile.Handle!);
                     _unitOfWork.Pulses.CreateMention(mention);
+
+                    // Create mention notification (only if not mentioning self)
+                    if (profile.Id != command.AuthorId)
+                    {
+                        var mentionNotification = Domain.Notification.Notification.CreateMentionNotification(
+                            recipientId: profile.Id,
+                            actorId: command.AuthorId,
+                            pulseId: repulse.Id);
+                        _unitOfWork.Notifications.Create(mentionNotification);
+                    }
                 }
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
             }
@@ -103,6 +113,18 @@ public sealed class CreateRepulseCommandHandler
             // Repulsed engagement is guaranteed to exist (created with pulse)
             repulsedEngagement!.IncrementRepulseCount();
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            // 6. Create repulse notification (only if not repulsing own pulse)
+            var repulsedPulse = await _unitOfWork.Pulses.FindByIdAsync(command.RepulsedPulseId, cancellationToken);
+            if (repulsedPulse is not null && repulsedPulse.AuthorId != command.AuthorId)
+            {
+                var repulseNotification = Domain.Notification.Notification.CreateRepulseNotification(
+                    recipientId: repulsedPulse.AuthorId,
+                    actorId: command.AuthorId,
+                    pulseId: repulse.Id);
+                _unitOfWork.Notifications.Create(repulseNotification);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }
 
             // Commit transaction - all entities created successfully
             // Database state is now consistent: Repulse + Engagement + (optional) Image + (optional) Mentions + Repulsed pulse count incremented

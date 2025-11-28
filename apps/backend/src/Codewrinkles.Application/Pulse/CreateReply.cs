@@ -92,6 +92,16 @@ public sealed class CreateReplyCommandHandler
                 {
                     var mention = PulseMention.Create(reply.Id, profile.Id, profile.Handle!);
                     _unitOfWork.Pulses.CreateMention(mention);
+
+                    // Create mention notification (only if not mentioning self)
+                    if (profile.Id != command.AuthorId)
+                    {
+                        var mentionNotification = Domain.Notification.Notification.CreateMentionNotification(
+                            recipientId: profile.Id,
+                            actorId: command.AuthorId,
+                            pulseId: reply.Id);
+                        _unitOfWork.Notifications.Create(mentionNotification);
+                    }
                 }
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
             }
@@ -103,6 +113,18 @@ public sealed class CreateReplyCommandHandler
             // Parent engagement is guaranteed to exist (created with pulse)
             parentEngagement!.IncrementReplyCount();
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            // 6. Create reply notification (only if not replying to own pulse)
+            var parentPulse = await _unitOfWork.Pulses.FindByIdAsync(command.ParentPulseId, cancellationToken);
+            if (parentPulse is not null && parentPulse.AuthorId != command.AuthorId)
+            {
+                var replyNotification = Domain.Notification.Notification.CreateReplyNotification(
+                    recipientId: parentPulse.AuthorId,
+                    actorId: command.AuthorId,
+                    pulseId: reply.Id);
+                _unitOfWork.Notifications.Create(replyNotification);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }
 
             // Commit transaction - all entities created successfully
             // Database state is now consistent: Reply + Engagement + (optional) Image + (optional) Mentions + Parent reply count incremented

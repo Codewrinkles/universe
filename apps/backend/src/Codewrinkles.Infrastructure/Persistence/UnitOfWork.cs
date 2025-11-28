@@ -11,19 +11,22 @@ public sealed class UnitOfWork : IUnitOfWork
     private readonly IProfileRepository _profiles;
     private readonly IPulseRepository _pulses;
     private readonly IFollowRepository _follows;
+    private readonly INotificationRepository _notifications;
 
     public UnitOfWork(
         ApplicationDbContext context,
         IIdentityRepository identities,
         IProfileRepository profiles,
         IPulseRepository pulses,
-        IFollowRepository follows)
+        IFollowRepository follows,
+        INotificationRepository notifications)
     {
         _context = context;
         _identities = identities;
         _profiles = profiles;
         _pulses = pulses;
         _follows = follows;
+        _notifications = notifications;
     }
 
     public IIdentityRepository Identities => _identities;
@@ -33,6 +36,8 @@ public sealed class UnitOfWork : IUnitOfWork
     public IPulseRepository Pulses => _pulses;
 
     public IFollowRepository Follows => _follows;
+
+    public INotificationRepository Notifications => _notifications;
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

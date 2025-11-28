@@ -99,6 +99,16 @@ public sealed class CreatePulseCommandHandler
                 {
                     var mention = PulseMention.Create(pulse.Id, profile.Id, profile.Handle!);
                     _unitOfWork.Pulses.CreateMention(mention);
+
+                    // Create mention notification (only if not mentioning self)
+                    if (profile.Id != command.AuthorId)
+                    {
+                        var mentionNotification = Domain.Notification.Notification.CreateMentionNotification(
+                            recipientId: profile.Id,
+                            actorId: command.AuthorId,
+                            pulseId: pulse.Id);
+                        _unitOfWork.Notifications.Create(mentionNotification);
+                    }
                 }
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
             }

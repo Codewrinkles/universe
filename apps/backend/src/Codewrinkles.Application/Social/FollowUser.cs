@@ -37,6 +37,13 @@ public sealed class FollowUserCommandHandler
         // 3. Save changes
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+        // 4. Create follow notification
+        var notification = Domain.Notification.Notification.CreateFollowNotification(
+            recipientId: command.FollowingId,
+            actorId: command.FollowerId);
+        _unitOfWork.Notifications.Create(notification);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
         return new FollowResult(Success: true);
     }
 }

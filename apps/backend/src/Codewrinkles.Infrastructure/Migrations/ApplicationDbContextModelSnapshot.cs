@@ -147,6 +147,54 @@ namespace Codewrinkles.Infrastructure.Migrations
                     b.ToTable("Profiles", "identity");
                 });
 
+            modelBuilder.Entity("Codewrinkles.Domain.Notification.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ActorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("EntityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("EntityType")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsRead")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("RecipientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte>("Type")
+                        .HasColumnType("tinyint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorId");
+
+                    b.HasIndex("RecipientId", "CreatedAt")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("IX_Notifications_RecipientId_CreatedAt");
+
+                    b.HasIndex("RecipientId", "IsRead")
+                        .HasDatabaseName("IX_Notifications_RecipientId_IsRead_Unread")
+                        .HasFilter("[IsRead] = 0");
+
+                    b.ToTable("Notifications", "notification");
+                });
+
             modelBuilder.Entity("Codewrinkles.Domain.Pulse.Pulse", b =>
                 {
                     b.Property<Guid>("Id")
@@ -353,6 +401,25 @@ namespace Codewrinkles.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Identity");
+                });
+
+            modelBuilder.Entity("Codewrinkles.Domain.Notification.Notification", b =>
+                {
+                    b.HasOne("Codewrinkles.Domain.Identity.Profile", "Actor")
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Codewrinkles.Domain.Identity.Profile", "Recipient")
+                        .WithMany()
+                        .HasForeignKey("RecipientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Actor");
+
+                    b.Navigation("Recipient");
                 });
 
             modelBuilder.Entity("Codewrinkles.Domain.Pulse.Pulse", b =>

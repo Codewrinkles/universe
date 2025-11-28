@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import { useUnreadNotificationCount } from "../../hooks/useNotifications";
 
 interface NavItemProps {
   to: string;
@@ -23,7 +24,7 @@ function NavItem({ to, icon, label, badge }: NavItemProps): JSX.Element {
       <span className="text-lg w-6 text-center">{icon}</span>
       <span className="hidden xl:inline">{label}</span>
       {badge !== undefined && badge > 0 && (
-        <span className="ml-auto hidden xl:inline rounded-full bg-sky-500 px-2 py-0.5 text-[10px] font-semibold text-white">
+        <span className="ml-auto hidden xl:inline rounded-full bg-brand-soft px-2 py-0.5 text-[10px] font-semibold text-black">
           {badge > 99 ? "99+" : badge}
         </span>
       )}
@@ -33,12 +34,13 @@ function NavItem({ to, icon, label, badge }: NavItemProps): JSX.Element {
 
 export function PulseNavigation(): JSX.Element {
   const { user } = useAuth();
+  const unreadCount = useUnreadNotificationCount();
 
   return (
     <nav className="sticky top-20 z-10 space-y-1">
       <NavItem to="/pulse" icon="🏠" label="Home" />
       {/* <NavItem to="/pulse/explore" icon="🔍" label="Explore" /> */}
-      <NavItem to="/pulse/notifications" icon="🔔" label="Notifications" badge={3} />
+      <NavItem to="/pulse/notifications" icon="🔔" label="Notifications" badge={unreadCount} />
       <NavItem to="/pulse/messages" icon="✉️" label="Messages" />
       <NavItem to="/pulse/bookmarks" icon="🔖" label="Bookmarks" />
       {user?.handle && <NavItem to={`/pulse/u/${user.handle}`} icon="👤" label="Profile" />}
