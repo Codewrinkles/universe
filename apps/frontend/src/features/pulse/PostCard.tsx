@@ -158,6 +158,7 @@ export function PostCard({ post, onReplyClick, onFollowChange }: PostCardProps):
   };
 
   return (
+    <>
     <article
       className="px-4 py-3 hover:bg-surface-card1/50 transition-colors cursor-pointer"
       onClick={handleCardClick}
@@ -278,7 +279,7 @@ export function PostCard({ post, onReplyClick, onFollowChange }: PostCardProps):
               icon="🔄"
               count={repostCount}
               hoverColor="hover:text-green-400 hover:bg-green-400/10"
-              label="Repost"
+              label="Re-Pulse"
               onClick={() => setShowRepulseModal(true)}
             />
             <LikeButton
@@ -300,15 +301,15 @@ export function PostCard({ post, onReplyClick, onFollowChange }: PostCardProps):
           </div>
         </div>
       </div>
-
-      {/* Repulse Modal */}
-      {showRepulseModal && (
-        <RepulseModal
-          post={post}
-          onClose={() => setShowRepulseModal(false)}
-          onSuccess={onFollowChange}
-        />
-      )}
     </article>
+    {/* Repulse Modal - rendered outside article to prevent event bubbling */}
+    {showRepulseModal && (
+      <RepulseModal
+        post={post}
+        onClose={() => setShowRepulseModal(false)}
+        onSuccess={onFollowChange}
+      />
+    )}
+    </>
   );
 }

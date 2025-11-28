@@ -5,10 +5,12 @@ import { useHandleSearch } from "./useHandleSearch";
 import { MentionAutocomplete } from "./MentionAutocomplete";
 import { useCreatePulse } from "./hooks/useCreatePulse";
 import { useCreateReply } from "./hooks/useCreateReply";
+import { useCreateRepulse } from "./hooks/useCreateRepulse";
 
 export interface UnifiedComposerProps {
-  mode: "post" | "reply";
+  mode: "post" | "reply" | "repulse";
   parentPulseId?: string;
+  repulsedPulseId?: string;
   onSuccess?: () => void;
   placeholder?: string;
   rows?: number;
@@ -18,6 +20,7 @@ export interface UnifiedComposerProps {
 export function UnifiedComposer({
   mode,
   parentPulseId,
+  repulsedPulseId,
   onSuccess,
   placeholder = "What's happening?",
   rows = 3,
@@ -39,11 +42,12 @@ export function UnifiedComposer({
   const { results, search, clearResults } = useHandleSearch();
   const { createPulse, isCreating: isCreatingPulse } = useCreatePulse();
   const { createReply, isCreating: isCreatingReply, error: replyError } = useCreateReply();
+  const { createRepulse, isCreating: isCreatingRepulse, error: repulseError } = useCreateRepulse();
 
   const maxChars = 300;
   const charsLeft = maxChars - value.length;
   const isOverLimit = charsLeft < 0;
-  const isSubmitting = mode === "post" ? isCreatingPulse : isCreatingReply;
+  const isSubmitting = mode === "post" ? isCreatingPulse : mode === "reply" ? isCreatingReply : isCreatingRepulse;
 
   // Clear preview when selectedImage is cleared
   useEffect(() => {
@@ -101,6 +105,8 @@ export function UnifiedComposer({
         await createPulse(value, selectedImage);
       } else if (mode === "reply" && parentPulseId) {
         await createReply(parentPulseId, value, selectedImage);
+      } else if (mode === "repulse" && repulsedPulseId) {
+        await createRepulse(repulsedPulseId, value, selectedImage);
       }
 
       // Clear form on success
@@ -168,8 +174,8 @@ export function UnifiedComposer({
     ? `${config.api.baseUrl}${user.avatarUrl}`
     : null;
 
-  const buttonText = mode === "post" ? "Post" : "Reply";
-  const submittingText = mode === "post" ? "Posting..." : "Replying...";
+  const buttonText = mode === "post" ? "Post" : mode === "reply" ? "Reply" : "Repulse";
+  const submittingText = mode === "post" ? "Posting..." : mode === "reply" ? "Replying..." : "Repulsing...";
 
   return (
     <div className="flex gap-3">
@@ -221,6 +227,9 @@ export function UnifiedComposer({
         )}
         {mode === "reply" && replyError && (
           <div className="text-sm text-red-400">{replyError}</div>
+        )}
+        {mode === "repulse" && repulseError && (
+          <div className="text-sm text-red-400">{repulseError}</div>
         )}
         <div className="flex items-center justify-between border-t border-border pt-3">
           <div className="flex items-center gap-1">
