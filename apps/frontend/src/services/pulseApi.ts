@@ -80,6 +80,27 @@ export const pulseApi = {
   },
 
   /**
+   * Create a repulse (quote/repost with commentary)
+   * ProfileId is extracted from JWT token on the backend
+   */
+  createRepulse(repulsedPulseId: string, content: string, image: File | null): Promise<CreatePulseResponse> {
+    // Use FormData (backend expects multipart/form-data)
+    const formData = new FormData();
+    formData.append("content", content);
+    formData.append("repulsedPulseId", repulsedPulseId);
+
+    if (image) {
+      formData.append("image", image);
+    }
+
+    return apiRequest<CreatePulseResponse>(config.api.endpoints.pulseRepulse, {
+      method: "POST",
+      body: formData,
+      headers: {},
+    });
+  },
+
+  /**
    * Create a reply to a pulse
    * ProfileId is extracted from JWT token on the backend
    */

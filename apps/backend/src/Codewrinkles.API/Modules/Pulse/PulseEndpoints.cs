@@ -35,6 +35,11 @@ public static class PulseEndpoints
             .WithName("UnlikePulse")
             .RequireAuthorization();
 
+        group.MapPost("repulse", CreateRepulse)
+            .WithName("CreateRepulse")
+            .RequireAuthorization()
+            .DisableAntiforgery();
+
         group.MapPost("{parentId:guid}/reply", CreateReply)
             .WithName("CreateReply")
             .RequireAuthorization()
@@ -411,6 +416,65 @@ public static class PulseEndpoints
                 detail: ex.Message,
                 statusCode: 400
             );
+        }
+    }
+
+    private static async Task<IResult> CreateRepulse(
+        HttpContext httpContext,
+        [FromForm] string content,
+        [FromForm] Guid repulsedPulseId,
+        [FromForm] IFormFile? image,
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Extract ProfileId from JWT claims (user can only create repulses as themselves)
+            var authorId = httpContext.GetCurrentProfileId();
+
+            // Open image stream if provided
+            Stream? imageStream = null;
+            if (image is not null)
+            {
+                imageStream = image.OpenReadStream();
+            }
+
+            var command = new CreateRepulseCommand(
+                AuthorId: authorId,
+                RepulsedPulseId: repulsedPulseId,
+                Content: content,
+                ImageStream: imageStream
+            );
+
+            var result = await mediator.SendAsync(command, cancellationToken);
+
+            return Results.Created($"/api/pulse/{result.PulseId}", new
+            {
+                pulseId = result.PulseId,
+                content = result.Content,
+                createdAt = result.CreatedAt,
+                imageUrl = result.ImageUrl
+            });
+        }
+        catch (PulseNotFoundException)
+        {
+            return Results.NotFound(new { error = "Repulsed pulse not found" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Results.Problem(
+                title: "Invalid Operation",
+                detail: ex.Message,
+                statusCode: 400
+            );
+        }
+        finally
+        {
+            // Dispose the image stream if it was opened
+            if (image is not null)
+            {
+                await image.OpenReadStream().DisposeAsync();
+            }
         }
     }
 }

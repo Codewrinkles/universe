@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router";
 import type { Post } from "../../types";
 import { PostLinkPreview } from "./PostLinkPreview";
 import { PostRepost } from "./PostRepost";
+import { RepulseModal } from "./RepulseModal";
 import { formatTimeAgo } from "../../utils/timeUtils";
 import { config } from "../../config";
 import { usePulseLike } from "./hooks/usePulseLike";
@@ -109,6 +110,7 @@ function LikeButton({ pulseId, initialIsLiked, initialLikeCount }: LikeButtonPro
 export function PostCard({ post, onReplyClick, onFollowChange }: PostCardProps): JSX.Element {
   const { author } = post;
   const navigate = useNavigate();
+  const [showRepulseModal, setShowRepulseModal] = useState(false);
 
   // Ensure we have a valid handle for profile links
   const profileHandle = author.handle || 'unknown';
@@ -277,6 +279,7 @@ export function PostCard({ post, onReplyClick, onFollowChange }: PostCardProps):
               count={repostCount}
               hoverColor="hover:text-green-400 hover:bg-green-400/10"
               label="Repost"
+              onClick={() => setShowRepulseModal(true)}
             />
             <LikeButton
               pulseId={post.id}
@@ -297,6 +300,15 @@ export function PostCard({ post, onReplyClick, onFollowChange }: PostCardProps):
           </div>
         </div>
       </div>
+
+      {/* Repulse Modal */}
+      {showRepulseModal && (
+        <RepulseModal
+          post={post}
+          onClose={() => setShowRepulseModal(false)}
+          onSuccess={onFollowChange}
+        />
+      )}
     </article>
   );
 }
