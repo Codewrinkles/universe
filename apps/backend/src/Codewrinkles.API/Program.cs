@@ -3,6 +3,7 @@ using Codewrinkles.Infrastructure;
 using Codewrinkles.Infrastructure.Options;
 using Codewrinkles.API.Modules.Identity;
 using Codewrinkles.API.Modules.Pulse;
+using Codewrinkles.API.Modules.Social;
 using Codewrinkles.API.ExceptionHandlers;
 using Codewrinkles.API.Authorization.Requirements;
 using Codewrinkles.API.Authorization.Handlers;
@@ -119,5 +120,6 @@ app.UseStaticFiles();
 // Map endpoints
 app.MapIdentityEndpoints();
 app.MapPulseEndpoints();
+app.MapSocialEndpoints();
 
 app.Run();

@@ -22,8 +22,11 @@ public interface IPulseRepository
     /// <summary>
     /// Get paginated feed of pulses (not deleted), ordered by CreatedAt DESC.
     /// Includes Author and Engagement.
+    /// If currentUserId is provided, filters to show only pulses from followed users + own pulses.
+    /// If currentUserId is null, returns all pulses (public feed).
     /// </summary>
     Task<IReadOnlyList<PulseEntity>> GetFeedAsync(
+        Guid? currentUserId,
         int limit,
         DateTime? beforeCreatedAt,
         Guid? beforeId,

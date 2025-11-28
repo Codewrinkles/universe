@@ -38,6 +38,7 @@ public sealed class GetFeedQueryHandler : ICommandHandler<GetFeedQuery, FeedResp
 
         // Fetch pulses from repository
         var pulses = await _unitOfWork.Pulses.GetFeedAsync(
+            currentUserId: query.CurrentUserId,
             limit: query.Limit + 1, // Fetch one extra to determine if there are more
             beforeCreatedAt: beforeCreatedAt,
             beforeId: beforeId,

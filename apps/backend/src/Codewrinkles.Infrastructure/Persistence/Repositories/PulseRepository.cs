@@ -1,5 +1,6 @@
 using Codewrinkles.Application.Common.Interfaces;
 using Codewrinkles.Domain.Pulse;
+using Codewrinkles.Domain.Social;
 using Microsoft.EntityFrameworkCore;
 
 namespace Codewrinkles.Infrastructure.Persistence.Repositories;
@@ -11,6 +12,7 @@ public sealed class PulseRepository : IPulseRepository
     private readonly DbSet<PulseEngagement> _engagements;
     private readonly DbSet<PulseLike> _likes;
     private readonly DbSet<PulseImage> _images;
+    private readonly DbSet<Follow> _follows;
 
     public PulseRepository(ApplicationDbContext context)
     {
@@ -19,6 +21,7 @@ public sealed class PulseRepository : IPulseRepository
         _engagements = context.Set<PulseEngagement>();
         _likes = context.Set<PulseLike>();
         _images = context.Set<PulseImage>();
+        _follows = context.Set<Follow>();
     }
 
     public async Task<Pulse?> FindByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -38,20 +41,50 @@ public sealed class PulseRepository : IPulseRepository
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
     }
 
-    public Task<IReadOnlyList<Pulse>> GetFeedAsync(
+    public async Task<IReadOnlyList<Pulse>> GetFeedAsync(
+        Guid? currentUserId,
         int limit,
         DateTime? beforeCreatedAt,
         Guid? beforeId,
         CancellationToken cancellationToken = default)
     {
-        var query = _pulses
-            .AsNoTracking()
-            .Include(p => p.Author)
-            .Include(p => p.Engagement)
-            .Include(p => p.Image)
-            .Include(p => p.RepulsedPulse)
-                .ThenInclude(rp => rp!.Author)
-            .Where(p => !p.IsDeleted);
+        IQueryable<Pulse> query;
+
+        if (currentUserId.HasValue)
+        {
+            // AUTHENTICATED USER: Show pulses from followed users + own pulses
+
+            // Step 1: Get IDs of users I'm following
+            var followingIds = await _follows
+                .Where(f => f.FollowerId == currentUserId.Value)
+                .Select(f => f.FollowingId)
+                .ToListAsync(cancellationToken);
+
+            // Step 2: Include my own ID (see my own pulses)
+            followingIds.Add(currentUserId.Value);
+
+            // Step 3: Get pulses from followed users + myself
+            query = _pulses
+                .AsNoTracking()
+                .Include(p => p.Author)
+                .Include(p => p.Engagement)
+                .Include(p => p.Image)
+                .Include(p => p.RepulsedPulse)
+                    .ThenInclude(rp => rp!.Author)
+                .Where(p => !p.IsDeleted && followingIds.Contains(p.AuthorId));
+        }
+        else
+        {
+            // UNAUTHENTICATED USER: Show all pulses (public feed)
+            query = _pulses
+                .AsNoTracking()
+                .Include(p => p.Author)
+                .Include(p => p.Engagement)
+                .Include(p => p.Image)
+                .Include(p => p.RepulsedPulse)
+                    .ThenInclude(rp => rp!.Author)
+                .Where(p => !p.IsDeleted);
+        }
 
         // Cursor-based pagination
         if (beforeCreatedAt.HasValue && beforeId.HasValue)
@@ -66,8 +99,7 @@ public sealed class PulseRepository : IPulseRepository
             .ThenByDescending(p => p.Id)
             .Take(limit);
 
-        return query.ToListAsync<Pulse>(cancellationToken)
-            .ContinueWith(t => (IReadOnlyList<Pulse>)t.Result, cancellationToken);
+        return await query.ToListAsync<Pulse>(cancellationToken);
     }
 
     public Task<IReadOnlyList<Pulse>> GetByAuthorIdAsync(

@@ -1,5 +1,6 @@
 using Codewrinkles.Domain.Identity;
 using Codewrinkles.Domain.Pulse;
+using Codewrinkles.Domain.Social;
 using Microsoft.EntityFrameworkCore;
 
 namespace Codewrinkles.Infrastructure.Persistence;
@@ -20,6 +21,9 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<PulseEngagement> PulseEngagements => Set<PulseEngagement>();
     public DbSet<PulseLike> PulseLikes => Set<PulseLike>();
     public DbSet<PulseImage> PulseImages => Set<PulseImage>();
+
+    // Social schema
+    public DbSet<Follow> Follows => Set<Follow>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
