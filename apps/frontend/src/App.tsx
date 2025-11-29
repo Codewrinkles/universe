@@ -19,7 +19,7 @@ import {
 } from "./features/settings/SettingsSections";
 import { LoginPage } from "./features/auth/LoginPage";
 import { RegisterPage } from "./features/auth/RegisterPage";
-import { OnboardingPage } from "./features/onboarding/OnboardingPage";
+import { OnboardingFlow } from "./features/onboarding/OnboardingFlow";
 import { ProtectedRoute } from "./features/auth/ProtectedRoute";
 
 /**
@@ -75,7 +75,7 @@ export function App(): JSX.Element {
           <Route path="apps" element={<SettingsApps />} />
           <Route path="notifications" element={<SettingsNotifications />} />
         </Route>
-        <Route path="onboarding" element={<OnboardingPage />} />
+        <Route path="onboarding" element={<OnboardingFlow />} />
       </Route>
 
       {/* Public routes - accessible without authentication */}

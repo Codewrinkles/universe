@@ -492,4 +492,13 @@ public sealed class PulseRepository : IPulseRepository
             Mentions: await mentionsTask
         );
     }
+
+    public async Task<int> GetPulseCountByAuthorAsync(
+        Guid authorId,
+        CancellationToken cancellationToken)
+    {
+        return await _pulses
+            .Where(p => p.AuthorId == authorId && !p.IsDeleted)
+            .CountAsync(cancellationToken);
+    }
 }

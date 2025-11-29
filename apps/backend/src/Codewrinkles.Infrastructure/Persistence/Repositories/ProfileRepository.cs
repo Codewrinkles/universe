@@ -86,4 +86,35 @@ public sealed class ProfileRepository : IProfileRepository
 
         return profiles;
     }
+
+    public async Task<IReadOnlyList<Profile>> GetMostFollowedProfilesAsync(
+        int limit,
+        Guid? excludeProfileId,
+        CancellationToken cancellationToken)
+    {
+        // Get profiles ordered by follower count using a JOIN with Follow table
+        var follows = _context.Set<Codewrinkles.Domain.Social.Follow>();
+
+        var query = _profiles.AsNoTracking();
+
+        // Exclude specific profile if provided (e.g., current user)
+        if (excludeProfileId.HasValue)
+        {
+            query = query.Where(p => p.Id != excludeProfileId.Value);
+        }
+
+        var profiles = await query
+            .GroupJoin(
+                follows,
+                profile => profile.Id,
+                follow => follow.FollowingId,
+                (profile, followGroup) => new { Profile = profile, FollowCount = followGroup.Count() })
+            .OrderByDescending(x => x.FollowCount)
+            .ThenByDescending(x => x.Profile.CreatedAt)
+            .Take(limit)
+            .Select(x => x.Profile)
+            .ToListAsync(cancellationToken);
+
+        return profiles;
+    }
 }

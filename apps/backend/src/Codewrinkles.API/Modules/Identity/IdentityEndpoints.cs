@@ -30,6 +30,14 @@ public static class IdentityEndpoints
         group.MapPost("/change-password", ChangePassword)
             .WithName("ChangePassword")
             .RequireAuthorization();
+
+        group.MapGet("/onboarding/status", GetOnboardingStatus)
+            .WithName("GetOnboardingStatus")
+            .RequireAuthorization();
+
+        group.MapPost("/onboarding/complete", CompleteOnboarding)
+            .WithName("CompleteOnboarding")
+            .RequireAuthorization();
     }
 
     private static async Task<IResult> RegisterUser(
@@ -237,6 +245,32 @@ public static class IdentityEndpoints
                 statusCode: 400
             );
         }
+    }
+
+    private static async Task<IResult> GetOnboardingStatus(
+        HttpContext httpContext,
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var profileId = httpContext.GetCurrentProfileId();
+
+        var query = new GetOnboardingStatusQuery(profileId);
+        var result = await mediator.SendAsync(query, cancellationToken);
+
+        return Results.Ok(result);
+    }
+
+    private static async Task<IResult> CompleteOnboarding(
+        HttpContext httpContext,
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var profileId = httpContext.GetCurrentProfileId();
+
+        var command = new CompleteOnboardingCommand(profileId);
+        await mediator.SendAsync(command, cancellationToken);
+
+        return Results.NoContent();
     }
 }
 

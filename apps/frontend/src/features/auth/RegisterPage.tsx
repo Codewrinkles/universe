@@ -36,8 +36,9 @@ export function RegisterPage(): JSX.Element {
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [justRegistered, setJustRegistered] = useState(false);
 
-  // Redirect if already authenticated
+  // Show loading state while checking authentication
   if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -46,7 +47,9 @@ export function RegisterPage(): JSX.Element {
     );
   }
 
-  if (isAuthenticated) {
+  // Redirect authenticated users away from registration page
+  // UNLESS they just registered (in which case we need to navigate them to onboarding)
+  if (isAuthenticated && !justRegistered) {
     return <Navigate to="/" replace />;
   }
 
@@ -99,8 +102,11 @@ export function RegisterPage(): JSX.Element {
         handle: handle.trim() || undefined,
       });
 
-      // Registration successful - navigate to home
-      navigate("/", { replace: true });
+      // Mark that we just registered to bypass auth guard
+      setJustRegistered(true);
+
+      // Registration successful - navigate to onboarding
+      navigate("/onboarding", { replace: true });
     } catch (error) {
       if (error instanceof ApiError) {
         // Handle validation errors from server

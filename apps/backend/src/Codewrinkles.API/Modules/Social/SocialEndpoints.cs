@@ -40,6 +40,10 @@ public static class SocialEndpoints
         group.MapGet("suggestions", GetSuggestedProfiles)
             .WithName("GetSuggestedProfiles")
             .RequireAuthorization();
+
+        // Get popular profiles (most followed)
+        group.MapGet("popular", GetPopularProfiles)
+            .WithName("GetPopularProfiles");
     }
 
     private static async Task<IResult> FollowUser(
@@ -274,5 +278,30 @@ public static class SocialEndpoints
                 statusCode: 400
             );
         }
+    }
+
+    private static async Task<IResult> GetPopularProfiles(
+        HttpContext httpContext,
+        [FromQuery] int limit,
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        // Default limit to 10 if not provided or invalid
+        if (limit <= 0 || limit > 50)
+        {
+            limit = 10;
+        }
+
+        // Extract current user if authenticated (to exclude them from results)
+        Guid? currentUserId = null;
+        if (httpContext.User.Identity?.IsAuthenticated == true)
+        {
+            currentUserId = httpContext.GetCurrentProfileId();
+        }
+
+        var query = new GetPopularProfilesQuery(Limit: limit, ExcludeProfileId: currentUserId);
+        var result = await mediator.SendAsync(query, cancellationToken);
+
+        return Results.Ok(new { profiles = result.Profiles });
     }
 }

@@ -17,6 +17,7 @@ public sealed class Profile
     public string? AvatarUrl { get; private set; }
     public string? Location { get; private set; }
     public string? WebsiteUrl { get; private set; }
+    public bool OnboardingCompleted { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime UpdatedAt { get; private set; }
 
@@ -42,6 +43,7 @@ public sealed class Profile
             AvatarUrl = null,
             Location = null,
             WebsiteUrl = null,
+            OnboardingCompleted = false,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -81,6 +83,12 @@ public sealed class Profile
     public void UpdateAvatarUrl(string? avatarUrl)
     {
         AvatarUrl = string.IsNullOrWhiteSpace(avatarUrl) ? null : avatarUrl.Trim();
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void CompleteOnboarding()
+    {
+        OnboardingCompleted = true;
         UpdatedAt = DateTime.UtcNow;
     }
 

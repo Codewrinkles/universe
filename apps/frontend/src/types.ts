@@ -214,6 +214,16 @@ export interface UpdateProfileResponse {
   websiteUrl: string | null;
 }
 
+// Onboarding API types
+export interface OnboardingStatus {
+  isCompleted: boolean;
+  hasHandle: boolean;
+  hasBio: boolean;
+  hasAvatar: boolean;
+  hasPostedPulse: boolean;
+  followingCount: number;
+}
+
 export interface UploadAvatarResponse {
   profileId: string;
   avatarUrl: string;

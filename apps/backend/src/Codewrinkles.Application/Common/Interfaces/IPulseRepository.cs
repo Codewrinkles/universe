@@ -178,6 +178,13 @@ public interface IPulseRepository
         CancellationToken cancellationToken);
 
     /// <summary>
+    /// Get count of pulses by author (excludes deleted).
+    /// </summary>
+    Task<int> GetPulseCountByAuthorAsync(
+        Guid authorId,
+        CancellationToken cancellationToken);
+
+    /// <summary>
     /// Create a pulse mention.
     /// Does not save to database - call UnitOfWork.SaveChangesAsync().
     /// </summary>

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Card } from "../../components/ui/Card";
 import { useSuggestedProfiles } from "../social/hooks/useSuggestedProfiles";
 import { FollowButton } from "../social/components/FollowButton";
@@ -35,10 +36,10 @@ function UserSuggestion({ user, onFollowChange }: UserSuggestionProps): JSX.Elem
       {getAvatarDisplay()}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-text-primary truncate">{user.name}</p>
+          <Link to={`/pulse/u/${user.handle}`} className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-text-primary truncate hover:underline">{user.name}</p>
             <p className="text-xs text-text-tertiary truncate">@{user.handle}</p>
-          </div>
+          </Link>
           <FollowButton profileId={user.profileId} size="sm" onFollowChange={onFollowChange} />
         </div>
         {user.bio && (

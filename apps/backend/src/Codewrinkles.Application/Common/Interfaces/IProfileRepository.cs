@@ -50,4 +50,14 @@ public interface IProfileRepository
     Task<IReadOnlyList<Profile>> FindByHandlesAsync(
         IEnumerable<string> handles,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get most followed profiles ordered by follower count.
+    /// Returns profiles with most followers first.
+    /// Optionally excludes a specific profile (e.g., current user).
+    /// </summary>
+    Task<IReadOnlyList<Profile>> GetMostFollowedProfilesAsync(
+        int limit,
+        Guid? excludeProfileId,
+        CancellationToken cancellationToken);
 }
