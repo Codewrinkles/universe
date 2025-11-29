@@ -397,11 +397,6 @@ export function PostCard({ post, onReplyClick, onFollowChange, onDelete }: PostC
               label={isBookmarked ? "Remove bookmark" : "Bookmark"}
               onClick={handleBookmarkClick}
             />
-            <ActionButton
-              icon="↗️"
-              hoverColor="hover:text-brand-soft hover:bg-brand-soft/10"
-              label="Share"
-            />
           </div>
         </div>
       </div>
