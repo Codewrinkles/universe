@@ -30,6 +30,7 @@ public sealed class Pulse
     public Pulse? ParentPulse { get; private set; }
     public PulseEngagement Engagement { get; private set; }
     public PulseImage? Image { get; private set; }
+    public PulseLinkPreview? LinkPreview { get; private set; }
 
     // Factory methods
     public static Pulse Create(Guid authorId, string content)

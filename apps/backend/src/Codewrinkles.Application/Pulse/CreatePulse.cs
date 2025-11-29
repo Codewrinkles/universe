@@ -25,15 +25,18 @@ public sealed class CreatePulseCommandHandler
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPulseImageService _pulseImageService;
     private readonly IProfileRepository _profileRepository;
+    private readonly ILinkPreviewService _linkPreviewService;
 
     public CreatePulseCommandHandler(
         IUnitOfWork unitOfWork,
         IPulseImageService pulseImageService,
-        IProfileRepository profileRepository)
+        IProfileRepository profileRepository,
+        ILinkPreviewService linkPreviewService)
     {
         _unitOfWork = unitOfWork;
         _pulseImageService = pulseImageService;
         _profileRepository = profileRepository;
+        _linkPreviewService = linkPreviewService;
     }
 
     public async Task<CreatePulseResult> HandleAsync(
@@ -111,6 +114,29 @@ public sealed class CreatePulseCommandHandler
                     }
                 }
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }
+
+            // 5. Generate link preview if URL detected
+            var firstUrl = _linkPreviewService.ExtractFirstUrl(pulse.Content);
+            if (firstUrl is not null)
+            {
+                var previewData = await _linkPreviewService.FetchPreviewAsync(
+                    firstUrl,
+                    cancellationToken);
+
+                if (previewData is not null)
+                {
+                    var linkPreview = PulseLinkPreview.Create(
+                        pulseId: pulse.Id,
+                        url: previewData.Url,
+                        title: previewData.Title,
+                        domain: previewData.Domain,
+                        description: previewData.Description,
+                        imageUrl: previewData.ImageUrl);
+
+                    _unitOfWork.Pulses.CreateLinkPreview(linkPreview);
+                    await _unitOfWork.SaveChangesAsync(cancellationToken);
+                }
             }
 
             // Commit transaction - all entities created successfully

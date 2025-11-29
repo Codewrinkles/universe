@@ -3,6 +3,7 @@ using PulseEngagementEntity = Codewrinkles.Domain.Pulse.PulseEngagement;
 using PulseLikeEntity = Codewrinkles.Domain.Pulse.PulseLike;
 using PulseImageEntity = Codewrinkles.Domain.Pulse.PulseImage;
 using PulseMentionEntity = Codewrinkles.Domain.Pulse.PulseMention;
+using PulseLinkPreviewEntity = Codewrinkles.Domain.Pulse.PulseLinkPreview;
 
 namespace Codewrinkles.Application.Common.Interfaces;
 
@@ -150,6 +151,12 @@ public interface IPulseRepository
     /// Does not save to database - call UnitOfWork.SaveChangesAsync().
     /// </summary>
     void CreateImage(PulseImageEntity image);
+
+    /// <summary>
+    /// Create a pulse link preview.
+    /// Does not save to database - call UnitOfWork.SaveChangesAsync().
+    /// </summary>
+    void CreateLinkPreview(PulseLinkPreviewEntity linkPreview);
 
     /// <summary>
     /// Get all replies for a parent pulse, ordered by CreatedAt ASC.

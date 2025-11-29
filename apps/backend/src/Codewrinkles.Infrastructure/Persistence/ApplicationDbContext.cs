@@ -22,6 +22,7 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<PulseEngagement> PulseEngagements => Set<PulseEngagement>();
     public DbSet<PulseLike> PulseLikes => Set<PulseLike>();
     public DbSet<PulseImage> PulseImages => Set<PulseImage>();
+    public DbSet<PulseLinkPreview> PulseLinkPreviews => Set<PulseLinkPreview>();
     public DbSet<PulseMention> PulseMentions => Set<PulseMention>();
     public DbSet<PulseBookmark> PulseBookmarks => Set<PulseBookmark>();
 

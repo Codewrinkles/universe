@@ -68,6 +68,14 @@ public static class DependencyInjection
         services.AddScoped<IAvatarService, AvatarService>();
         services.AddScoped<IPulseImageService, PulseImageService>();
 
+        // HttpClient for LinkPreviewService
+        services.AddHttpClient("LinkPreview", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(5);
+            client.DefaultRequestHeaders.Add("User-Agent", "Codewrinkles/1.0");
+        });
+        services.AddScoped<ILinkPreviewService, LinkPreviewService>();
+
         return services;
     }
 }

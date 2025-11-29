@@ -13,6 +13,7 @@ public sealed record PulseDto(
     Guid? ParentPulseId,
     RepulsedPulseDto? RepulsedPulse,
     string? ImageUrl,
+    PulseLinkPreviewDto? LinkPreview,
     List<MentionDto> Mentions
 );
 
@@ -41,6 +42,14 @@ public sealed record RepulsedPulseDto(
     string Content,
     DateTime CreatedAt,
     bool IsDeleted
+);
+
+public sealed record PulseLinkPreviewDto(
+    string Url,
+    string Title,
+    string? Description,
+    string? ImageUrl,
+    string Domain
 );
 
 public sealed record FeedResponse(

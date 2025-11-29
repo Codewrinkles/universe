@@ -113,6 +113,14 @@ public sealed class GetBookmarkedPulsesQueryHandler : ICommandHandler<GetBookmar
                 ? MapToRepulsedPulseDto(pulse.RepulsedPulse)
                 : null,
             ImageUrl: pulse.Image?.Url,
+            LinkPreview: pulse.LinkPreview is not null
+                ? new PulseLinkPreviewDto(
+                    Url: pulse.LinkPreview.Url,
+                    Title: pulse.LinkPreview.Title,
+                    Description: pulse.LinkPreview.Description,
+                    ImageUrl: pulse.LinkPreview.ImageUrl,
+                    Domain: pulse.LinkPreview.Domain)
+                : null,
             Mentions: mentions
         );
     }

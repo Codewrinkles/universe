@@ -17,11 +17,11 @@ export function PostLinkPreview({ link }: PostLinkPreviewProps): JSX.Element {
     >
       {/* Link image */}
       {link.imageUrl && (
-        <div className="border-b border-border">
+        <div className="border-b border-border bg-black/5 dark:bg-black/20 flex items-center justify-center">
           <img
             src={link.imageUrl}
             alt={link.title}
-            className="w-full h-48 object-cover"
+            className="w-full max-h-80 object-contain"
           />
         </div>
       )}

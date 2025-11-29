@@ -13,6 +13,7 @@ public sealed class PulseRepository : IPulseRepository
     private readonly DbSet<PulseEngagement> _engagements;
     private readonly DbSet<PulseLike> _likes;
     private readonly DbSet<PulseImage> _images;
+    private readonly DbSet<PulseLinkPreview> _linkPreviews;
     private readonly DbSet<PulseMention> _mentions;
     private readonly DbSet<Follow> _follows;
 
@@ -26,6 +27,7 @@ public sealed class PulseRepository : IPulseRepository
         _engagements = context.Set<PulseEngagement>();
         _likes = context.Set<PulseLike>();
         _images = context.Set<PulseImage>();
+        _linkPreviews = context.Set<PulseLinkPreview>();
         _mentions = context.Set<PulseMention>();
         _follows = context.Set<Follow>();
     }
@@ -42,6 +44,7 @@ public sealed class PulseRepository : IPulseRepository
             .Include(p => p.Author)
             .Include(p => p.Engagement)
             .Include(p => p.Image)
+            .Include(p => p.LinkPreview)
             .Include(p => p.RepulsedPulse)
                 .ThenInclude(rp => rp!.Author)
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
@@ -76,6 +79,7 @@ public sealed class PulseRepository : IPulseRepository
                     .Include(p => p.Author)
                     .Include(p => p.Engagement)
                     .Include(p => p.Image)
+                    .Include(p => p.LinkPreview)
                     .Include(p => p.RepulsedPulse)
                         .ThenInclude(rp => rp!.Author)
                     .Where(p => !p.IsDeleted);
@@ -93,6 +97,7 @@ public sealed class PulseRepository : IPulseRepository
                     .Include(p => p.Author)
                     .Include(p => p.Engagement)
                     .Include(p => p.Image)
+                    .Include(p => p.LinkPreview)
                     .Include(p => p.RepulsedPulse)
                         .ThenInclude(rp => rp!.Author)
                     .Where(p => !p.IsDeleted && followingIds.Contains(p.AuthorId));
@@ -106,6 +111,7 @@ public sealed class PulseRepository : IPulseRepository
                 .Include(p => p.Author)
                 .Include(p => p.Engagement)
                 .Include(p => p.Image)
+                .Include(p => p.LinkPreview)
                 .Include(p => p.RepulsedPulse)
                     .ThenInclude(rp => rp!.Author)
                 .Where(p => !p.IsDeleted);
@@ -139,6 +145,7 @@ public sealed class PulseRepository : IPulseRepository
             .Include(p => p.Author)
             .Include(p => p.Engagement)
             .Include(p => p.Image)
+            .Include(p => p.LinkPreview)
             .Include(p => p.RepulsedPulse)
                 .ThenInclude(rp => rp!.Author)
             .Where(p => p.AuthorId == authorId && !p.IsDeleted);
@@ -236,6 +243,11 @@ public sealed class PulseRepository : IPulseRepository
         _images.Add(image);
     }
 
+    public void CreateLinkPreview(PulseLinkPreview linkPreview)
+    {
+        _linkPreviews.Add(linkPreview);
+    }
+
     public Task<IReadOnlyList<Pulse>> GetRepliesByParentIdAsync(
         Guid parentPulseId,
         int limit,
@@ -248,6 +260,7 @@ public sealed class PulseRepository : IPulseRepository
             .Include(p => p.Author)
             .Include(p => p.Engagement)
             .Include(p => p.Image)
+            .Include(p => p.LinkPreview)
             .Where(p => p.ParentPulseId == parentPulseId && !p.IsDeleted);
 
         // Cursor-based pagination (chronological order - oldest first for threads)
