@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.RegularExpressions;
 using HtmlAgilityPack;
 using Codewrinkles.Application.Common.Interfaces;
@@ -57,6 +58,10 @@ public sealed class LinkPreviewService : ILinkPreviewService
                 ?? GetMetaContent(doc, "description");
 
             var imageUrl = GetMetaContent(doc, "og:image");
+
+            // Decode HTML entities (e.g., &amp; → &, &quot; → ", &#39; → ')
+            title = WebUtility.HtmlDecode(title);
+            description = description is not null ? WebUtility.HtmlDecode(description) : null;
 
             return new LinkPreviewData(
                 Url: url,
