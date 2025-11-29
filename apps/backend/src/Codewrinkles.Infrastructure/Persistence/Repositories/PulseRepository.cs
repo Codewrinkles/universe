@@ -501,4 +501,11 @@ public sealed class PulseRepository : IPulseRepository
             .Where(p => p.AuthorId == authorId && !p.IsDeleted)
             .CountAsync(cancellationToken);
     }
+
+    public async Task<int> GetTotalCountAsync(CancellationToken cancellationToken)
+    {
+        return await _pulses
+            .Where(p => !p.IsDeleted)
+            .CountAsync(cancellationToken);
+    }
 }

@@ -160,6 +160,7 @@ export interface RegisterResponse {
   email: string;
   name: string;
   handle: string | null;
+  role: string;
   accessToken: string;
   refreshToken: string;
 }
@@ -179,6 +180,7 @@ export interface LoginResponse {
   avatarUrl: string | null;
   location: string | null;
   websiteUrl: string | null;
+  role: string;
   accessToken: string;
   refreshToken: string;
 }
@@ -193,6 +195,7 @@ export interface User {
   avatarUrl: string | null;
   location: string | null;
   websiteUrl: string | null;
+  role: string;
 }
 
 // Profile API types

@@ -15,6 +15,7 @@ public sealed class Identity
     public string PasswordHash { get; private set; }
     public bool IsEmailVerified { get; private set; }
     public bool IsActive { get; private set; }
+    public UserRole Role { get; private set; }
     public int FailedLoginAttempts { get; private set; }
     public DateTime? LockedUntil { get; private set; }
     public DateTime CreatedAt { get; private set; }
@@ -38,6 +39,7 @@ public sealed class Identity
             PasswordHash = passwordHash,
             IsEmailVerified = false,
             IsActive = true,
+            Role = UserRole.User,
             FailedLoginAttempts = 0,
             LockedUntil = null,
             CreatedAt = DateTime.UtcNow,
@@ -95,6 +97,12 @@ public sealed class Identity
         ArgumentException.ThrowIfNullOrWhiteSpace(newPasswordHash, nameof(newPasswordHash));
 
         PasswordHash = newPasswordHash;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void PromoteToAdmin()
+    {
+        Role = UserRole.Admin;
         UpdatedAt = DateTime.UtcNow;
     }
 }

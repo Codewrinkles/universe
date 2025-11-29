@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import type { App } from "../../types";
+import { useAuth } from "../../hooks/useAuth";
 
 interface AppWithPath extends App {
   path?: string;
@@ -27,6 +28,15 @@ function getAccentClass(accent: App["accent"]): string {
 
 export function AppSwitcher(): JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
+  const { user } = useAuth();
+
+  // Add Admin app if user is an admin
+  const apps = user?.role === "Admin"
+    ? [
+        ...APPS,
+        { id: "admin", name: "Admin", accent: "emerald" as const, description: "System administration", path: "/admin" },
+      ]
+    : APPS;
 
   return (
     <div className="relative">
@@ -48,7 +58,7 @@ export function AppSwitcher(): JSX.Element {
             Switch between apps in your Codewrinkles universe.
           </p>
           <div className="space-y-1">
-            {APPS.map((app) => {
+            {apps.map((app) => {
               const Component = app.path ? Link : "div";
               const clickHandler = app.path ? () => setIsOpen(false) : undefined;
               return (

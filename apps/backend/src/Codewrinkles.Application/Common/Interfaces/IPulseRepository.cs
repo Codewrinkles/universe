@@ -197,4 +197,9 @@ public interface IPulseRepository
     Task<IReadOnlyList<PulseMentionEntity>> GetMentionsForPulsesAsync(
         IEnumerable<Guid> pulseIds,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get total count of all pulses (excludes deleted).
+    /// </summary>
+    Task<int> GetTotalCountAsync(CancellationToken cancellationToken);
 }

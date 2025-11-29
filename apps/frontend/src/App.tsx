@@ -21,6 +21,9 @@ import { LoginPage } from "./features/auth/LoginPage";
 import { RegisterPage } from "./features/auth/RegisterPage";
 import { OnboardingFlow } from "./features/onboarding/OnboardingFlow";
 import { ProtectedRoute } from "./features/auth/ProtectedRoute";
+import { AdminRoute } from "./features/auth/AdminRoute";
+import { AdminPage } from "./features/admin/AdminPage";
+import { DashboardPage } from "./features/admin/DashboardPage";
 
 /**
  * Main application component that manages:
@@ -76,6 +79,20 @@ export function App(): JSX.Element {
           <Route path="notifications" element={<SettingsNotifications />} />
         </Route>
         <Route path="onboarding" element={<OnboardingFlow />} />
+      </Route>
+
+      {/* Admin routes - require admin role */}
+      <Route
+        path="/"
+        element={
+          <AdminRoute>
+            <ShellLayout theme={theme} onThemeToggle={toggleTheme} />
+          </AdminRoute>
+        }
+      >
+        <Route path="admin" element={<AdminPage />}>
+          <Route index element={<DashboardPage />} />
+        </Route>
       </Route>
 
       {/* Public routes - accessible without authentication */}

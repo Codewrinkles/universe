@@ -49,4 +49,19 @@ public sealed class IdentityRepository : IIdentityRepository
     {
         _identities.Add(identity);
     }
+
+    public Task<int> GetTotalCountAsync(CancellationToken cancellationToken = default)
+    {
+        return _identities
+            .AsNoTracking()
+            .CountAsync(cancellationToken);
+    }
+
+    public Task<int> GetActiveCountSinceAsync(DateTime since, CancellationToken cancellationToken = default)
+    {
+        return _identities
+            .AsNoTracking()
+            .Where(i => i.LastLoginAt != null && i.LastLoginAt >= since)
+            .CountAsync(cancellationToken);
+    }
 }

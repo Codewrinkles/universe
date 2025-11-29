@@ -61,6 +61,7 @@ public static class IdentityEndpoints
             email = result.Email,
             name = result.Name,
             handle = result.Handle,
+            role = result.Role.ToString(),
             accessToken = result.AccessToken,
             refreshToken = result.RefreshToken
         });
@@ -89,6 +90,7 @@ public static class IdentityEndpoints
                 handle = result.Handle,
                 bio = result.Bio,
                 avatarUrl = result.AvatarUrl,
+                role = result.Role.ToString(),
                 accessToken = result.AccessToken,
                 refreshToken = result.RefreshToken
             });

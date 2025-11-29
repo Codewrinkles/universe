@@ -18,6 +18,7 @@ public sealed record RegisterUserResult(
     string Email,
     string Name,
     string? Handle,
+    UserRole Role,
     string AccessToken,
     string RefreshToken
 );
@@ -93,6 +94,7 @@ public sealed class RegisterUserCommandHandler
             Email: identity.Email,
             Name: profile.Name,
             Handle: profile.Handle,
+            Role: identity.Role,
             AccessToken: accessToken,
             RefreshToken: refreshToken
         );

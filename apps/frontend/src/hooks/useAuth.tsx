@@ -87,6 +87,7 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
       avatarUrl: null,
       location: null,
       websiteUrl: null,
+      role: response.role,
     };
 
     // Store user data
@@ -117,6 +118,7 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
       avatarUrl: response.avatarUrl,
       location: response.location,
       websiteUrl: response.websiteUrl,
+      role: response.role,
     };
 
     // Store user data

@@ -23,6 +23,7 @@ public sealed class JwtTokenGenerator
             new(JwtRegisteredClaimNames.Email, identity.Email),
             new(JwtRegisteredClaimNames.Name, profile.Name),
             new("profileId", profile.Id.ToString()),
+            new("role", identity.Role.ToString()),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         };
 

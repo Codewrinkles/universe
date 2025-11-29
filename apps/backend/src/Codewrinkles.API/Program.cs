@@ -1,6 +1,7 @@
 using Codewrinkles.Application;
 using Codewrinkles.Infrastructure;
 using Codewrinkles.Infrastructure.Options;
+using Codewrinkles.API.Modules.Admin;
 using Codewrinkles.API.Modules.Identity;
 using Codewrinkles.API.Modules.Notification;
 using Codewrinkles.API.Modules.Pulse;
@@ -55,6 +56,10 @@ builder.Services.AddAuthorization(options =>
     // Policy: User must own the pulse resource (used with IAuthorizationService)
     options.AddPolicy("MustBePulseOwner", policy =>
         policy.Requirements.Add(new MustBePulseOwnerRequirement()));
+
+    // Policy: User must have Admin role
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireRole("Admin"));
 });
 
 // Register authorization handlers
@@ -147,5 +152,6 @@ app.MapPulseEndpoints();
 app.MapBookmarkEndpoints();
 app.MapSocialEndpoints();
 app.MapNotificationEndpoints();
+app.MapAdminEndpoints();
 
 app.Run();

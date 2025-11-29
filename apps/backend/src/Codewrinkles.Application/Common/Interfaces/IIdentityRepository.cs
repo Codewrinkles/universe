@@ -33,4 +33,14 @@ public interface IIdentityRepository
     /// Does not save to database - call UnitOfWork.SaveChangesAsync().
     /// </summary>
     void Register(Identity identity);
+
+    /// <summary>
+    /// Get total count of all identities (users).
+    /// </summary>
+    Task<int> GetTotalCountAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Get count of active users (users who logged in since the specified date).
+    /// </summary>
+    Task<int> GetActiveCountSinceAsync(DateTime since, CancellationToken cancellationToken);
 }
