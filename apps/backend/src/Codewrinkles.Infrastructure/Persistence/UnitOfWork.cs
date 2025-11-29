@@ -13,6 +13,7 @@ public sealed class UnitOfWork : IUnitOfWork
     private readonly IFollowRepository _follows;
     private readonly INotificationRepository _notifications;
     private readonly IBookmarkRepository _bookmarks;
+    private readonly IHashtagRepository _hashtags;
 
     public UnitOfWork(
         ApplicationDbContext context,
@@ -21,7 +22,8 @@ public sealed class UnitOfWork : IUnitOfWork
         IPulseRepository pulses,
         IFollowRepository follows,
         INotificationRepository notifications,
-        IBookmarkRepository bookmarks)
+        IBookmarkRepository bookmarks,
+        IHashtagRepository hashtags)
     {
         _context = context;
         _identities = identities;
@@ -30,6 +32,7 @@ public sealed class UnitOfWork : IUnitOfWork
         _follows = follows;
         _notifications = notifications;
         _bookmarks = bookmarks;
+        _hashtags = hashtags;
     }
 
     public IIdentityRepository Identities => _identities;
@@ -43,6 +46,8 @@ public sealed class UnitOfWork : IUnitOfWork
     public INotificationRepository Notifications => _notifications;
 
     public IBookmarkRepository Bookmarks => _bookmarks;
+
+    public IHashtagRepository Hashtags => _hashtags;
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

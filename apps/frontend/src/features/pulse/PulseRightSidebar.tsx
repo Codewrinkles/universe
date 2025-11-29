@@ -1,3 +1,4 @@
+import { TrendingTopics } from "./TrendingTopics";
 import { WhoToFollow } from "./WhoToFollow";
 
 export function PulseRightSidebar(): JSX.Element {
@@ -14,6 +15,8 @@ export function PulseRightSidebar(): JSX.Element {
           🔍
         </span>
       </div>
+
+      <TrendingTopics />
 
       <WhoToFollow />
 

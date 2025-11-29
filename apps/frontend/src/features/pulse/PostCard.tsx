@@ -315,7 +315,19 @@ export function PostCard({ post, onReplyClick, onFollowChange, onDelete }: PostC
                     <Link
                       key={index}
                       to={`/pulse/u/${part.handle}`}
-                      className="text-brand-soft hover:underline"
+                      className="text-brand-link hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {part.content}
+                    </Link>
+                  );
+                }
+                if (part.type === "hashtag" && part.tag) {
+                  return (
+                    <Link
+                      key={index}
+                      to={`/social/hashtag/${part.tag.toLowerCase()}`}
+                      className="text-brand-link hover:underline"
                       onClick={(e) => e.stopPropagation()}
                     >
                       {part.content}

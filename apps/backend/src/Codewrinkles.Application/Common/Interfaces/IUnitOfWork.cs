@@ -10,6 +10,7 @@ public interface IUnitOfWork : IAsyncDisposable
     IFollowRepository Follows { get; }
     INotificationRepository Notifications { get; }
     IBookmarkRepository Bookmarks { get; }
+    IHashtagRepository Hashtags { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 

@@ -11,6 +11,7 @@ export default {
         brand: {
           DEFAULT: "#20C1AC",      // main teal
           soft: "#35D6C0",
+          link: "var(--color-brand-link)", // Theme-aware link color (CSS variable)
         },
         surface: {
           page: "#050505",

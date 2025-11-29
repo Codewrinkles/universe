@@ -2,7 +2,10 @@ import { useRef, useState, useEffect } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { config } from "../../config";
 import { useHandleSearch } from "./useHandleSearch";
+import { useHashtagSearch } from "./useHashtagSearch";
 import { MentionAutocomplete } from "./MentionAutocomplete";
+import { HashtagAutocomplete } from "./HashtagAutocomplete";
+import { HighlightedTextarea } from "./HighlightedTextarea";
 import { useCreatePulse } from "./hooks/useCreatePulse";
 import { useCreateReply } from "./hooks/useCreateReply";
 import { useCreateRepulse } from "./hooks/useCreateRepulse";
@@ -37,9 +40,12 @@ export function UnifiedComposer({
   const [isFocused, setIsFocused] = useState(false);
   const [showMentions, setShowMentions] = useState(false);
   const [mentionPosition, setMentionPosition] = useState({ top: 0, left: 0 });
+  const [showHashtags, setShowHashtags] = useState(false);
+  const [hashtagPosition, setHashtagPosition] = useState({ top: 0, left: 0 });
 
   // Hooks
-  const { results, search, clearResults } = useHandleSearch();
+  const { results: mentionResults, search: searchMentions, clearResults: clearMentionResults } = useHandleSearch();
+  const { results: hashtagResults, search: searchHashtags, clearResults: clearHashtagResults } = useHashtagSearch();
   const { createPulse, isCreating: isCreatingPulse } = useCreatePulse();
   const { createReply, isCreating: isCreatingReply, error: replyError } = useCreateReply();
   const { createRepulse, isCreating: isCreatingRepulse, error: repulseError } = useCreateRepulse();
@@ -59,41 +65,58 @@ export function UnifiedComposer({
     }
   }, [selectedImage]);
 
-  // Detect mentions and trigger autocomplete
+  // Detect mentions and hashtags, trigger autocomplete
   useEffect(() => {
     const cursorPosition = textareaRef.current?.selectionStart ?? 0;
     const textBeforeCursor = value.slice(0, cursorPosition);
+
+    // Check for mention (@)
     const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
+    // Check for hashtag (#)
+    const hashtagMatch = textBeforeCursor.match(/#(\w*)$/);
 
-    if (mentionMatch && mentionMatch[1] !== undefined) {
-      const searchTerm = mentionMatch[1];
-      search(searchTerm);
-      setShowMentions(true);
-
-      // Calculate autocomplete position near the cursor
+    // Calculate position helper function
+    const calculatePosition = () => {
       if (textareaRef.current) {
         const textarea = textareaRef.current;
         const rect = textarea.getBoundingClientRect();
-
-        // Get the number of newlines before cursor to estimate line position
-        const textBeforeCursor = value.slice(0, cursorPosition);
         const lines = textBeforeCursor.split('\n');
         const currentLineIndex = lines.length - 1;
-        const lineHeight = 24; // Approximate line height in pixels
-
-        // Position below the current line
+        const lineHeight = 24;
         const topOffset = currentLineIndex * lineHeight + lineHeight;
 
-        setMentionPosition({
+        return {
           top: rect.top + topOffset + 8,
-          left: rect.left + 16, // Add some left padding
-        });
+          left: rect.left + 16,
+        };
       }
-    } else {
-      setShowMentions(false);
-      clearResults();
+      return { top: 0, left: 0 };
+    };
+
+    // Handle mention autocomplete
+    if (mentionMatch && mentionMatch[1] !== undefined) {
+      const searchTerm = mentionMatch[1];
+      searchMentions(searchTerm);
+      setShowMentions(true);
+      setShowHashtags(false);
+      setMentionPosition(calculatePosition());
     }
-  }, [value, search, clearResults]);
+    // Handle hashtag autocomplete
+    else if (hashtagMatch && hashtagMatch[1] !== undefined) {
+      const searchTerm = hashtagMatch[1];
+      searchHashtags(searchTerm);
+      setShowHashtags(true);
+      setShowMentions(false);
+      setHashtagPosition(calculatePosition());
+    }
+    // Clear autocomplete if neither match
+    else {
+      setShowMentions(false);
+      setShowHashtags(false);
+      clearMentionResults();
+      clearHashtagResults();
+    }
+  }, [value, searchMentions, searchHashtags, clearMentionResults, clearHashtagResults]);
 
   const handleSubmit = async (): Promise<void> => {
     if (value.trim().length === 0 || isOverLimit || isSubmitting) {
@@ -167,7 +190,31 @@ export function UnifiedComposer({
     }
 
     setShowMentions(false);
-    clearResults();
+    clearMentionResults();
+  };
+
+  const handleHashtagSelect = (tag: string): void => {
+    const cursorPosition = textareaRef.current?.selectionStart ?? 0;
+    const textBeforeCursor = value.slice(0, cursorPosition);
+    const textAfterCursor = value.slice(cursorPosition);
+
+    // Replace the partial hashtag with the full tag
+    const hashtagMatch = textBeforeCursor.match(/#(\w*)$/);
+    if (hashtagMatch) {
+      const hashtagStart = textBeforeCursor.lastIndexOf("#");
+      const newText = textBeforeCursor.slice(0, hashtagStart) + `#${tag} ` + textAfterCursor;
+      setValue(newText);
+
+      // Move cursor after the hashtag
+      setTimeout(() => {
+        const newCursorPos = hashtagStart + tag.length + 2; // +2 for # and space
+        textareaRef.current?.setSelectionRange(newCursorPos, newCursorPos);
+        textareaRef.current?.focus();
+      }, 0);
+    }
+
+    setShowHashtags(false);
+    clearHashtagResults();
   };
 
   const avatarUrl = user?.avatarUrl
@@ -191,7 +238,7 @@ export function UnifiedComposer({
         </div>
       )}
       <div className="flex-1 space-y-3 relative">
-        <textarea
+        <HighlightedTextarea
           ref={textareaRef}
           value={value}
           onChange={(e) => setValue(e.target.value)}
@@ -199,13 +246,20 @@ export function UnifiedComposer({
           onBlur={() => setIsFocused(false)}
           rows={isFocused || value.length > 0 ? focusedRows : rows}
           placeholder={placeholder}
-          className="w-full resize-none bg-transparent text-lg text-text-primary placeholder:text-text-tertiary focus:outline-none transition-all custom-scrollbar"
+          className="w-full resize-none text-lg text-text-primary placeholder:text-text-tertiary focus:outline-none transition-all custom-scrollbar"
         />
-        {showMentions && results.length > 0 && (
+        {showMentions && mentionResults.length > 0 && (
           <MentionAutocomplete
-            results={results}
+            results={mentionResults}
             onSelect={handleMentionSelect}
             position={mentionPosition}
+          />
+        )}
+        {showHashtags && hashtagResults.length > 0 && (
+          <HashtagAutocomplete
+            results={hashtagResults}
+            onSelect={handleHashtagSelect}
+            position={hashtagPosition}
           />
         )}
         {imagePreview && (

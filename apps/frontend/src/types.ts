@@ -101,6 +101,18 @@ export interface CreatePulseResponse {
   imageUrl?: string | null;
 }
 
+export interface Hashtag {
+  id: string;
+  tag: string;
+  tagDisplay: string;
+  pulseCount: number;
+  lastUsedAt: string;
+}
+
+export interface HashtagsResponse {
+  hashtags: Hashtag[];
+}
+
 // Legacy Post types (deprecated - use Pulse types above)
 export type PostAuthor = PulseAuthor;
 export type Post = Pulse;

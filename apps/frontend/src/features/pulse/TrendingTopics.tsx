@@ -1,70 +1,110 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Card } from "../../components/ui/Card";
-
-interface TrendingTopic {
-  id: string;
-  category: string;
-  topic: string;
-  posts: string;
-}
-
-const MOCK_TRENDING: TrendingTopic[] = [
-  {
-    id: "1",
-    category: "Technology",
-    topic: "#CleanArchitecture",
-    posts: "1.2K posts",
-  },
-  {
-    id: "2",
-    category: "AI & ML",
-    topic: "Claude 4",
-    posts: "5.8K posts",
-  },
-  {
-    id: "3",
-    category: "Software",
-    topic: "#DotNet10",
-    posts: "892 posts",
-  },
-  {
-    id: "4",
-    category: "Development",
-    topic: "Vertical Slices",
-    posts: "421 posts",
-  },
-];
+import { config } from "../../config";
+import type { Hashtag } from "../../types";
 
 interface TrendingItemProps {
-  topic: TrendingTopic;
+  hashtag: Hashtag;
 }
 
-function TrendingItem({ topic }: TrendingItemProps): JSX.Element {
+function TrendingItem({ hashtag }: TrendingItemProps): JSX.Element {
+  const formatCount = (count: number): string => {
+    if (count >= 1000) {
+      return `${(count / 1000).toFixed(1)}K`;
+    }
+    return count.toString();
+  };
+
   return (
-    <div className="py-3 hover:bg-surface-card2 -mx-4 px-4 cursor-pointer transition-colors">
-      <p className="text-[11px] text-text-tertiary">{topic.category}</p>
-      <p className="text-sm font-medium text-text-primary">{topic.topic}</p>
-      <p className="text-xs text-text-tertiary">{topic.posts}</p>
-    </div>
+    <Link
+      to={`/social/hashtag/${hashtag.tag}`}
+      className="block py-3 hover:bg-surface-card2 -mx-4 px-4 transition-colors"
+    >
+      <p className="text-[11px] text-text-tertiary">Trending</p>
+      <p className="text-sm font-medium text-text-primary">#{hashtag.tagDisplay}</p>
+      <p className="text-xs text-text-tertiary">
+        {formatCount(hashtag.pulseCount)} {hashtag.pulseCount === 1 ? "pulse" : "pulses"}
+      </p>
+    </Link>
   );
 }
 
 export function TrendingTopics(): JSX.Element {
+  const [hashtags, setHashtags] = useState<Hashtag[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchTrendingHashtags = async (): Promise<void> => {
+      try {
+        const response = await fetch(`${config.api.baseUrl}/api/pulse/hashtags/trending?limit=5`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch trending hashtags");
+        }
+
+        const data = await response.json() as { hashtags: Hashtag[] };
+        setHashtags(data.hashtags);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unknown error");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void fetchTrendingHashtags();
+  }, []);
+
+  if (loading) {
+    return (
+      <Card>
+        <h2 className="text-base font-semibold tracking-tight text-text-primary">
+          Trending
+        </h2>
+        <div className="py-8 text-center text-sm text-text-secondary">
+          Loading...
+        </div>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <h2 className="text-base font-semibold tracking-tight text-text-primary">
+          Trending
+        </h2>
+        <div className="py-8 text-center text-sm text-text-secondary">
+          Failed to load trending topics
+        </div>
+      </Card>
+    );
+  }
+
+  if (hashtags.length === 0) {
+    return (
+      <Card>
+        <h2 className="text-base font-semibold tracking-tight text-text-primary">
+          Trending
+        </h2>
+        <div className="py-8 text-center text-sm text-text-secondary">
+          No trending topics yet
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <h2 className="text-base font-semibold tracking-tight text-text-primary">
         Trending
       </h2>
       <div className="divide-y divide-border">
-        {MOCK_TRENDING.map((topic) => (
-          <TrendingItem key={topic.id} topic={topic} />
+        {hashtags.map((hashtag) => (
+          <TrendingItem key={hashtag.id} hashtag={hashtag} />
         ))}
       </div>
-      <button
-        type="button"
-        className="mt-2 text-xs text-brand-soft hover:text-brand transition-colors"
-      >
-        Show more
-      </button>
     </Card>
   );
 }

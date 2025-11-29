@@ -25,6 +25,8 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<PulseLinkPreview> PulseLinkPreviews => Set<PulseLinkPreview>();
     public DbSet<PulseMention> PulseMentions => Set<PulseMention>();
     public DbSet<PulseBookmark> PulseBookmarks => Set<PulseBookmark>();
+    public DbSet<Hashtag> Hashtags => Set<Hashtag>();
+    public DbSet<PulseHashtag> PulseHashtags => Set<PulseHashtag>();
 
     // Social schema
     public DbSet<Follow> Follows => Set<Follow>();

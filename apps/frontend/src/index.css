@@ -20,6 +20,7 @@ body {
   --color-text-primary: #F3F4F6;
   --color-text-secondary: #A1A1AA;
   --color-text-tertiary: #737373;
+  --color-brand-link: #35D6C0; /* Soft teal for dark theme */
 }
 
 .light-theme {
@@ -31,6 +32,7 @@ body {
   --color-text-primary: #0F172A;
   --color-text-secondary: #475569;
   --color-text-tertiary: #94A3B8;
+  --color-brand-link: #0D9488; /* Darker teal for light theme (better contrast) */
 }
 
 /* Override Tailwind utility classes to use CSS variables */
@@ -78,6 +80,16 @@ body {
 .light-theme .text-text-tertiary,
 .light-theme [class*="text-text-tertiary"] {
   color: var(--color-text-tertiary) !important;
+}
+
+.light-theme .text-brand-link,
+.light-theme [class*="text-brand-link"] {
+  color: var(--color-brand-link) !important;
+}
+
+.dark-theme .text-brand-link,
+.dark-theme [class*="text-brand-link"] {
+  color: var(--color-brand-link) !important;
 }
 
 /* Ring offset needs special handling */

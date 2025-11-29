@@ -8,6 +8,7 @@ import { ThreadView } from "./features/pulse/ThreadView";
 import { ProfilePage } from "./features/pulse/ProfilePage";
 import { NotificationsPage } from "./features/pulse/NotificationsPage";
 import { BookmarksPage } from "./features/pulse/BookmarksPage";
+import { HashtagPage } from "./features/pulse/HashtagPage";
 import { TwinPage } from "./features/twin/TwinPage";
 import { SettingsPage } from "./features/settings/SettingsPage";
 import {
@@ -50,6 +51,7 @@ export function App(): JSX.Element {
         <Route path="pulse/u/:handle" element={<ProfilePage />} />
         <Route path="pulse/:pulseId" element={<ThreadView />} />
         <Route path="social" element={<Navigate to="/pulse" replace />} />
+        <Route path="social/hashtag/:tag" element={<HashtagPage />} />
       </Route>
 
       {/* Protected routes - require authentication */}

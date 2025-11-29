@@ -51,6 +51,12 @@ public static class PulseEndpoints
 
         group.MapGet("{id:guid}/thread", GetThread)
             .WithName("GetThread");
+
+        group.MapGet("hashtags/trending", GetTrendingHashtags)
+            .WithName("GetTrendingHashtags");
+
+        group.MapGet("hashtags/{tag}", GetPulsesByHashtag)
+            .WithName("GetPulsesByHashtag");
     }
 
     private static async Task<IResult> CreatePulse(
@@ -520,6 +526,68 @@ public static class PulseEndpoints
                 title: "Unauthorized",
                 detail: ex.Message,
                 statusCode: 403
+            );
+        }
+    }
+
+    private static async Task<IResult> GetTrendingHashtags(
+        [FromQuery] int limit,
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        // Default limit to 10 if not provided or invalid
+        if (limit <= 0 || limit > 50)
+        {
+            limit = 10;
+        }
+
+        var query = new GetTrendingHashtagsQuery(Limit: limit);
+        var result = await mediator.SendAsync(query, cancellationToken);
+
+        return Results.Ok(new { hashtags = result });
+    }
+
+    private static async Task<IResult> GetPulsesByHashtag(
+        HttpContext httpContext,
+        string tag,
+        [FromQuery] string? cursor,
+        [FromQuery] int limit,
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Default limit to 20 if not provided or invalid
+            if (limit <= 0 || limit > 100)
+            {
+                limit = 20;
+            }
+
+            // Extract ProfileId from JWT if present (optional auth)
+            var currentUserId = httpContext.GetCurrentProfileIdOrNull();
+
+            var query = new GetPulsesByHashtagQuery(
+                Tag: tag,
+                CurrentUserId: currentUserId,
+                Cursor: cursor,
+                Limit: limit
+            );
+
+            var result = await mediator.SendAsync(query, cancellationToken);
+
+            return Results.Ok(new
+            {
+                pulses = result.Pulses,
+                nextCursor = result.NextCursor,
+                hasMore = result.HasMore
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Results.Problem(
+                title: "Invalid Cursor",
+                detail: ex.Message,
+                statusCode: 400
             );
         }
     }
