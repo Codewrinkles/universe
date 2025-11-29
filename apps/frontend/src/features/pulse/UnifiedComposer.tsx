@@ -302,27 +302,6 @@ export function UnifiedComposer({
             >
               🖼️
             </button>
-            <button
-              type="button"
-              className="rounded-full p-2 text-brand-soft hover:bg-brand-soft/10 transition-colors"
-              title="Add GIF"
-            >
-              📷
-            </button>
-            <button
-              type="button"
-              className="rounded-full p-2 text-brand-soft hover:bg-brand-soft/10 transition-colors"
-              title="Add poll"
-            >
-              📊
-            </button>
-            <button
-              type="button"
-              className="rounded-full p-2 text-brand-soft hover:bg-brand-soft/10 transition-colors"
-              title="Add emoji"
-            >
-              😊
-            </button>
           </div>
           <div className="flex items-center gap-3">
             {value.length > 0 && (
