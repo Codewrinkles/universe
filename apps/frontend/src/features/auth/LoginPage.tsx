@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 import { Link, Navigate, useNavigate, useLocation } from "react-router-dom";
-import type { AuthMode, FormErrors } from "../../types";
+import type { FormErrors } from "../../types";
 import { useAuth } from "../../hooks/useAuth";
 import { AuthCard } from "./AuthCard";
 import { SocialSignInButtons } from "./SocialSignInButtons";
@@ -19,10 +19,9 @@ export function LoginPage(): JSX.Element {
   const { login, isAuthenticated, isLoading: authLoading } = useAuth();
 
   // Get the redirect destination (if coming from protected route)
-  const from = (location.state as { from?: string })?.from || "/";
+  const from = (location.state as { from?: string })?.from || "/pulse";
 
   // Form state
-  const [mode, setMode] = useState<AuthMode>("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -113,33 +112,7 @@ export function LoginPage(): JSX.Element {
   };
 
   return (
-    <AuthCard title="Welcome back" subtitle="Log in to your Codewrinkles account.">
-      {/* Mode toggle */}
-      <div className="mb-4 inline-flex rounded-full border border-border bg-surface-card2 p-[3px] text-xs">
-        <button
-          type="button"
-          onClick={() => setMode("password")}
-          className={`rounded-full px-4 py-1.5 transition-colors ${
-            mode === "password"
-              ? "bg-surface-page text-text-primary"
-              : "text-text-secondary hover:text-text-primary"
-          }`}
-        >
-          Password
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode("magic")}
-          className={`rounded-full px-4 py-1.5 transition-colors ${
-            mode === "magic"
-              ? "bg-surface-page text-text-primary"
-              : "text-text-secondary hover:text-text-primary"
-          }`}
-        >
-          Magic link
-        </button>
-      </div>
-
+    <AuthCard title="Welcome back" subtitle="Welcome back to the ecosystem.">
       {/* General error message */}
       {errors.general && (
         <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-500">
@@ -148,73 +121,51 @@ export function LoginPage(): JSX.Element {
       )}
 
       <form className="space-y-4" onSubmit={handleSubmit} noValidate>
-        {mode === "password" ? (
-          <>
-            <FormField
-              label="Email"
-              placeholder="you@example.com"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onBlur={() => handleBlur("email")}
-              error={touched["email"] ? errors.email : undefined}
-              disabled={isSubmitting}
-              autoComplete="email"
-              required
-            />
+        <FormField
+          label="Email"
+          placeholder="you@example.com"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          onBlur={() => handleBlur("email")}
+          error={touched["email"] ? errors.email : undefined}
+          disabled={isSubmitting}
+          autoComplete="email"
+          required
+        />
 
-            <FormField
-              label="Password"
-              placeholder="Enter your password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onBlur={() => handleBlur("password")}
-              error={touched["password"] ? errors.password : undefined}
-              disabled={isSubmitting}
-              autoComplete="current-password"
-              required
-            />
+        <FormField
+          label="Password"
+          placeholder="Enter your password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          onBlur={() => handleBlur("password")}
+          error={touched["password"] ? errors.password : undefined}
+          disabled={isSubmitting}
+          autoComplete="current-password"
+          required
+        />
 
-            <div className="flex items-center justify-between text-xs">
-              <label className="flex items-center gap-2 text-text-secondary">
-                <input
-                  type="checkbox"
-                  className="h-3 w-3 rounded border-border bg-surface-page"
-                />
-                <span>Remember me</span>
-              </label>
-              <button type="button" className="text-[11px] text-brand-soft hover:text-brand">
-                Forgot password?
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <FormField
-              label="Email"
-              placeholder="you@example.com"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onBlur={() => handleBlur("email")}
-              error={touched["email"] ? errors.email : undefined}
-              disabled={isSubmitting}
-              autoComplete="email"
-              required
-            />
-            <p className="text-xs text-text-secondary">
-              We&apos;ll send you a one-time link to log in.
-            </p>
-          </>
-        )}
+        {/* Legal compliance */}
+        <p className="text-[11px] text-text-tertiary text-center">
+          By continuing, you agree to our{" "}
+          <Link to="/terms" className="text-text-secondary hover:text-text-primary underline">
+            Terms of Service
+          </Link>{" "}
+          and{" "}
+          <Link to="/privacy" className="text-text-secondary hover:text-text-primary underline">
+            Privacy Policy
+          </Link>
+          .
+        </p>
 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="btn-primary w-full rounded-full bg-brand-soft px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-brand disabled:cursor-not-allowed disabled:opacity-50"
+          className="btn-primary w-full rounded-full bg-brand text-black px-4 py-2 text-sm font-medium hover:bg-brand-soft transition-colors disabled:cursor-not-allowed disabled:opacity-50 shadow-lg shadow-brand/20"
         >
-          {isSubmitting ? "Logging in..." : mode === "password" ? "Continue" : "Send magic link"}
+          {isSubmitting ? "Logging in..." : "Continue"}
         </button>
       </form>
 

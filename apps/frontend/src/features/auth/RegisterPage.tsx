@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import type { AuthMode, FormErrors } from "../../types";
+import type { FormErrors } from "../../types";
 import { useAuth } from "../../hooks/useAuth";
 import { AuthCard } from "./AuthCard";
 import { SocialSignInButtons } from "./SocialSignInButtons";
@@ -26,7 +26,6 @@ export function RegisterPage(): JSX.Element {
   const { register, isAuthenticated, isLoading: authLoading } = useAuth();
 
   // Form state
-  const [mode, setMode] = useState<AuthMode>("password");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -132,33 +131,7 @@ export function RegisterPage(): JSX.Element {
   };
 
   return (
-    <AuthCard title="Create your account" subtitle="Start your Codewrinkles workspace.">
-      {/* Auth mode toggle */}
-      <div className="mb-4 inline-flex rounded-full border border-border bg-surface-card2 p-[3px] text-xs">
-        <button
-          type="button"
-          onClick={() => setMode("password")}
-          className={`rounded-full px-4 py-1.5 transition-colors ${
-            mode === "password"
-              ? "bg-surface-page text-text-primary"
-              : "text-text-secondary hover:text-text-primary"
-          }`}
-        >
-          Password
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode("magic")}
-          className={`rounded-full px-4 py-1.5 transition-colors ${
-            mode === "magic"
-              ? "bg-surface-page text-text-primary"
-              : "text-text-secondary hover:text-text-primary"
-          }`}
-        >
-          Magic link
-        </button>
-      </div>
-
+    <AuthCard title="Create your account" subtitle="Join the ecosystem built for value, not engagement.">
       {/* General error message */}
       {errors.general && (
         <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-500">
@@ -193,49 +166,52 @@ export function RegisterPage(): JSX.Element {
           required
         />
 
-        {mode === "password" && (
-          <FormField
-            label="Password"
-            placeholder="Create a password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onBlur={() => handleBlur("password")}
-            error={touched["password"] ? errors.password : undefined}
-            disabled={isSubmitting}
-            autoComplete="new-password"
-            required
-          >
-            {password && <PasswordStrength password={password} />}
-          </FormField>
-        )}
+        <FormField
+          label="Password"
+          placeholder="Create a password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          onBlur={() => handleBlur("password")}
+          error={touched["password"] ? errors.password : undefined}
+          disabled={isSubmitting}
+          autoComplete="new-password"
+          required
+        >
+          {password && <PasswordStrength password={password} />}
+        </FormField>
 
-        {mode === "password" && (
-          <FormField
-            label="Handle (optional)"
-            placeholder="codewrinkles"
-            type="text"
-            value={handle}
-            onChange={(e) => setHandle(e.target.value)}
-            onBlur={() => handleBlur("handle")}
-            error={touched["handle"] ? errors.handle : undefined}
-            disabled={isSubmitting}
-            autoComplete="username"
-          />
-        )}
+        <FormField
+          label="Handle (optional)"
+          placeholder="codewrinkles"
+          type="text"
+          value={handle}
+          onChange={(e) => setHandle(e.target.value)}
+          onBlur={() => handleBlur("handle")}
+          error={touched["handle"] ? errors.handle : undefined}
+          disabled={isSubmitting}
+          autoComplete="username"
+        />
 
-        {mode === "magic" && (
-          <p className="text-xs text-text-secondary">
-            We&apos;ll create your account after you confirm the magic link.
-          </p>
-        )}
+        {/* Legal compliance */}
+        <p className="text-[11px] text-text-tertiary text-center">
+          By continuing, you agree to our{" "}
+          <Link to="/terms" className="text-text-secondary hover:text-text-primary underline">
+            Terms of Service
+          </Link>{" "}
+          and{" "}
+          <Link to="/privacy" className="text-text-secondary hover:text-text-primary underline">
+            Privacy Policy
+          </Link>
+          .
+        </p>
 
         <button
           type="submit"
           disabled={isSubmitting}
-          className="btn-primary w-full rounded-full bg-brand-soft px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-brand disabled:cursor-not-allowed disabled:opacity-50"
+          className="btn-primary w-full rounded-full bg-brand text-black px-4 py-2 text-sm font-medium hover:bg-brand-soft transition-colors disabled:cursor-not-allowed disabled:opacity-50 shadow-lg shadow-brand/20"
         >
-          {isSubmitting ? "Creating account..." : mode === "password" ? "Create account" : "Send magic link"}
+          {isSubmitting ? "Creating account..." : "Create account"}
         </button>
       </form>
 

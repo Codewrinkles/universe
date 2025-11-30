@@ -2,14 +2,13 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useTheme } from "./hooks/useTheme";
 import { useAuth } from "./hooks/useAuth";
 import { ShellLayout } from "./features/shell/ShellLayout";
-import { HomePage } from "./features/home/HomePage";
+import { LandingPage } from "./features/landing/LandingPage";
 import { PulsePage } from "./features/pulse/PulsePage";
 import { ThreadView } from "./features/pulse/ThreadView";
 import { ProfilePage } from "./features/pulse/ProfilePage";
 import { NotificationsPage } from "./features/pulse/NotificationsPage";
 import { BookmarksPage } from "./features/pulse/BookmarksPage";
 import { HashtagPage } from "./features/pulse/HashtagPage";
-import { TwinPage } from "./features/twin/TwinPage";
 import { SettingsPage } from "./features/settings/SettingsPage";
 import {
   SettingsProfile,
@@ -24,6 +23,7 @@ import { ProtectedRoute } from "./features/auth/ProtectedRoute";
 import { AdminRoute } from "./features/auth/AdminRoute";
 import { AdminPage } from "./features/admin/AdminPage";
 import { DashboardPage } from "./features/admin/DashboardPage";
+import { TermsPage, PrivacyPage } from "./features/legal";
 
 /**
  * Main application component that manages:
@@ -33,7 +33,7 @@ import { DashboardPage } from "./features/admin/DashboardPage";
  */
 export function App(): JSX.Element {
   const { theme, toggleTheme } = useTheme();
-  const { isLoading } = useAuth();
+  const { isLoading, isAuthenticated } = useAuth();
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -46,6 +46,11 @@ export function App(): JSX.Element {
 
   return (
     <Routes>
+      {/* Landing page - unauthenticated only */}
+      <Route path="/" element={<ShellLayout theme={theme} onThemeToggle={toggleTheme} />}>
+        <Route index element={isAuthenticated ? <Navigate to="/pulse" replace /> : <LandingPage />} />
+      </Route>
+
       {/* Public routes with Shell layout - accessible without authentication */}
       <Route path="/" element={<ShellLayout theme={theme} onThemeToggle={toggleTheme} />}>
         <Route path="pulse" element={<PulsePage />} />
@@ -66,11 +71,6 @@ export function App(): JSX.Element {
           </ProtectedRoute>
         }
       >
-        <Route index element={<HomePage />} />
-        <Route path="nova" element={<TwinPage />} />
-        {/* Redirects for old routes */}
-        <Route path="learn" element={<Navigate to="/nova" replace />} />
-        <Route path="twin" element={<Navigate to="/nova" replace />} />
         <Route path="settings" element={<SettingsPage />}>
           <Route index element={<Navigate to="/settings/profile" replace />} />
           <Route path="profile" element={<SettingsProfile />} />
@@ -98,9 +98,11 @@ export function App(): JSX.Element {
       {/* Public routes - accessible without authentication */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
 
-      {/* Catch-all redirect */}
-      <Route path="*" element={<Navigate to="/pulse" replace />} />
+      {/* Catch-all redirect - auth-aware */}
+      <Route path="*" element={<Navigate to={isAuthenticated ? "/pulse" : "/"} replace />} />
     </Routes>
   );
 }

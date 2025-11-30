@@ -443,6 +443,9 @@ apps/frontend/*.local
 NEXT_SESSION_PROMPT.md
 USER_REGISTRATION_PLAN.md
 
+# Content creation files
+content-visuals/
+
 # Misc
 nul
 favicon.ico
