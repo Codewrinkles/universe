@@ -12,7 +12,7 @@ public sealed class Identity
     public Guid Id { get; private set; }
     public string Email { get; private set; }
     public string EmailNormalized { get; private set; }
-    public string PasswordHash { get; private set; }
+    public string? PasswordHash { get; private set; }
     public bool IsEmailVerified { get; private set; }
     public bool IsActive { get; private set; }
     public UserRole Role { get; private set; }
@@ -22,10 +22,11 @@ public sealed class Identity
     public DateTime UpdatedAt { get; private set; }
     public DateTime? LastLoginAt { get; private set; }
 
-    // Navigation property
+    // Navigation properties
     public Profile Profile { get; private set; }
+    public ICollection<ExternalLogin> ExternalLogins { get; private set; } = [];
 
-    // Factory method
+    // Factory methods
     public static Identity Create(string email, string passwordHash)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(email, nameof(email));
@@ -45,6 +46,24 @@ public sealed class Identity
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             LastLoginAt = null
+        };
+    }
+
+    public static Identity CreateFromOAuth(string email, bool isEmailVerified)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(email);
+
+        return new Identity
+        {
+            Email = email.Trim(),
+            EmailNormalized = email.Trim().ToLowerInvariant(),
+            PasswordHash = null,  // No password for OAuth-only accounts
+            IsEmailVerified = isEmailVerified,
+            IsActive = true,
+            FailedLoginAttempts = 0,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            Role = UserRole.User
         };
     }
 
@@ -105,4 +124,13 @@ public sealed class Identity
         Role = UserRole.Admin;
         UpdatedAt = DateTime.UtcNow;
     }
+
+    public bool HasOAuthProvider(OAuthProvider provider)
+        => ExternalLogins.Any(el => el.Provider == provider);
+
+    public bool CanLoginWithPassword()
+        => !string.IsNullOrWhiteSpace(PasswordHash);
+
+    public bool IsOAuthOnly()
+        => string.IsNullOrWhiteSpace(PasswordHash) && ExternalLogins.Any();
 }

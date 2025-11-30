@@ -6,6 +6,7 @@ public interface IUnitOfWork : IAsyncDisposable
 {
     IIdentityRepository Identities { get; }
     IProfileRepository Profiles { get; }
+    IExternalLoginRepository ExternalLogins { get; }
     IPulseRepository Pulses { get; }
     IFollowRepository Follows { get; }
     INotificationRepository Notifications { get; }

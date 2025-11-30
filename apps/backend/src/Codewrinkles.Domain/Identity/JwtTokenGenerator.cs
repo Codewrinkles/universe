@@ -33,6 +33,12 @@ public sealed class JwtTokenGenerator
             claims.Add(new Claim("handle", profile.Handle));
         }
 
+        // Add avatarUrl claim only if it's not null
+        if (!string.IsNullOrWhiteSpace(profile.AvatarUrl))
+        {
+            claims.Add(new Claim("avatarUrl", profile.AvatarUrl));
+        }
+
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.SecretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 

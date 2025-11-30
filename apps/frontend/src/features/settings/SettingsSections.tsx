@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { Toggle } from "../../components/ui/Toggle";
 import { useAuth } from "../../hooks/useAuth";
-import { config } from "../../config";
+import { buildAvatarUrl } from "../../utils/avatarUtils";
 
 interface FieldProps {
   label: string;
@@ -144,10 +144,7 @@ export function SettingsProfile(): JSX.Element {
     }
   };
 
-  // Build avatar URL with cache busting
-  const avatarUrl = user?.avatarUrl
-    ? `${config.api.baseUrl}${user.avatarUrl}?t=${Date.now()}`
-    : null;
+  const avatarUrl = buildAvatarUrl(user?.avatarUrl);
 
   return (
     <div className="space-y-6">

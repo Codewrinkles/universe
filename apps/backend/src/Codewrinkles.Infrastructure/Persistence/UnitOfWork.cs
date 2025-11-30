@@ -1,5 +1,6 @@
 using System.Data;
 using Codewrinkles.Application.Common.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Codewrinkles.Infrastructure.Persistence;
@@ -9,6 +10,7 @@ public sealed class UnitOfWork : IUnitOfWork
     private readonly ApplicationDbContext _context;
     private readonly IIdentityRepository _identities;
     private readonly IProfileRepository _profiles;
+    private readonly IExternalLoginRepository _externalLogins;
     private readonly IPulseRepository _pulses;
     private readonly IFollowRepository _follows;
     private readonly INotificationRepository _notifications;
@@ -19,6 +21,7 @@ public sealed class UnitOfWork : IUnitOfWork
         ApplicationDbContext context,
         IIdentityRepository identities,
         IProfileRepository profiles,
+        IExternalLoginRepository externalLogins,
         IPulseRepository pulses,
         IFollowRepository follows,
         INotificationRepository notifications,
@@ -28,6 +31,7 @@ public sealed class UnitOfWork : IUnitOfWork
         _context = context;
         _identities = identities;
         _profiles = profiles;
+        _externalLogins = externalLogins;
         _pulses = pulses;
         _follows = follows;
         _notifications = notifications;
@@ -38,6 +42,8 @@ public sealed class UnitOfWork : IUnitOfWork
     public IIdentityRepository Identities => _identities;
 
     public IProfileRepository Profiles => _profiles;
+
+    public IExternalLoginRepository ExternalLogins => _externalLogins;
 
     public IPulseRepository Pulses => _pulses;
 
@@ -58,9 +64,7 @@ public sealed class UnitOfWork : IUnitOfWork
         IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
         CancellationToken cancellationToken = default)
     {
-        // EF Core's BeginTransactionAsync only takes CancellationToken
-        // Isolation level must be set on the connection before beginning transaction
-        var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        var transaction = await _context.Database.BeginTransactionAsync(isolationLevel, cancellationToken);
 
         return new UnitOfWorkTransaction(transaction);
     }

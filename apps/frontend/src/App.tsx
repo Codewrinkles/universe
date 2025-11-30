@@ -18,6 +18,8 @@ import {
 } from "./features/settings/SettingsSections";
 import { LoginPage } from "./features/auth/LoginPage";
 import { RegisterPage } from "./features/auth/RegisterPage";
+import { OAuthSuccessPage } from "./features/auth/OAuthSuccessPage";
+import { OAuthErrorPage } from "./features/auth/OAuthErrorPage";
 import { OnboardingFlow } from "./features/onboarding/OnboardingFlow";
 import { ProtectedRoute } from "./features/auth/ProtectedRoute";
 import { AdminRoute } from "./features/auth/AdminRoute";
@@ -98,6 +100,8 @@ export function App(): JSX.Element {
       {/* Public routes - accessible without authentication */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/auth/success" element={<OAuthSuccessPage />} />
+      <Route path="/auth/error" element={<OAuthErrorPage />} />
       <Route path="/terms" element={<TermsPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
 

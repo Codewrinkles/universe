@@ -16,6 +16,7 @@ public sealed class ApplicationDbContext : DbContext
     // Identity schema
     public DbSet<Identity> Identities => Set<Identity>();
     public DbSet<Profile> Profiles => Set<Profile>();
+    public DbSet<ExternalLogin> ExternalLogins => Set<ExternalLogin>();
 
     // Pulse schema
     public DbSet<Pulse> Pulses => Set<Pulse>();

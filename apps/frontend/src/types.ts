@@ -6,6 +6,17 @@ export type Theme = "dark" | "light";
 
 export type AuthMode = "password" | "magic";
 
+export type OAuthProvider = "Google" | "GitHub";
+
+export interface InitiateOAuthRequest {
+  baseUrl: string;
+  redirectUri: string;
+}
+
+export interface InitiateOAuthResponse {
+  authorizationUrl: string;
+}
+
 export interface App {
   id: string;
   name: string;

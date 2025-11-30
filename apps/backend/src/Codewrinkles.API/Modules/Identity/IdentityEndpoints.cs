@@ -1,7 +1,12 @@
+using System.Text.Json;
+using Codewrinkles.Application.Common.Interfaces;
 using Codewrinkles.Application.Users;
 using Codewrinkles.API.Extensions;
+using Codewrinkles.Domain.Identity;
+using Codewrinkles.Infrastructure.Services;
 using Kommand.Abstractions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace Codewrinkles.API.Modules.Identity;
 
@@ -38,6 +43,12 @@ public static class IdentityEndpoints
         group.MapPost("/onboarding/complete", CompleteOnboarding)
             .WithName("CompleteOnboarding")
             .RequireAuthorization();
+
+        group.MapPost("/oauth/{provider}/initiate", InitiateOAuth)
+            .WithName("InitiateOAuthFlow");
+
+        group.MapGet("/oauth/{provider}/callback", HandleOAuthCallback)
+            .WithName("HandleOAuthCallback");
     }
 
     private static async Task<IResult> RegisterUser(
@@ -274,6 +285,114 @@ public static class IdentityEndpoints
 
         return Results.NoContent();
     }
+
+    private static async Task<IResult> InitiateOAuth(
+        string provider,
+        [FromBody] InitiateOAuthRequest request,
+        [FromServices] IOAuthService oauthService,
+        [FromServices] IDistributedCache cache,
+        CancellationToken cancellationToken)
+    {
+        if (!Enum.TryParse<OAuthProvider>(provider, true, out var oauthProvider))
+        {
+            return Results.BadRequest(new { error = "Invalid OAuth provider" });
+        }
+
+        var state = OAuthService.GenerateState();
+        var cacheKey = $"oauth_state_{state}";
+        var cacheValue = new OAuthStateData
+        {
+            Provider = oauthProvider,
+            CreatedAt = DateTime.UtcNow,
+            RedirectUri = request.RedirectUri
+        };
+
+        await cache.SetStringAsync(
+            cacheKey,
+            JsonSerializer.Serialize(cacheValue),
+            new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+            },
+            cancellationToken);
+
+        var backendCallbackUri = $"{request.BaseUrl}/api/identity/oauth/{provider.ToLowerInvariant()}/callback";
+        var authUrl = oauthService.GenerateAuthorizationUrl(oauthProvider, backendCallbackUri, state);
+
+        return Results.Ok(new { authorizationUrl = authUrl.Url });
+    }
+
+    private static async Task<IResult> HandleOAuthCallback(
+        string provider,
+        [FromQuery] string? code,
+        [FromQuery] string? state,
+        [FromQuery] string? error,
+        [FromServices] IMediator mediator,
+        [FromServices] IDistributedCache cache,
+        CancellationToken cancellationToken)
+    {
+        if (!Enum.TryParse<OAuthProvider>(provider, true, out var oauthProvider))
+        {
+            return Results.Redirect($"{GetFrontendUrl()}/auth/error?message=Invalid+provider");
+        }
+
+        if (!string.IsNullOrWhiteSpace(error))
+        {
+            return Results.Redirect($"{GetFrontendUrl()}/auth/error?message={Uri.EscapeDataString(error)}");
+        }
+
+        if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(state))
+        {
+            return Results.Redirect($"{GetFrontendUrl()}/auth/error?message=Missing+code+or+state");
+        }
+
+        var cacheKey = $"oauth_state_{state}";
+        var storedStateJson = await cache.GetStringAsync(cacheKey, cancellationToken);
+
+        if (storedStateJson is null)
+        {
+            return Results.Redirect($"{GetFrontendUrl()}/auth/error?message=Invalid+state");
+        }
+
+        var storedState = JsonSerializer.Deserialize<OAuthStateData>(storedStateJson);
+
+        if (storedState is null || storedState.Provider != oauthProvider)
+        {
+            return Results.Redirect($"{GetFrontendUrl()}/auth/error?message=Provider+mismatch");
+        }
+
+        await cache.RemoveAsync(cacheKey, cancellationToken);
+
+        var redirectUri = $"{GetBackendUrl()}/api/identity/oauth/{provider.ToLowerInvariant()}/callback";
+
+        var command = new CompleteOAuthCallbackCommand(oauthProvider, code, state, redirectUri);
+
+        try
+        {
+            var result = await mediator.SendAsync(command, cancellationToken);
+
+            var frontendSuccessUrl = $"{storedState.RedirectUri}" +
+                $"?access_token={Uri.EscapeDataString(result.AccessToken)}" +
+                $"&refresh_token={Uri.EscapeDataString(result.RefreshToken)}" +
+                $"&is_new_user={result.IsNewUser.ToString().ToLowerInvariant()}";
+
+            return Results.Redirect(frontendSuccessUrl);
+        }
+        catch (Exception ex)
+        {
+            return Results.Redirect($"{GetFrontendUrl()}/auth/error?message={Uri.EscapeDataString(ex.Message)}");
+        }
+    }
+
+    private static string GetBackendUrl() =>
+        Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development"
+            ? "https://localhost:7280"
+            : "https://api.codewrinkles.com";
+
+    private static string GetFrontendUrl() =>
+        Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development"
+            ? "http://localhost:5173"
+            : "https://codewrinkles.com";
 }
 
 public sealed record RegisterUserRequest(
@@ -300,3 +419,12 @@ public sealed record ChangePasswordRequest(
     string CurrentPassword,
     string NewPassword
 );
+
+public sealed record InitiateOAuthRequest(string BaseUrl, string RedirectUri);
+
+internal sealed record OAuthStateData
+{
+    public required OAuthProvider Provider { get; init; }
+    public required DateTime CreatedAt { get; init; }
+    public required string RedirectUri { get; init; }
+}

@@ -6,7 +6,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
-import { config } from "../../config";
+import { buildAvatarUrl } from "../../utils/avatarUtils";
 
 /**
  * Get initials from a name (up to 2 characters)
@@ -76,10 +76,7 @@ export function ProfileDropdown(): JSX.Element {
     logout();
   };
 
-  // Build avatar URL
-  const avatarUrl = user.avatarUrl
-    ? `${config.api.baseUrl}${user.avatarUrl}`
-    : null;
+  const avatarUrl = buildAvatarUrl(user.avatarUrl);
 
   return (
     <div className="relative" ref={dropdownRef}>

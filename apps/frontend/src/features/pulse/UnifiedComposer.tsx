@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { useAuth } from "../../hooks/useAuth";
-import { config } from "../../config";
+import { buildAvatarUrl } from "../../utils/avatarUtils";
 import { useHandleSearch } from "./useHandleSearch";
 import { useHashtagSearch } from "./useHashtagSearch";
 import { MentionAutocomplete } from "./MentionAutocomplete";
@@ -217,9 +217,7 @@ export function UnifiedComposer({
     clearHashtagResults();
   };
 
-  const avatarUrl = user?.avatarUrl
-    ? `${config.api.baseUrl}${user.avatarUrl}`
-    : null;
+  const avatarUrl = buildAvatarUrl(user?.avatarUrl);
 
   const buttonText = mode === "post" ? "Post" : mode === "reply" ? "Reply" : "Repulse";
   const submittingText = mode === "post" ? "Posting..." : mode === "reply" ? "Replying..." : "Repulsing...";

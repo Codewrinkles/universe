@@ -29,7 +29,7 @@ public sealed class IdentityConfiguration : IEntityTypeConfiguration<Domain.Iden
             .HasMaxLength(255);
 
         builder.Property(i => i.PasswordHash)
-            .IsRequired()
+            .IsRequired(false)  // Nullable for OAuth-only accounts
             .HasMaxLength(255);
 
         builder.Property(i => i.IsEmailVerified)

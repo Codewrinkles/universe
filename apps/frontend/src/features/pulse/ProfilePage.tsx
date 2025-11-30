@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router";
 import { useAuth } from "../../hooks/useAuth";
 import { config } from "../../config";
+import { buildAvatarUrl } from "../../utils/avatarUtils";
 import { PulseNavigation } from "./PulseNavigation";
 import { PulseRightSidebar } from "./PulseRightSidebar";
 import { PostCard } from "./PostCard";
@@ -19,9 +20,7 @@ interface ProfileHeaderProps {
 }
 
 function ProfileHeader({ profile, isOwnProfile, followersCount, followingCount, pulsesCount, isLoadingCounts = false }: ProfileHeaderProps): JSX.Element {
-  const avatarUrl = profile.avatarUrl
-    ? `${config.api.baseUrl}${profile.avatarUrl}?t=${Date.now()}`
-    : null;
+  const avatarUrl = buildAvatarUrl(profile.avatarUrl);
 
   return (
     <div className="border-b border-border bg-surface-card1 p-4">
@@ -473,7 +472,7 @@ export function ProfilePage(): JSX.Element {
                     <div className="flex items-start gap-3">
                       <div className="h-12 w-12 rounded-full overflow-hidden border border-border flex-shrink-0">
                         {user.avatarUrl ? (
-                          <img src={`${config.api.baseUrl}${user.avatarUrl}`} alt={user.name} className="h-full w-full object-cover" />
+                          <img src={buildAvatarUrl(user.avatarUrl) ?? ''} alt={user.name} className="h-full w-full object-cover" />
                         ) : (
                           <div className="h-full w-full bg-surface-card2 flex items-center justify-center">
                             <span className="text-lg text-text-tertiary">{user.name.charAt(0).toUpperCase()}</span>
@@ -517,7 +516,7 @@ export function ProfilePage(): JSX.Element {
                     <div className="flex items-start gap-3">
                       <div className="h-12 w-12 rounded-full overflow-hidden border border-border flex-shrink-0">
                         {user.avatarUrl ? (
-                          <img src={`${config.api.baseUrl}${user.avatarUrl}`} alt={user.name} className="h-full w-full object-cover" />
+                          <img src={buildAvatarUrl(user.avatarUrl) ?? ''} alt={user.name} className="h-full w-full object-cover" />
                         ) : (
                           <div className="h-full w-full bg-surface-card2 flex items-center justify-center">
                             <span className="text-lg text-text-tertiary">{user.name.charAt(0).toUpperCase()}</span>

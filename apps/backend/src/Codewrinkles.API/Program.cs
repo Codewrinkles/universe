@@ -26,6 +26,12 @@ builder.Services.AddApplication();
 // Add Infrastructure layer
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// Add distributed cache for OAuth state management
+builder.Services.AddDistributedMemoryCache();
+
+// Add HttpClient for OAuthService
+builder.Services.AddHttpClient<Codewrinkles.Application.Common.Interfaces.IOAuthService, Codewrinkles.Infrastructure.Services.OAuthService>();
+
 // Add Authentication & Authorization
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
     ?? throw new InvalidOperationException("JWT configuration is missing");

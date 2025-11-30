@@ -3,6 +3,7 @@ import { Card } from "../../../components/ui/Card";
 import { Button } from "../../../components/ui/Button";
 import { FollowButton } from "../../social/components/FollowButton";
 import { config } from "../../../config";
+import { buildAvatarUrl } from "../../../utils/avatarUtils";
 import type { ProfileSuggestion } from "../../../types";
 
 interface SuggestedFollowsProps {
@@ -40,10 +41,11 @@ export function SuggestedFollows({ onComplete }: SuggestedFollowsProps): JSX.Ele
   }, []);
 
   const getAvatarDisplay = (profile: ProfileSuggestion): JSX.Element => {
-    if (profile.avatarUrl) {
+    const avatarSrc = buildAvatarUrl(profile.avatarUrl);
+    if (avatarSrc) {
       return (
         <img
-          src={`${config.api.baseUrl}${profile.avatarUrl}`}
+          src={avatarSrc}
           alt={profile.name}
           className="h-12 w-12 rounded-full object-cover"
         />

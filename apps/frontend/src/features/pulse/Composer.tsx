@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { useAuth } from "../../hooks/useAuth";
-import { config } from "../../config";
+import { buildAvatarUrl } from "../../utils/avatarUtils";
 import { useHandleSearch } from "./useHandleSearch";
 import { MentionAutocomplete } from "./MentionAutocomplete";
 
@@ -129,9 +129,7 @@ export function Composer({ value, onChange, maxChars, isOverLimit, charsLeft, on
     clearResults();
   };
 
-  const avatarUrl = user?.avatarUrl
-    ? `${config.api.baseUrl}${user.avatarUrl}`
-    : null;
+  const avatarUrl = buildAvatarUrl(user?.avatarUrl);
 
   return (
     <div className="flex gap-3">

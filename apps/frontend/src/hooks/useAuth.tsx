@@ -10,6 +10,17 @@ import { config } from "../config";
 import { authApi } from "../services/authApi";
 import { profileApi } from "../services/profileApi";
 import { setAuthTokens, clearAuthData, isTokenExpired } from "../utils/api";
+import { jwtDecode } from "jwt-decode";
+
+interface JwtPayload {
+  sub: string;
+  email: string;
+  name: string;
+  handle?: string;
+  avatarUrl?: string;
+  profileId: string;
+  role: string;
+}
 
 interface AuthContextType {
   user: User | null;
@@ -21,6 +32,7 @@ interface AuthContextType {
   updateProfile: (data: UpdateProfileRequest) => Promise<void>;
   updateAvatar: (file: File) => Promise<string>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  completeOAuthLogin: (accessToken: string, refreshToken: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -223,6 +235,39 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
     await authApi.changePassword(request);
   }, [user]);
 
+  /**
+   * Complete OAuth login
+   * Called after OAuth callback redirect with tokens
+   */
+  const completeOAuthLogin = useCallback(async (
+    accessToken: string,
+    refreshToken: string
+  ): Promise<void> => {
+    try {
+      setIsLoading(true);
+      setAuthTokens(accessToken, refreshToken);
+
+      const decoded = jwtDecode<JwtPayload>(accessToken);
+      const userData: User = {
+        identityId: decoded.sub,
+        profileId: decoded.profileId,
+        email: decoded.email,
+        name: decoded.name,
+        handle: decoded.handle || null,
+        bio: null,
+        avatarUrl: decoded.avatarUrl || null,
+        location: null,
+        websiteUrl: null,
+        role: decoded.role,
+      };
+
+      setUser(userData);
+      localStorage.setItem(config.auth.userKey, JSON.stringify(userData));
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const value: AuthContextType = {
     user,
     isAuthenticated: user !== null,
@@ -233,6 +278,7 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
     updateProfile,
     updateAvatar,
     changePassword,
+    completeOAuthLogin,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
