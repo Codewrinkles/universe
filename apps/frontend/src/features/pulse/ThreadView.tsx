@@ -6,10 +6,12 @@ import { UnifiedComposer } from "./UnifiedComposer";
 import { PulseNavigation } from "./PulseNavigation";
 import { PulseRightSidebar } from "./PulseRightSidebar";
 import { LoadingCard, Spinner } from "../../components/ui";
+import { useAuth } from "../../hooks/useAuth";
 
 export function ThreadView(): JSX.Element {
   const { pulseId } = useParams<{ pulseId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const highlightedReplyId = searchParams.get("highlight");
   const [replyingToPulseId, setReplyingToPulseId] = useState<string | null>(null);
@@ -65,12 +67,14 @@ export function ThreadView(): JSX.Element {
 
   return (
     <div className="flex justify-center">
-      {/* Left Navigation - container matches right for symmetry */}
-      <aside className="hidden lg:flex w-[320px] flex-shrink-0 justify-end pr-8">
-        <div className="w-[240px]">
-          <PulseNavigation />
-        </div>
-      </aside>
+      {/* Left Navigation - only show if authenticated */}
+      {user && (
+        <aside className="hidden lg:flex w-[320px] flex-shrink-0 justify-end pr-8">
+          <div className="w-[240px]">
+            <PulseNavigation />
+          </div>
+        </aside>
+      )}
 
       {/* Main Content */}
       <main className="w-full max-w-[600px] border-x border-border lg:w-[600px]">
@@ -200,15 +204,20 @@ export function ThreadView(): JSX.Element {
         ) : null}
       </main>
 
-      {/* Right Sidebar - placeholder for spacing */}
-      <aside className="hidden lg:block w-[320px] flex-shrink-0 pl-8">
-        {/* Empty placeholder */}
-      </aside>
+      {/* Right Sidebar - only show if authenticated */}
+      {user && (
+        <>
+          {/* Right Sidebar - placeholder for spacing */}
+          <aside className="hidden lg:block w-[320px] flex-shrink-0 pl-8">
+            {/* Empty placeholder */}
+          </aside>
 
-      {/* Right Sidebar - fixed position */}
-      <div className="hidden lg:block fixed top-20 z-10 w-[288px] left-[calc(50%+332px)]">
-        <PulseRightSidebar />
-      </div>
+          {/* Right Sidebar - fixed position */}
+          <div className="hidden lg:block fixed top-20 z-10 w-[288px] left-[calc(50%+332px)]">
+            <PulseRightSidebar />
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -320,24 +320,28 @@ export function ProfilePage(): JSX.Element {
   if (isLoading) {
     return (
       <div className="flex justify-center">
-        {/* Left Navigation */}
-        <aside className="hidden lg:flex w-[320px] flex-shrink-0 justify-end pr-8">
-          <div className="w-[240px]">
-            <PulseNavigation />
-          </div>
-        </aside>
+        {/* Left Navigation - only show if authenticated */}
+        {currentUser && (
+          <aside className="hidden lg:flex w-[320px] flex-shrink-0 justify-end pr-8">
+            <div className="w-[240px]">
+              <PulseNavigation />
+            </div>
+          </aside>
+        )}
 
         {/* Main Content */}
         <main className="w-full max-w-[600px] border-x border-border lg:w-[600px]">
           <LoadingProfile />
         </main>
 
-        {/* Right Sidebar */}
-        <aside className="hidden lg:flex w-[320px] flex-shrink-0 pl-8">
-          <div className="w-[280px]">
-            <PulseRightSidebar />
-          </div>
-        </aside>
+        {/* Right Sidebar - only show if authenticated */}
+        {currentUser && (
+          <aside className="hidden lg:flex w-[320px] flex-shrink-0 pl-8">
+            <div className="w-[280px]">
+              <PulseRightSidebar />
+            </div>
+          </aside>
+        )}
       </div>
     );
   }
@@ -358,12 +362,14 @@ export function ProfilePage(): JSX.Element {
 
   return (
     <div className="flex justify-center">
-      {/* Left Navigation */}
-      <aside className="hidden lg:flex w-[320px] flex-shrink-0 justify-end pr-8">
-        <div className="w-[240px]">
-          <PulseNavigation />
-        </div>
-      </aside>
+      {/* Left Navigation - only show if authenticated */}
+      {currentUser && (
+        <aside className="hidden lg:flex w-[320px] flex-shrink-0 justify-end pr-8">
+          <div className="w-[240px]">
+            <PulseNavigation />
+          </div>
+        </aside>
+      )}
 
       {/* Main Content */}
       <main className="w-full max-w-[600px] border-x border-border lg:w-[600px]">
@@ -544,12 +550,14 @@ export function ProfilePage(): JSX.Element {
         </div>
       </main>
 
-      {/* Right Sidebar */}
-      <aside className="hidden lg:flex w-[320px] flex-shrink-0 pl-8">
-        <div className="w-[280px]">
-          <PulseRightSidebar />
-        </div>
-      </aside>
+      {/* Right Sidebar - only show if authenticated */}
+      {currentUser && (
+        <aside className="hidden lg:flex w-[320px] flex-shrink-0 pl-8">
+          <div className="w-[280px]">
+            <PulseRightSidebar />
+          </div>
+        </aside>
+      )}
     </div>
   );
 }

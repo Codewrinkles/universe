@@ -105,7 +105,6 @@ export function ProfileDropdown(): JSX.Element {
           {/* User info section */}
           <div className="border-b border-border px-4 py-3">
             <p className="text-sm font-medium text-text-primary truncate">{user.name}</p>
-            <p className="text-xs text-text-secondary truncate">{user.email}</p>
             {user.handle && (
               <p className="text-xs text-text-tertiary truncate">@{user.handle}</p>
             )}
@@ -113,29 +112,6 @@ export function ProfileDropdown(): JSX.Element {
 
           {/* Menu items */}
           <div className="py-1">
-            {user.handle && (
-              <Link
-                to={`/pulse/u/${user.handle}`}
-                onClick={() => setIsOpen(false)}
-                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-text-secondary hover:bg-surface-card2 hover:text-text-primary transition-colors"
-              >
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
-                Profile
-              </Link>
-            )}
             <Link
               to="/settings"
               onClick={() => setIsOpen(false)}

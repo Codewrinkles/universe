@@ -265,14 +265,17 @@ export function PostCard({ post, onReplyClick, onFollowChange, onDelete }: PostC
               onClick={(e) => e.stopPropagation()}
               className="flex items-center gap-2 flex-shrink-0"
             >
-              <FollowButton
-                profileId={author.id}
-                initialIsFollowing={post.isFollowingAuthor}
-                size="sm"
-                onFollowChange={onFollowChange}
-              />
+              {/* Follow button - only show if authenticated and not viewing own profile */}
+              {user && !isAuthor && (
+                <FollowButton
+                  profileId={author.id}
+                  initialIsFollowing={post.isFollowingAuthor}
+                  size="sm"
+                  onFollowChange={onFollowChange}
+                />
+              )}
               {/* Three-dot menu for author's own posts */}
-              {isAuthor && (
+              {user && isAuthor && (
                 <div className="relative" ref={menuRef}>
                   <button
                     type="button"
@@ -370,34 +373,36 @@ export function PostCard({ post, onReplyClick, onFollowChange, onDelete }: PostC
             </div>
           )}
 
-          {/* Actions */}
-          <div className="mt-2 flex items-center justify-between max-w-md -ml-2">
-            <ActionButton
-              icon="💬"
-              count={replyCount}
-              hoverColor="hover:text-sky-400 hover:bg-sky-400/10"
-              label="Reply"
-              onClick={handleReplyButtonClick}
-            />
-            <ActionButton
-              icon="🔄"
-              count={repostCount}
-              hoverColor="hover:text-green-400 hover:bg-green-400/10"
-              label="Re-Pulse"
-              onClick={() => setShowRepulseModal(true)}
-            />
-            <LikeButton
-              pulseId={post.id}
-              initialIsLiked={isLikedByCurrentUser}
-              initialLikeCount={likeCount}
-            />
-            <ActionButton
-              icon={isBookmarked ? "🔖" : "📑"}
-              hoverColor="hover:text-brand-soft hover:bg-brand-soft/10"
-              label={isBookmarked ? "Remove bookmark" : "Bookmark"}
-              onClick={handleBookmarkClick}
-            />
-          </div>
+          {/* Actions - only show if authenticated */}
+          {user && (
+            <div className="mt-2 flex items-center justify-between max-w-md -ml-2">
+              <ActionButton
+                icon="💬"
+                count={replyCount}
+                hoverColor="hover:text-sky-400 hover:bg-sky-400/10"
+                label="Reply"
+                onClick={handleReplyButtonClick}
+              />
+              <ActionButton
+                icon="🔄"
+                count={repostCount}
+                hoverColor="hover:text-green-400 hover:bg-green-400/10"
+                label="Re-Pulse"
+                onClick={() => setShowRepulseModal(true)}
+              />
+              <LikeButton
+                pulseId={post.id}
+                initialIsLiked={isLikedByCurrentUser}
+                initialLikeCount={likeCount}
+              />
+              <ActionButton
+                icon={isBookmarked ? "🔖" : "📑"}
+                hoverColor="hover:text-brand-soft hover:bg-brand-soft/10"
+                label={isBookmarked ? "Remove bookmark" : "Bookmark"}
+                onClick={handleBookmarkClick}
+              />
+            </div>
+          )}
         </div>
       </div>
     </article>
