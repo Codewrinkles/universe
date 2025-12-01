@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router";
+import { Helmet } from "react-helmet-async";
 import { useThread } from "./hooks/useThread";
 import { PostCard } from "./PostCard";
 import { UnifiedComposer } from "./UnifiedComposer";
@@ -7,6 +8,12 @@ import { PulseNavigation } from "./PulseNavigation";
 import { PulseRightSidebar } from "./PulseRightSidebar";
 import { LoadingCard, Spinner } from "../../components/ui";
 import { useAuth } from "../../hooks/useAuth";
+import {
+  truncateText,
+  getFullUrl,
+  generatePulseStructuredData,
+  getDefaultOGImage,
+} from "../../utils/seo";
 
 export function ThreadView(): JSX.Element {
   const { pulseId } = useParams<{ pulseId: string }>();
@@ -65,8 +72,62 @@ export function ThreadView(): JSX.Element {
     }
   }, [highlightedReplyId, replies, isLoading]);
 
+  // Generate SEO metadata from parentPulse
+  const title = parentPulse
+    ? `${parentPulse.author.name} (@${parentPulse.author.handle}) on Codewrinkles`
+    : "Thread • Codewrinkles";
+  const description = parentPulse
+    ? truncateText(parentPulse.content, 160)
+    : "See the conversation on Codewrinkles";
+  const url = getFullUrl(`/pulse/${pulseId}`);
+  const ogImage =
+    parentPulse?.imageUrl ||
+    parentPulse?.author.avatarUrl ||
+    getDefaultOGImage();
+
   return (
-    <div className="flex justify-center">
+    <>
+      <Helmet>
+        {/* Primary Meta Tags */}
+        <title>{title}</title>
+        <meta name="title" content={title} />
+        <meta name="description" content={description} />
+
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content={url} />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={description} />
+        <meta property="og:image" content={ogImage} />
+        {parentPulse && (
+          <>
+            <meta property="article:published_time" content={parentPulse.createdAt} />
+            <meta property="article:author" content={parentPulse.author.name} />
+          </>
+        )}
+
+        {/* Twitter */}
+        <meta
+          name="twitter:card"
+          content={parentPulse?.imageUrl ? "summary_large_image" : "summary"}
+        />
+        <meta name="twitter:url" content={url} />
+        <meta name="twitter:title" content={title} />
+        <meta name="twitter:description" content={description} />
+        <meta name="twitter:image" content={ogImage} />
+
+        {/* Canonical URL */}
+        <link rel="canonical" href={url} />
+
+        {/* Structured Data */}
+        {parentPulse && (
+          <script type="application/ld+json">
+            {generatePulseStructuredData(parentPulse)}
+          </script>
+        )}
+      </Helmet>
+
+      <div className="flex justify-center">
       {/* Left Navigation - only show if authenticated */}
       {user && (
         <aside className="hidden lg:flex w-[320px] flex-shrink-0 justify-end pr-8">
@@ -218,6 +279,7 @@ export function ThreadView(): JSX.Element {
           </div>
         </>
       )}
-    </div>
+      </div>
+    </>
   );
 }

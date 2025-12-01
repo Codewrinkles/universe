@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router";
+import { Helmet } from "react-helmet-async";
 import { useAuth } from "../../hooks/useAuth";
 import { config } from "../../config";
 import { buildAvatarUrl } from "../../utils/avatarUtils";
@@ -9,6 +10,11 @@ import { PostCard } from "./PostCard";
 import { UnifiedComposer } from "./UnifiedComposer";
 import type { User, Pulse, FollowerDto, FollowingDto } from "../../types";
 import { LoadingProfile, LoadingCard, LoadingUserItem, Skeleton } from "../../components/ui";
+import {
+  generateProfileStructuredData,
+  getFullUrl,
+  getDefaultOGImage,
+} from "../../utils/seo";
 
 interface ProfileHeaderProps {
   profile: User;
@@ -360,8 +366,47 @@ export function ProfilePage(): JSX.Element {
     );
   }
 
+  // Generate SEO metadata from profile
+  const profileHandle = profile.handle || "user";
+  const title = `${profile.name} (@${profileHandle}) • Codewrinkles`;
+  const description =
+    profile.bio || `See pulses from ${profile.name} on Codewrinkles`;
+  const url = getFullUrl(`/pulse/u/${profileHandle}`);
+  const ogImage = buildAvatarUrl(profile.avatarUrl) || getDefaultOGImage();
+
   return (
-    <div className="flex justify-center">
+    <>
+      <Helmet>
+        {/* Primary Meta Tags */}
+        <title>{title}</title>
+        <meta name="title" content={title} />
+        <meta name="description" content={description} />
+
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="profile" />
+        <meta property="og:url" content={url} />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={description} />
+        <meta property="og:image" content={ogImage} />
+        <meta property="profile:username" content={profileHandle} />
+
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:url" content={url} />
+        <meta name="twitter:title" content={title} />
+        <meta name="twitter:description" content={description} />
+        <meta name="twitter:image" content={ogImage} />
+
+        {/* Canonical URL */}
+        <link rel="canonical" href={url} />
+
+        {/* Structured Data */}
+        <script type="application/ld+json">
+          {generateProfileStructuredData(profile)}
+        </script>
+      </Helmet>
+
+      <div className="flex justify-center">
       {/* Left Navigation - only show if authenticated */}
       {currentUser && (
         <aside className="hidden lg:flex w-[320px] flex-shrink-0 justify-end pr-8">
@@ -558,6 +603,7 @@ export function ProfilePage(): JSX.Element {
           </div>
         </aside>
       )}
-    </div>
+      </div>
+    </>
   );
 }

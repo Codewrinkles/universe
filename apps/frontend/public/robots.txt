@@ -1,0 +1,37 @@
+# Codewrinkles Robots.txt
+# Updated: 2025-12-01
+
+# Allow all search engines to crawl public content
+User-agent: *
+Allow: /
+Allow: /pulse
+Allow: /pulse/u/
+
+# Disallow private/authenticated pages
+Disallow: /settings
+Disallow: /settings/*
+Disallow: /onboarding
+Disallow: /onboarding/*
+Disallow: /admin
+Disallow: /admin/*
+
+# Disallow auth pages (no need to index)
+Disallow: /login
+Disallow: /register
+Disallow: /auth/
+
+# Allow crawling of static assets
+Allow: /assets/
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.gif$
+Allow: /*.svg$
+
+# Sitemap location
+Sitemap: https://codewrinkles.com/sitemap.xml
+
+# Crawl-delay for polite crawling (optional)
+# Crawl-delay: 1
