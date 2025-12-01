@@ -14,12 +14,24 @@ export function PrivacyPage(): JSX.Element {
             Privacy Policy
           </h1>
           <p className="text-sm text-text-secondary">
-            Last updated: November 30, 2024
+            Last updated: December 1, 2024
           </p>
         </div>
 
         {/* Content */}
         <div className="prose prose-invert max-w-none space-y-8 text-text-secondary">
+          {/* Quick Summary */}
+          <section className="p-4 bg-brand/10 border border-brand/30 rounded-lg">
+            <h2 className="text-lg font-semibold text-brand-soft mb-3">🔒 Privacy at a Glance</h2>
+            <ul className="space-y-2 text-sm">
+              <li>✅ <strong>No Cookie Banner Needed:</strong> We don't use cookies at all</li>
+              <li>✅ <strong>No Tracking:</strong> Zero analytics, advertising, or third-party trackers</li>
+              <li>✅ <strong>No Data Selling:</strong> We never sell your personal information</li>
+              <li>✅ <strong>Local Storage Only:</strong> We use browser local storage for authentication and preferences (strictly necessary)</li>
+              <li>✅ <strong>Transparent:</strong> Everything we collect and why is explained below</li>
+            </ul>
+          </section>
+
           {/* Introduction */}
           <section>
             <h2 className="text-xl font-semibold text-text-primary mb-3">1. Introduction</h2>
@@ -54,8 +66,38 @@ export function PrivacyPage(): JSX.Element {
               <li><strong>Log Data:</strong> IP address, browser type, operating system, access times, pages viewed</li>
               <li><strong>Device Information:</strong> Device type, unique device identifiers</li>
               <li><strong>Usage Data:</strong> How you interact with the Service, features used, actions taken</li>
-              <li><strong>Cookies:</strong> We use essential cookies for authentication and preferences (theme settings)</li>
             </ul>
+          </section>
+
+          {/* Local Storage */}
+          <section>
+            <h2 className="text-xl font-semibold text-text-primary mb-3">2.1. Browser Local Storage</h2>
+            <p className="leading-relaxed">
+              <strong>Important:</strong> We do not use cookies. Instead, we use browser local storage to store essential data on your device.
+            </p>
+
+            <h3 className="text-lg font-semibold text-text-primary mt-4 mb-2">What We Store Locally</h3>
+            <ul className="list-disc list-inside space-y-2 mt-3 ml-4">
+              <li><strong>Authentication Tokens:</strong> Access and refresh tokens to keep you logged in (strictly necessary for the Service to function)</li>
+              <li><strong>User Profile Data:</strong> Your name, handle, and profile information for quick access</li>
+              <li><strong>Theme Preference:</strong> Your dark/light mode preference</li>
+            </ul>
+
+            <h3 className="text-lg font-semibold text-text-primary mt-4 mb-2">What We Don't Store</h3>
+            <ul className="list-disc list-inside space-y-2 mt-3 ml-4">
+              <li>❌ <strong>No HTTP Cookies:</strong> We do not set any browser cookies</li>
+              <li>❌ <strong>No Tracking Cookies:</strong> We do not use analytics or advertising cookies</li>
+              <li>❌ <strong>No Third-Party Trackers:</strong> No Google Analytics, Facebook Pixel, or similar tracking technologies</li>
+              <li>❌ <strong>No Cross-Site Tracking:</strong> We do not track you across other websites</li>
+            </ul>
+
+            <p className="leading-relaxed mt-3">
+              <strong>Managing Local Storage:</strong> You can clear local storage at any time through your browser settings. Note that clearing local storage will log you out and reset your preferences.
+            </p>
+
+            <p className="leading-relaxed mt-3 p-3 bg-surface-card1 rounded-lg border border-border">
+              <strong>Privacy First:</strong> Because we only use strictly necessary local storage (required for authentication and basic functionality), <strong>no cookie consent banner is required</strong> under GDPR, CCPA, or other privacy regulations. We believe in transparency over annoying pop-ups.
+            </p>
           </section>
 
           {/* How We Use Your Information */}
@@ -76,7 +118,24 @@ export function PrivacyPage(): JSX.Element {
               <li>Enforce our Terms of Service and protect our rights</li>
             </ul>
             <p className="leading-relaxed mt-3">
-              <strong>What We Don't Do:</strong> We do not sell your personal information. We do not use algorithmic feeds to manipulate engagement. We do not share your data with third-party advertisers.
+              <strong>What We Don't Do:</strong> We do not sell your personal information. We do not use algorithmic feeds to manipulate engagement. We do not share your data with third-party advertisers. We do not use tracking cookies or analytics to profile you.
+            </p>
+          </section>
+
+          {/* OAuth Third-Party Authentication */}
+          <section>
+            <h2 className="text-xl font-semibold text-text-primary mb-3">3.1. OAuth Authentication (Google & GitHub)</h2>
+            <p className="leading-relaxed">
+              When you sign in using Google or GitHub OAuth:
+            </p>
+            <ul className="list-disc list-inside space-y-2 mt-3 ml-4">
+              <li><strong>What We Receive:</strong> Your email address, name, and profile picture from the OAuth provider</li>
+              <li><strong>What We Don't Receive:</strong> We do not receive your Google/GitHub password or access to your Google/GitHub account beyond basic profile information</li>
+              <li><strong>Provider Privacy Policies:</strong> Your use of Google/GitHub OAuth is subject to their respective privacy policies</li>
+              <li><strong>Revocation:</strong> You can revoke Codewrinkles' access to your OAuth account at any time through your Google/GitHub account settings</li>
+            </ul>
+            <p className="leading-relaxed mt-3">
+              We use OAuth solely for authentication convenience. We do not track your activity on Google or GitHub, and we do not share your Codewrinkles data with these providers beyond what is necessary for authentication.
             </p>
           </section>
 
