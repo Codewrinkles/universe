@@ -41,7 +41,8 @@ export function PulseNavigation(): JSX.Element {
       <NavItem to="/pulse" icon="🏠" label="Home" />
       {/* <NavItem to="/pulse/explore" icon="🔍" label="Explore" /> */}
       <NavItem to="/pulse/notifications" icon="🔔" label="Notifications" badge={unreadCount} />
-      <NavItem to="/pulse/messages" icon="✉️" label="Messages" />
+      {/* TODO: Implement messaging with anti-spam safeguards (mutual followers, message requests, rate limiting) */}
+      {/* <NavItem to="/pulse/messages" icon="✉️" label="Messages" /> */}
       <NavItem to="/pulse/bookmarks" icon="🔖" label="Bookmarks" />
       {user?.handle && <NavItem to={`/pulse/u/${user.handle}`} icon="👤" label="Profile" />}
 
