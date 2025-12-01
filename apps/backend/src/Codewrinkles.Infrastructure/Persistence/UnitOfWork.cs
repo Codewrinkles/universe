@@ -11,6 +11,7 @@ public sealed class UnitOfWork : IUnitOfWork
     private readonly IIdentityRepository _identities;
     private readonly IProfileRepository _profiles;
     private readonly IExternalLoginRepository _externalLogins;
+    private readonly IRefreshTokenRepository _refreshTokens;
     private readonly IPulseRepository _pulses;
     private readonly IFollowRepository _follows;
     private readonly INotificationRepository _notifications;
@@ -22,6 +23,7 @@ public sealed class UnitOfWork : IUnitOfWork
         IIdentityRepository identities,
         IProfileRepository profiles,
         IExternalLoginRepository externalLogins,
+        IRefreshTokenRepository refreshTokens,
         IPulseRepository pulses,
         IFollowRepository follows,
         INotificationRepository notifications,
@@ -32,6 +34,7 @@ public sealed class UnitOfWork : IUnitOfWork
         _identities = identities;
         _profiles = profiles;
         _externalLogins = externalLogins;
+        _refreshTokens = refreshTokens;
         _pulses = pulses;
         _follows = follows;
         _notifications = notifications;
@@ -44,6 +47,8 @@ public sealed class UnitOfWork : IUnitOfWork
     public IProfileRepository Profiles => _profiles;
 
     public IExternalLoginRepository ExternalLogins => _externalLogins;
+
+    public IRefreshTokenRepository RefreshTokens => _refreshTokens;
 
     public IPulseRepository Pulses => _pulses;
 

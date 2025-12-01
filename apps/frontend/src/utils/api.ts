@@ -93,6 +93,94 @@ export function isTokenExpired(token: string): boolean {
 }
 
 /**
+ * Check if a JWT token will expire soon (within 5 minutes)
+ * Used for proactive token refresh
+ */
+export function isTokenExpiringSoon(token: string): boolean {
+  try {
+    const decoded = jwtDecode<{ exp: number }>(token);
+    const expirationTime = decoded.exp * 1000;
+    const now = Date.now();
+    const fiveMinutes = 5 * 60 * 1000;
+
+    // Token expires in less than 5 minutes
+    return expirationTime - now < fiveMinutes;
+  } catch {
+    // Invalid token format = treat as expiring
+    return true;
+  }
+}
+
+/**
+ * Get the stored refresh token
+ */
+export function getRefreshToken(): string | null {
+  return localStorage.getItem(config.auth.refreshTokenKey);
+}
+
+// Track if a token refresh is in progress to prevent concurrent refresh attempts
+let isRefreshing = false;
+let refreshPromise: Promise<void> | null = null;
+
+/**
+ * Refresh the access token using the refresh token
+ * Returns true if successful, false if refresh failed
+ */
+export async function refreshAccessToken(): Promise<boolean> {
+  // If a refresh is already in progress, wait for it to complete
+  if (isRefreshing && refreshPromise) {
+    try {
+      await refreshPromise;
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  const refreshToken = getRefreshToken();
+
+  if (!refreshToken) {
+    return false;
+  }
+
+  // Mark refresh as in progress
+  isRefreshing = true;
+  refreshPromise = (async () => {
+    try {
+      const response = await fetch(`${config.api.baseUrl}/api/identity/refresh`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (!response.ok) {
+        // Refresh failed - clear auth data and emit event
+        clearAuthData();
+        window.dispatchEvent(new CustomEvent("auth:session-expired"));
+        throw new Error("Token refresh failed");
+      }
+
+      const data = await response.json() as { accessToken: string; refreshToken: string };
+
+      // Store new tokens
+      setAuthTokens(data.accessToken, data.refreshToken);
+    } finally {
+      isRefreshing = false;
+      refreshPromise = null;
+    }
+  })();
+
+  try {
+    await refreshPromise;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Parse error response from API
  * Handles ASP.NET Core ProblemDetails format
  */
@@ -145,12 +233,22 @@ async function parseErrorResponse(response: Response): Promise<ApiError> {
 /**
  * Generic API request function
  * Handles authentication, error parsing, and type safety
+ * Includes proactive token refresh and 401 retry logic
  */
 export async function apiRequest<TResponse>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  isRetry = false
 ): Promise<TResponse> {
-  const token = getAccessToken();
+  let token = getAccessToken();
+
+  // Proactive token refresh: if token is expiring soon, refresh it before making the request
+  if (token && !isRetry && isTokenExpiringSoon(token)) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      token = getAccessToken(); // Get the new token
+    }
+  }
 
   const headers: HeadersInit = {
     ...options.headers,
@@ -183,8 +281,16 @@ export async function apiRequest<TResponse>(
 
   if (!response.ok) {
     // Handle 401 Unauthorized - token expired or invalid
-    if (response.status === 401) {
-      // Emit event to notify auth context to logout user
+    if (response.status === 401 && !isRetry) {
+      // Attempt to refresh the token and retry the request once
+      const refreshed = await refreshAccessToken();
+
+      if (refreshed) {
+        // Retry the request with the new token
+        return apiRequest<TResponse>(endpoint, options, true);
+      }
+
+      // Refresh failed - emit event to notify auth context
       window.dispatchEvent(new CustomEvent("auth:unauthorized"));
     }
 

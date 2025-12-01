@@ -39,6 +39,7 @@ public static class DependencyInjection
         services.AddScoped<IIdentityRepository, IdentityRepository>();
         services.AddScoped<IProfileRepository, ProfileRepository>();
         services.AddScoped<IExternalLoginRepository, ExternalLoginRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IPulseRepository, PulseRepository>();
         services.AddScoped<IFollowRepository, FollowRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
@@ -61,7 +62,8 @@ public static class DependencyInjection
                 SecretKey: jwtOptions.SecretKey,
                 Issuer: jwtOptions.Issuer,
                 Audience: jwtOptions.Audience,
-                AccessTokenExpiryMinutes: jwtOptions.AccessTokenExpiryMinutes
+                AccessTokenExpiryMinutes: jwtOptions.AccessTokenExpiryMinutes,
+                RefreshTokenExpiryDays: jwtOptions.RefreshTokenExpiryDays
             );
             return new JwtTokenGenerator(jwtSettings);
         });

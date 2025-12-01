@@ -4,5 +4,6 @@ public sealed record JwtSettings(
     string SecretKey,
     string Issuer,
     string Audience,
-    int AccessTokenExpiryMinutes
+    int AccessTokenExpiryMinutes,
+    int RefreshTokenExpiryDays
 );

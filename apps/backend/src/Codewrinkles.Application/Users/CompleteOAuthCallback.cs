@@ -117,7 +117,19 @@ public sealed class CompleteOAuthCallbackCommandHandler
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var accessToken = _jwtTokenGenerator.GenerateAccessToken(identity, profile);
-        var refreshToken = JwtTokenGenerator.GenerateRefreshToken(identity);
+
+        // Generate refresh token and store in database
+        var (refreshToken, refreshTokenHash) = JwtTokenGenerator.GenerateRefreshToken();
+        var refreshTokenExpiry = DateTime.UtcNow.AddDays(_jwtTokenGenerator.RefreshTokenExpiryDays);
+
+        var refreshTokenEntity = RefreshToken.Create(
+            refreshTokenHash,
+            identity.Id,
+            refreshTokenExpiry
+        );
+
+        _unitOfWork.RefreshTokens.Add(refreshTokenEntity);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new CompleteOAuthCallbackResult(
             identity.Id,
@@ -167,7 +179,19 @@ public sealed class CompleteOAuthCallbackCommandHandler
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var accessToken = _jwtTokenGenerator.GenerateAccessToken(existingIdentity, profile);
-        var refreshToken = JwtTokenGenerator.GenerateRefreshToken(existingIdentity);
+
+        // Generate refresh token and store in database
+        var (refreshToken, refreshTokenHash) = JwtTokenGenerator.GenerateRefreshToken();
+        var refreshTokenExpiry = DateTime.UtcNow.AddDays(_jwtTokenGenerator.RefreshTokenExpiryDays);
+
+        var refreshTokenEntity = RefreshToken.Create(
+            refreshTokenHash,
+            existingIdentity.Id,
+            refreshTokenExpiry
+        );
+
+        _unitOfWork.RefreshTokens.Add(refreshTokenEntity);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new CompleteOAuthCallbackResult(
             existingIdentity.Id,
@@ -243,7 +267,19 @@ public sealed class CompleteOAuthCallbackCommandHandler
         }
 
         var accessToken = _jwtTokenGenerator.GenerateAccessToken(identity, profile);
-        var refreshToken = JwtTokenGenerator.GenerateRefreshToken(identity);
+
+        // Generate refresh token and store in database
+        var (refreshToken, refreshTokenHash) = JwtTokenGenerator.GenerateRefreshToken();
+        var refreshTokenExpiry = DateTime.UtcNow.AddDays(_jwtTokenGenerator.RefreshTokenExpiryDays);
+
+        var refreshTokenEntity = RefreshToken.Create(
+            refreshTokenHash,
+            identity.Id,
+            refreshTokenExpiry
+        );
+
+        _unitOfWork.RefreshTokens.Add(refreshTokenEntity);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new CompleteOAuthCallbackResult(
             identity.Id,

@@ -23,6 +23,9 @@ public static class IdentityEndpoints
         group.MapPost("/login", LoginUser)
             .WithName("LoginUser");
 
+        group.MapPost("/refresh", RefreshAccessToken)
+            .WithName("RefreshAccessToken");
+
         group.MapPut("/profile/{profileId:guid}", UpdateProfile)
             .WithName("UpdateProfile")
             .RequireAuthorization("MustBeProfileOwner");
@@ -124,6 +127,43 @@ public static class IdentityEndpoints
                 title: "Account Locked",
                 detail: ex.Message,
                 statusCode: 423
+            );
+        }
+    }
+
+    private static async Task<IResult> RefreshAccessToken(
+        [FromBody] RefreshAccessTokenRequest request,
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var command = new RefreshAccessTokenCommand(
+                RefreshToken: request.RefreshToken
+            );
+
+            var result = await mediator.SendAsync(command, cancellationToken);
+
+            return Results.Ok(new
+            {
+                accessToken = result.AccessToken,
+                refreshToken = result.RefreshToken
+            });
+        }
+        catch (InvalidRefreshTokenException ex)
+        {
+            return Results.Problem(
+                title: "Invalid Refresh Token",
+                detail: ex.Message,
+                statusCode: 401
+            );
+        }
+        catch (RefreshTokenExpiredException ex)
+        {
+            return Results.Problem(
+                title: "Refresh Token Expired",
+                detail: ex.Message,
+                statusCode: 401
             );
         }
     }
@@ -405,6 +445,10 @@ public sealed record RegisterUserRequest(
 public sealed record LoginUserRequest(
     string Email,
     string Password
+);
+
+public sealed record RefreshAccessTokenRequest(
+    string RefreshToken
 );
 
 public sealed record UpdateProfileRequest(

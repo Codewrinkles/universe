@@ -149,16 +149,20 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
     setUser(null);
   }, []);
 
-  // Listen for 401 unauthorized events from API calls
-  // Automatically logout user when token expires
+  // Listen for auth events from API calls
+  // - auth:unauthorized = 401 error after refresh attempt failed
+  // - auth:session-expired = refresh token expired
   useEffect(() => {
-    const handleUnauthorized = (): void => {
+    const handleAuthFailure = (): void => {
       logout();
     };
 
-    window.addEventListener("auth:unauthorized", handleUnauthorized);
+    window.addEventListener("auth:unauthorized", handleAuthFailure);
+    window.addEventListener("auth:session-expired", handleAuthFailure);
+
     return () => {
-      window.removeEventListener("auth:unauthorized", handleUnauthorized);
+      window.removeEventListener("auth:unauthorized", handleAuthFailure);
+      window.removeEventListener("auth:session-expired", handleAuthFailure);
     };
   }, [logout]);
 

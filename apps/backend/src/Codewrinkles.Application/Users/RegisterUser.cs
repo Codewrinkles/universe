@@ -85,7 +85,19 @@ public sealed class RegisterUserCommandHandler
 
         // 3. Generate JWT tokens (after successful commit)
         var accessToken = _jwtTokenGenerator.GenerateAccessToken(identity, profile);
-        var refreshToken = JwtTokenGenerator.GenerateRefreshToken(identity);
+
+        // Generate refresh token and store in database
+        var (refreshToken, refreshTokenHash) = JwtTokenGenerator.GenerateRefreshToken();
+        var refreshTokenExpiry = DateTime.UtcNow.AddDays(_jwtTokenGenerator.RefreshTokenExpiryDays);
+
+        var refreshTokenEntity = RefreshToken.Create(
+            refreshTokenHash,
+            identity.Id,
+            refreshTokenExpiry
+        );
+
+        _unitOfWork.RefreshTokens.Add(refreshTokenEntity);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         // 4. Return result
         return new RegisterUserResult(

@@ -71,7 +71,19 @@ public sealed class LoginUserCommandHandler
         // 4. Generate JWT tokens
         var profile = identity.Profile;
         var accessToken = _jwtTokenGenerator.GenerateAccessToken(identity, profile);
-        var refreshToken = JwtTokenGenerator.GenerateRefreshToken(identity);
+
+        // Generate refresh token and store in database
+        var (refreshToken, refreshTokenHash) = JwtTokenGenerator.GenerateRefreshToken();
+        var refreshTokenExpiry = DateTime.UtcNow.AddDays(_jwtTokenGenerator.RefreshTokenExpiryDays);
+
+        var refreshTokenEntity = RefreshToken.Create(
+            refreshTokenHash,
+            identity.Id,
+            refreshTokenExpiry
+        );
+
+        _unitOfWork.RefreshTokens.Add(refreshTokenEntity);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         // 5. Return result
         return new LoginUserResult(
