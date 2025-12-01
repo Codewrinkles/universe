@@ -60,4 +60,14 @@ public interface IProfileRepository
         int limit,
         Guid? excludeProfileId,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Search profiles by name or handle (case-insensitive).
+    /// Returns profiles that match the search query in name or handle.
+    /// Results are ordered by relevance (exact matches first, then partial).
+    /// </summary>
+    Task<IReadOnlyList<Profile>> SearchProfilesAsync(
+        string query,
+        int limit,
+        CancellationToken cancellationToken = default);
 }

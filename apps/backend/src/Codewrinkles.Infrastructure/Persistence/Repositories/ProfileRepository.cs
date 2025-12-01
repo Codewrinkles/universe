@@ -117,4 +117,39 @@ public sealed class ProfileRepository : IProfileRepository
 
         return profiles;
     }
+
+    public async Task<IReadOnlyList<Profile>> SearchProfilesAsync(
+        string query,
+        int limit,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+            return [];
+
+        var normalizedQuery = query.Trim().ToLowerInvariant();
+
+        // Search in both name and handle using LIKE
+        // Order by relevance: exact handle match > exact name match > partial matches
+        var profiles = await _profiles
+            .AsNoTracking()
+            .Where(p =>
+                (p.Handle != null && EF.Functions.Like(p.Handle, $"%{normalizedQuery}%")) ||
+                EF.Functions.Like(p.Name.ToLower(), $"%{normalizedQuery}%"))
+            .OrderBy(p =>
+                // Exact handle match = 0 (highest priority)
+                p.Handle == normalizedQuery ? 0 :
+                // Exact name match = 1
+                p.Name.ToLower() == normalizedQuery ? 1 :
+                // Handle starts with query = 2
+                (p.Handle != null && p.Handle.StartsWith(normalizedQuery)) ? 2 :
+                // Name starts with query = 3
+                p.Name.ToLower().StartsWith(normalizedQuery) ? 3 :
+                // Contains query = 4 (lowest priority)
+                4)
+            .ThenBy(p => p.Name)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+
+        return profiles;
+    }
 }

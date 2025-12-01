@@ -9,6 +9,7 @@ import { ProfilePage } from "./features/pulse/ProfilePage";
 import { NotificationsPage } from "./features/pulse/NotificationsPage";
 import { BookmarksPage } from "./features/pulse/BookmarksPage";
 import { HashtagPage } from "./features/pulse/HashtagPage";
+import { SearchResultsPage } from "./features/pulse/SearchResultsPage";
 import { SettingsPage } from "./features/settings/SettingsPage";
 import {
   SettingsProfile,
@@ -56,6 +57,7 @@ export function App(): JSX.Element {
       {/* Public routes with Shell layout - accessible without authentication */}
       <Route path="/" element={<ShellLayout theme={theme} onThemeToggle={toggleTheme} />}>
         <Route path="pulse" element={<PulsePage />} />
+        <Route path="pulse/search" element={<SearchResultsPage />} />
         <Route path="pulse/notifications" element={<NotificationsPage />} />
         <Route path="pulse/bookmarks" element={<BookmarksPage />} />
         <Route path="pulse/u/:handle" element={<ProfilePage />} />

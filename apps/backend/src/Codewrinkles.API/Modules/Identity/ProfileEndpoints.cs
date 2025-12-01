@@ -60,17 +60,18 @@ public static class ProfileEndpoints
         // Enforce limit bounds
         var effectiveLimit = Math.Clamp(limit > 0 ? limit : 10, 1, 20);
 
-        var query = new SearchHandlesQuery(q, effectiveLimit);
+        var query = new SearchProfilesQuery(q, effectiveLimit);
         var result = await mediator.SendAsync(query, cancellationToken);
 
         return Results.Ok(new
         {
-            handles = result.Handles.Select(h => new
+            profiles = result.Profiles.Select(p => new
             {
-                profileId = h.ProfileId,
-                handle = h.Handle,
-                name = h.Name,
-                avatarUrl = h.AvatarUrl
+                profileId = p.ProfileId,
+                handle = p.Handle,
+                name = p.Name,
+                bio = p.Bio,
+                avatarUrl = p.AvatarUrl
             })
         });
     }
