@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useUnreadNotificationCount } from "../../hooks/useNotifications";
+import { useComposerModal } from "./ComposerModalContext";
 
 interface NavItemProps {
   to: string;
@@ -35,6 +36,7 @@ function NavItem({ to, icon, label, badge }: NavItemProps): JSX.Element {
 export function PulseNavigation(): JSX.Element {
   const { user } = useAuth();
   const unreadCount = useUnreadNotificationCount();
+  const { openModal } = useComposerModal();
 
   return (
     <nav className="sticky top-20 z-10 space-y-1">
@@ -49,6 +51,7 @@ export function PulseNavigation(): JSX.Element {
       <div className="pt-4">
         <button
           type="button"
+          onClick={openModal}
           className="w-full rounded-full bg-brand-soft px-4 py-3 text-sm font-semibold text-black hover:bg-brand transition-colors"
         >
           <span className="hidden xl:inline">Post</span>

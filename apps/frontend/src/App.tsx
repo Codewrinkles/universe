@@ -3,6 +3,7 @@ import { useTheme } from "./hooks/useTheme";
 import { useAuth } from "./hooks/useAuth";
 import { ShellLayout } from "./features/shell/ShellLayout";
 import { LandingPage } from "./features/landing/LandingPage";
+import { PulseLayout } from "./features/pulse/PulseLayout";
 import { PulsePage } from "./features/pulse/PulsePage";
 import { ThreadView } from "./features/pulse/ThreadView";
 import { ProfilePage } from "./features/pulse/ProfilePage";
@@ -56,14 +57,17 @@ export function App(): JSX.Element {
 
       {/* Public routes with Shell layout - accessible without authentication */}
       <Route path="/" element={<ShellLayout theme={theme} onThemeToggle={toggleTheme} />}>
-        <Route path="pulse" element={<PulsePage />} />
-        <Route path="pulse/search" element={<SearchResultsPage />} />
-        <Route path="pulse/notifications" element={<NotificationsPage />} />
-        <Route path="pulse/bookmarks" element={<BookmarksPage />} />
-        <Route path="pulse/u/:handle" element={<ProfilePage />} />
-        <Route path="pulse/:pulseId" element={<ThreadView />} />
-        <Route path="social" element={<Navigate to="/pulse" replace />} />
-        <Route path="social/hashtag/:tag" element={<HashtagPage />} />
+        {/* Pulse routes wrapped in PulseLayout for shared composer modal */}
+        <Route element={<PulseLayout />}>
+          <Route path="pulse" element={<PulsePage />} />
+          <Route path="pulse/search" element={<SearchResultsPage />} />
+          <Route path="pulse/notifications" element={<NotificationsPage />} />
+          <Route path="pulse/bookmarks" element={<BookmarksPage />} />
+          <Route path="pulse/u/:handle" element={<ProfilePage />} />
+          <Route path="pulse/:pulseId" element={<ThreadView />} />
+          <Route path="social" element={<Navigate to="/pulse" replace />} />
+          <Route path="social/hashtag/:tag" element={<HashtagPage />} />
+        </Route>
       </Route>
 
       {/* Protected routes - require authentication */}
