@@ -427,7 +427,7 @@ public static class IdentityEndpoints
     private static string GetBackendUrl() =>
         Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development"
             ? "https://localhost:7280"
-            : "https://api.codewrinkles.com";
+            : "https://app-codewrinkles-api.azurewebsites.net";
 
     private static string GetFrontendUrl() =>
         Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development"
