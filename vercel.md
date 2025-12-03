@@ -114,18 +114,15 @@ Click **"Build and Output Settings"** to expand this section.
 
 1. Click **"Environment Variables"** to expand this section
 
-2. You'll see two fields: "Name" and "Value"
+2. You'll see fields for adding environment variables
 
-3. In the **Name** field, type exactly: `VITE_API_BASE_URL`
+3. In the **Name** (or **Key**) field, type exactly: `VITE_API_BASE_URL`
 
 4. In the **Value** field, type exactly: `https://app-codewrinkles-api.azurewebsites.net`
 
-5. Make sure **all three checkboxes** are checked:
-   - ✅ Production
-   - ✅ Preview
-   - ✅ Development
+5. If you see any dropdown or options for which environments to apply this to, make sure it applies to all environments (Production, Preview, Development)
 
-6. Click **"Add"** (or just continue - it will be added automatically)
+6. Click **"Add"** or the **+** button to add the variable
 
 ### 3.5 Deploy
 
