@@ -152,6 +152,7 @@ export async function refreshAccessToken(): Promise<boolean> {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: 'include', // Required for CORS with AllowCredentials
         body: JSON.stringify({ refreshToken }),
       });
 
@@ -270,6 +271,7 @@ export async function apiRequest<TResponse>(
     response = await fetch(endpoint, {
       ...options,
       headers,
+      credentials: 'include', // Required for CORS with AllowCredentials
     });
   } catch (error) {
     // Network error (server unreachable, CORS, etc.)
