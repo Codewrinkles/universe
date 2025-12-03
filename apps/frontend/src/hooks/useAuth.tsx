@@ -9,7 +9,7 @@ import type { User, RegisterRequest, LoginRequest, UpdateProfileRequest, ChangeP
 import { config } from "../config";
 import { authApi } from "../services/authApi";
 import { profileApi } from "../services/profileApi";
-import { setAuthTokens, clearAuthData, isTokenExpired } from "../utils/api";
+import { setAuthTokens, clearAuthData, isTokenExpired, refreshAccessToken, getAccessToken, getRefreshToken } from "../utils/api";
 import { jwtDecode } from "jwt-decode";
 
 interface JwtPayload {
@@ -50,22 +50,44 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
   const [isLoading, setIsLoading] = useState(true);
 
   // Initialize auth state from localStorage on mount
+  // Attempts to refresh expired/missing access tokens using the refresh token
   useEffect(() => {
-    const initializeAuth = (): void => {
+    const initializeAuth = async (): Promise<void> => {
       try {
-        const token = localStorage.getItem(config.auth.accessTokenKey);
+        const accessToken = localStorage.getItem(config.auth.accessTokenKey);
+        const refreshToken = getRefreshToken();
         const savedUser = localStorage.getItem(config.auth.userKey);
 
-        if (token && savedUser) {
-          // Validate token is not expired
-          if (isTokenExpired(token)) {
-            // Token expired, clear auth data
-            clearAuthData();
-          } else {
-            // Token valid, restore user session
-            const parsedUser = JSON.parse(savedUser) as User;
-            setUser(parsedUser);
+        // Case 1: Valid access token + user data → restore session immediately
+        if (accessToken && savedUser && !isTokenExpired(accessToken)) {
+          const parsedUser = JSON.parse(savedUser) as User;
+          setUser(parsedUser);
+          return;
+        }
+
+        // Case 2: Refresh token exists → try to get new access token
+        // (access token may be expired, missing, or invalid)
+        if (refreshToken) {
+          const refreshed = await refreshAccessToken();
+
+          if (refreshed) {
+            const newToken = getAccessToken();
+            if (newToken && !isTokenExpired(newToken) && savedUser) {
+              const parsedUser = JSON.parse(savedUser) as User;
+              setUser(parsedUser);
+              return;
+            }
           }
+
+          // Refresh failed - clear everything
+          clearAuthData();
+          return;
+        }
+
+        // Case 3: No refresh token → no way to restore session
+        // Clear any stale data
+        if (accessToken || savedUser) {
+          clearAuthData();
         }
       } catch {
         // Invalid stored data, clear it
@@ -75,7 +97,7 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
       }
     };
 
-    initializeAuth();
+    void initializeAuth();
   }, []);
 
   /**
