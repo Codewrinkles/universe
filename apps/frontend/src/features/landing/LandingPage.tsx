@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Card } from "../../components/ui/Card";
+import { YouTubeButton } from "../../components/ui/YouTubeButton";
 import { generateWebsiteStructuredData, getDefaultOGImage } from "../../utils/seo";
 
 export function LandingPage(): JSX.Element {
@@ -63,19 +64,27 @@ export function LandingPage(): JSX.Element {
           <p className="text-lg lg:text-xl text-text-secondary max-w-2xl mx-auto mb-10">
             An ecosystem designed to create genuine connections and meaningful content.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link
-              to="/register"
-              className="inline-flex items-center justify-center rounded-full bg-brand text-black px-8 py-3 text-base font-medium hover:bg-brand-soft transition-colors shadow-lg shadow-brand/20"
-            >
-              Join Codewrinkles
-            </Link>
-            <Link
-              to="/login"
-              className="text-sm text-text-secondary hover:text-text-primary transition-colors"
-            >
-              Already have an account? <span className="text-brand-soft">Log in</span>
-            </Link>
+          <div className="flex flex-col gap-6 justify-center items-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link
+                to="/register"
+                className="inline-flex items-center justify-center rounded-full bg-brand text-black px-8 py-3 text-base font-medium hover:bg-brand-soft transition-colors shadow-lg shadow-brand/20"
+              >
+                Join Codewrinkles
+              </Link>
+              <Link
+                to="/login"
+                className="text-sm text-text-secondary hover:text-text-primary transition-colors"
+              >
+                Already have an account? <span className="text-brand-soft">Log in</span>
+              </Link>
+            </div>
+
+            {/* YouTube channel link */}
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-xs text-text-tertiary">Follow the journey</p>
+              <YouTubeButton variant="landing" />
+            </div>
           </div>
         </div>
       </section>

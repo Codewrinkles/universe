@@ -4,6 +4,7 @@ import { MobileNav } from "./MobileNav";
 import { AppSwitcher } from "./AppSwitcher";
 import { ThemeToggle } from "./ThemeToggle";
 import { ProfileDropdown } from "./ProfileDropdown";
+import { YouTubeButton } from "../../components/ui/YouTubeButton";
 import { useAuth } from "../../hooks/useAuth";
 
 export interface HeaderProps {
@@ -37,6 +38,9 @@ export function Header({ theme, onThemeToggle }: HeaderProps): JSX.Element {
 
         {/* Right side */}
         <div className="flex items-center gap-2 relative">
+          {/* YouTube link */}
+          <YouTubeButton variant="header" />
+
           {/* Theme toggle */}
           <ThemeToggle theme={theme} onToggle={onThemeToggle} />
 
