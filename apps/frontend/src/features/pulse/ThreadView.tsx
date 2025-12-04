@@ -188,7 +188,7 @@ export function ThreadView(): JSX.Element {
               <div className="border-b border-border p-4 bg-surface-card1/30">
                 <UnifiedComposer
                   mode="reply"
-                  parentPulseId={pulseId}
+                  parentPulseId={parentPulse.id}
                   onSuccess={handleReplyCreated}
                   placeholder="Post your reply"
                   rows={2}
@@ -228,7 +228,7 @@ export function ThreadView(): JSX.Element {
                           <div className="p-4 bg-surface-card1/30 border-t border-border">
                             <UnifiedComposer
                               mode="reply"
-                              parentPulseId={pulseId}
+                              parentPulseId={reply.id}
                               onSuccess={handleReplyCreated}
                               placeholder="Post your reply"
                               rows={2}
