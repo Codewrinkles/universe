@@ -14,6 +14,7 @@ Codewrinkles Universe is a unified platform that rethinks how we create, share, 
 - Your followers actually see your posts (chronological feed, no algorithm)
 - Discover new voices through genuine social proof, not virality metrics
 - Built for meaningful conversations, not engagement farming
+- **[Try it now](https://codewrinkles.com)** (Beta)
 
 **Nova** - Learning, reimagined *(coming soon)*
 - AI-powered learning companion
@@ -44,7 +45,7 @@ This is an experiment in transparent product development. I'm documenting the jo
 - Balancing vision with pragmatism
 
 Follow along on:
-- **Pulse** *(when it launches)*
+- **[Pulse](https://codewrinkles.com)**
 - [YouTube - Codewrinkles](https://youtube.com/@codewrinkles)
 - [LinkedIn](https://www.linkedin.com/in/dan-patrascu-baba-08b78523/)
 - [Substack](https://architecttocto.substack.com/)
@@ -59,19 +60,24 @@ Follow along on:
 - TailwindCSS (custom design system)
 - React Router
 
-**Backend** *(coming soon)*
-- Details TBD - building the foundation first
+**Backend**
+- .NET 10 / ASP.NET Core Minimal APIs
+- C# 13
+- Clean Architecture (layered monolith)
+- Entity Framework Core 10
+- SQL Server
+- JWT authentication with refresh tokens
+- OpenTelemetry + Azure Application Insights
 
 ---
 
 ## Current Status
 
-🚧 **In Development** - Phase 1: Account & Identity System
+**Pulse** - Beta
 
-We're building the foundation:
-- User authentication and profiles
-- Unified identity across all apps
-- Core infrastructure
+The core microblogging experience is live and functional. We're actively iterating based on feedback and adding polish.
+
+**Nova** - In Design
 
 Check [core.md](./core.md) for the product vision and roadmap.
 
@@ -91,18 +97,17 @@ Not accepting code contributions yet - still in early solo development. But you 
 If you want to explore the codebase:
 
 ```bash
-# Install dependencies
+# Frontend
 cd apps/frontend
 npm install
+npm run dev      # Dev server at http://localhost:5173
+npm run lint     # Type check
+npm run build    # Production build
 
-# Run dev server
-npm run dev
-
-# Type check
-npm run lint
-
-# Build
-npm run build
+# Backend
+cd apps/backend
+dotnet build     # Build solution
+dotnet run --project src/Codewrinkles.API  # Run API
 ```
 
 See [CLAUDE.md](./CLAUDE.md) for technical guidelines and architecture decisions.
