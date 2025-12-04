@@ -51,7 +51,9 @@ export function UnifiedComposer({
   const { createRepulse, isCreating: isCreatingRepulse, error: repulseError } = useCreateRepulse();
 
   const maxChars = 500;
-  const charsLeft = maxChars - value.length;
+  // Normalize newlines for consistent counting (Windows \r\n -> \n)
+  const normalizedLength = value.replace(/\r\n/g, '\n').replace(/\r/g, '\n').length;
+  const charsLeft = maxChars - normalizedLength;
   const isOverLimit = charsLeft < 0;
   const isSubmitting = mode === "post" ? isCreatingPulse : mode === "reply" ? isCreatingReply : isCreatingRepulse;
 

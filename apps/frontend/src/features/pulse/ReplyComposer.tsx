@@ -27,7 +27,9 @@ export function ReplyComposer({
   const { results, search, clearResults } = useHandleSearch();
 
   const maxChars = 500;
-  const charsLeft = maxChars - value.length;
+  // Normalize newlines for consistent counting (Windows \r\n -> \n)
+  const normalizedLength = value.replace(/\r\n/g, '\n').replace(/\r/g, '\n').length;
+  const charsLeft = maxChars - normalizedLength;
   const isOverLimit = charsLeft < 0;
 
   // Clear preview when selectedImage is cleared
