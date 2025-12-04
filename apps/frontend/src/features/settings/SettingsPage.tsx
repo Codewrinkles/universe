@@ -5,8 +5,6 @@ import { SettingsSidebar } from "./SettingsSidebar";
 const SECTIONS: SettingsSection[] = [
   { id: "profile", label: "Profile" },
   { id: "account", label: "Account" },
-  { id: "apps", label: "Connected apps" },
-  { id: "notifications", label: "Notifications" },
 ];
 
 export function SettingsPage(): JSX.Element {

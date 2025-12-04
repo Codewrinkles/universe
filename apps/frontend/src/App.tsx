@@ -15,8 +15,6 @@ import { SettingsPage } from "./features/settings/SettingsPage";
 import {
   SettingsProfile,
   SettingsAccount,
-  SettingsApps,
-  SettingsNotifications,
 } from "./features/settings/SettingsSections";
 import { LoginPage } from "./features/auth/LoginPage";
 import { RegisterPage } from "./features/auth/RegisterPage";
@@ -83,8 +81,6 @@ export function App(): JSX.Element {
           <Route index element={<Navigate to="/settings/profile" replace />} />
           <Route path="profile" element={<SettingsProfile />} />
           <Route path="account" element={<SettingsAccount />} />
-          <Route path="apps" element={<SettingsApps />} />
-          <Route path="notifications" element={<SettingsNotifications />} />
         </Route>
         <Route path="onboarding" element={<OnboardingFlow />} />
       </Route>
