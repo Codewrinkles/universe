@@ -2,6 +2,7 @@ using Kommand.Abstractions;
 using Codewrinkles.Application.Common.Interfaces;
 using Codewrinkles.Domain.Pulse;
 using Codewrinkles.Domain.Pulse.Exceptions;
+using Codewrinkles.Telemetry;
 
 namespace Codewrinkles.Application.Pulse;
 
@@ -23,41 +24,59 @@ public sealed class GetPulseQueryHandler : ICommandHandler<GetPulseQuery, PulseD
         GetPulseQuery query,
         CancellationToken cancellationToken)
     {
-        var pulse = await _unitOfWork.Pulses.FindByIdWithDetailsAsync(
-            query.PulseId,
-            cancellationToken);
-
-        if (pulse is null)
-        {
-            throw new PulseNotFoundException(query.PulseId);
-        }
-
-        // Check if current user has liked this pulse, bookmarked it, and is following the author
-        var isLikedByCurrentUser = false;
-        var isBookmarkedByCurrentUser = false;
-        var isFollowingAuthor = false;
+        using var activity = TelemetryExtensions.StartApplicationActivity(SpanNames.Pulse.Get);
+        activity?.SetTag(TagNames.Pulse.Id, query.PulseId.ToString());
         if (query.CurrentUserId.HasValue)
         {
-            isLikedByCurrentUser = await _unitOfWork.Pulses.HasUserLikedPulseAsync(
-                query.PulseId,
-                query.CurrentUserId.Value,
-                cancellationToken);
-
-            isBookmarkedByCurrentUser = await _unitOfWork.Bookmarks.IsBookmarkedAsync(
-                query.CurrentUserId.Value,
-                query.PulseId,
-                cancellationToken);
-
-            isFollowingAuthor = await _unitOfWork.Follows.IsFollowingAsync(
-                query.CurrentUserId.Value,
-                pulse.AuthorId,
-                cancellationToken);
+            activity?.SetProfileId(query.CurrentUserId.Value);
         }
 
-        // Load mentions for the pulse
-        var mentions = await _unitOfWork.Pulses.GetMentionsForPulsesAsync([pulse.Id], cancellationToken);
+        try
+        {
+            var pulse = await _unitOfWork.Pulses.FindByIdWithDetailsAsync(
+                query.PulseId,
+                cancellationToken);
 
-        return MapToPulseDto(pulse, isLikedByCurrentUser, isFollowingAuthor, isBookmarkedByCurrentUser, mentions.ToList());
+            if (pulse is null)
+            {
+                throw new PulseNotFoundException(query.PulseId);
+            }
+
+            // Check if current user has liked this pulse, bookmarked it, and is following the author
+            var isLikedByCurrentUser = false;
+            var isBookmarkedByCurrentUser = false;
+            var isFollowingAuthor = false;
+            if (query.CurrentUserId.HasValue)
+            {
+                isLikedByCurrentUser = await _unitOfWork.Pulses.HasUserLikedPulseAsync(
+                    query.PulseId,
+                    query.CurrentUserId.Value,
+                    cancellationToken);
+
+                isBookmarkedByCurrentUser = await _unitOfWork.Bookmarks.IsBookmarkedAsync(
+                    query.CurrentUserId.Value,
+                    query.PulseId,
+                    cancellationToken);
+
+                isFollowingAuthor = await _unitOfWork.Follows.IsFollowingAsync(
+                    query.CurrentUserId.Value,
+                    pulse.AuthorId,
+                    cancellationToken);
+            }
+
+            // Load mentions for the pulse
+            var mentions = await _unitOfWork.Pulses.GetMentionsForPulsesAsync([pulse.Id], cancellationToken);
+
+            activity?.SetTag(TagNames.Pulse.Type, pulse.Type.ToString().ToLowerInvariant());
+            activity?.SetSuccess(true);
+
+            return MapToPulseDto(pulse, isLikedByCurrentUser, isFollowingAuthor, isBookmarkedByCurrentUser, mentions.ToList());
+        }
+        catch (Exception ex)
+        {
+            activity?.RecordError(ex);
+            throw;
+        }
     }
 
     private static PulseDto MapToPulseDto(

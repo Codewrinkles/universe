@@ -1,6 +1,7 @@
 using System.Data;
 using Kommand.Abstractions;
 using Codewrinkles.Application.Common.Interfaces;
+using Codewrinkles.Telemetry;
 
 namespace Codewrinkles.Application.Pulse;
 
@@ -27,18 +28,33 @@ public sealed class DeletePulseCommandHandler
         DeletePulseCommand command,
         CancellationToken cancellationToken)
     {
-        // Validator has already confirmed:
-        // - Pulse exists
-        // - User is the author
-        // So we can safely fetch and delete
+        using var activity = TelemetryExtensions.StartApplicationActivity(SpanNames.Pulse.Delete);
+        activity?.SetProfileId(command.ProfileId);
+        activity?.SetTag(TagNames.Pulse.Id, command.PulseId.ToString());
 
-        var pulse = await _unitOfWork.Pulses.FindByIdAsync(command.PulseId, cancellationToken);
+        try
+        {
+            // Validator has already confirmed:
+            // - Pulse exists
+            // - User is the author
+            // So we can safely fetch and delete
 
-        // Pulse is guaranteed to exist (validator checked)
-        pulse!.MarkAsDeleted();
+            var pulse = await _unitOfWork.Pulses.FindByIdAsync(command.PulseId, cancellationToken);
 
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+            // Pulse is guaranteed to exist (validator checked)
+            pulse!.MarkAsDeleted();
 
-        return new DeletePulseResult(Success: true);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            AppMetrics.RecordPulseDeleted();
+            activity?.SetSuccess(true);
+
+            return new DeletePulseResult(Success: true);
+        }
+        catch (Exception ex)
+        {
+            activity?.RecordError(ex);
+            throw;
+        }
     }
 }

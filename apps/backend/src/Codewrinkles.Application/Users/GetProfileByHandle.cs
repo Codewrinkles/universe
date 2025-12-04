@@ -1,5 +1,6 @@
 using Kommand.Abstractions;
 using Codewrinkles.Application.Common.Interfaces;
+using Codewrinkles.Telemetry;
 
 namespace Codewrinkles.Application.Users;
 
@@ -37,23 +38,38 @@ public sealed class GetProfileByHandleQueryHandler
         GetProfileByHandleQuery query,
         CancellationToken cancellationToken)
     {
-        var profile = await _unitOfWork.Profiles.FindByHandleAsync(
-            query.Handle,
-            cancellationToken);
+        using var activity = TelemetryExtensions.StartApplicationActivity(SpanNames.Profile.GetByHandle);
+        activity?.SetTag("profile.handle", query.Handle);
 
-        if (profile is null)
+        try
         {
-            throw new ProfileNotFoundByHandleException(query.Handle);
-        }
+            var profile = await _unitOfWork.Profiles.FindByHandleAsync(
+                query.Handle,
+                cancellationToken);
 
-        return new ProfileDto(
-            ProfileId: profile.Id,
-            Name: profile.Name,
-            Handle: profile.Handle,
-            Bio: profile.Bio,
-            AvatarUrl: profile.AvatarUrl,
-            Location: profile.Location,
-            WebsiteUrl: profile.WebsiteUrl
-        );
+            if (profile is null)
+            {
+                throw new ProfileNotFoundByHandleException(query.Handle);
+            }
+
+            activity?.SetEntity("Profile", profile.Id);
+            AppMetrics.RecordProfileView();
+            activity?.SetSuccess(true);
+
+            return new ProfileDto(
+                ProfileId: profile.Id,
+                Name: profile.Name,
+                Handle: profile.Handle,
+                Bio: profile.Bio,
+                AvatarUrl: profile.AvatarUrl,
+                Location: profile.Location,
+                WebsiteUrl: profile.WebsiteUrl
+            );
+        }
+        catch (Exception ex)
+        {
+            activity?.RecordError(ex);
+            throw;
+        }
     }
 }

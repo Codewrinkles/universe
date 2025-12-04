@@ -1,6 +1,7 @@
 using Kommand.Abstractions;
 using Codewrinkles.Application.Common.Interfaces;
 using Codewrinkles.Domain.Social;
+using Codewrinkles.Telemetry;
 
 namespace Codewrinkles.Application.Social;
 
@@ -23,27 +24,43 @@ public sealed class FollowUserCommandHandler
         FollowUserCommand command,
         CancellationToken cancellationToken)
     {
-        // Validator has already confirmed:
-        // - Both profiles exist
-        // - Not attempting to follow self
-        // - Not already following
+        using var activity = TelemetryExtensions.StartApplicationActivity(SpanNames.Social.Follow);
+        activity?.SetProfileId(command.FollowerId);
+        activity?.SetTag(TagNames.Social.TargetProfileId, command.FollowingId.ToString());
 
-        // 1. Create Follow entity via factory method
-        var follow = Follow.Create(command.FollowerId, command.FollowingId);
+        try
+        {
+            // Validator has already confirmed:
+            // - Both profiles exist
+            // - Not attempting to follow self
+            // - Not already following
 
-        // 2. Add to repository
-        _unitOfWork.Follows.CreateFollow(follow);
+            // 1. Create Follow entity via factory method
+            var follow = Follow.Create(command.FollowerId, command.FollowingId);
 
-        // 3. Save changes
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+            // 2. Add to repository
+            _unitOfWork.Follows.CreateFollow(follow);
 
-        // 4. Create follow notification
-        var notification = Domain.Notification.Notification.CreateFollowNotification(
-            recipientId: command.FollowingId,
-            actorId: command.FollowerId);
-        _unitOfWork.Notifications.Create(notification);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+            // 3. Save changes
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return new FollowResult(Success: true);
+            // 4. Create follow notification
+            var notification = Domain.Notification.Notification.CreateFollowNotification(
+                recipientId: command.FollowingId,
+                actorId: command.FollowerId);
+            _unitOfWork.Notifications.Create(notification);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            AppMetrics.RecordFollowCreated();
+            AppMetrics.RecordNotificationCreated("follow");
+            activity?.SetSuccess(true);
+
+            return new FollowResult(Success: true);
+        }
+        catch (Exception ex)
+        {
+            activity?.RecordError(ex);
+            throw;
+        }
     }
 }

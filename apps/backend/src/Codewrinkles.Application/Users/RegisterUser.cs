@@ -2,6 +2,7 @@ using System.Data;
 using Kommand.Abstractions;
 using Codewrinkles.Application.Common.Interfaces;
 using Codewrinkles.Domain.Identity;
+using Codewrinkles.Telemetry;
 
 namespace Codewrinkles.Application.Users;
 
@@ -44,71 +45,88 @@ public sealed class RegisterUserCommandHandler
         RegisterUserCommand command,
         CancellationToken cancellationToken)
     {
-        // 1. Hash password
-        var passwordHash = _passwordHasher.HashPassword(command.Password);
+        using var activity = TelemetryExtensions.StartApplicationActivity(SpanNames.Authentication.Register);
+        activity?.SetEmailDomain(command.Email);
 
-        // 2. Create Identity and Profile atomically
-        Identity identity;
-        Profile profile;
-
-        await using var transaction = await _unitOfWork.BeginTransactionAsync(
-            IsolationLevel.ReadCommitted,
-            cancellationToken);
         try
         {
-            // Create Identity
-            identity = Identity.Create(
-                email: command.Email,
-                passwordHash: passwordHash);
+            // 1. Hash password
+            var passwordHash = _passwordHasher.HashPassword(command.Password);
 
-            _unitOfWork.Identities.Register(identity);
+            // 2. Create Identity and Profile atomically
+            Identity identity;
+            Profile profile;
+
+            await using var transaction = await _unitOfWork.BeginTransactionAsync(
+                IsolationLevel.ReadCommitted,
+                cancellationToken);
+            try
+            {
+                // Create Identity
+                identity = Identity.Create(
+                    email: command.Email,
+                    passwordHash: passwordHash);
+
+                _unitOfWork.Identities.Register(identity);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                // Create Profile linked to Identity
+                profile = Profile.Create(
+                    identityId: identity.Id,
+                    name: command.Name,
+                    handle: command.Handle);
+
+                _unitOfWork.Profiles.Create(profile);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                // Commit transaction - both Identity and Profile created
+                await transaction.CommitAsync(cancellationToken);
+            }
+            catch
+            {
+                // Rollback on any error - neither Identity nor Profile created
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
+
+            activity?.SetUserContext(identity.Id, profile.Id);
+
+            // 3. Generate JWT tokens (after successful commit)
+            var accessToken = _jwtTokenGenerator.GenerateAccessToken(identity, profile);
+
+            // Generate refresh token and store in database
+            var (refreshToken, refreshTokenHash) = JwtTokenGenerator.GenerateRefreshToken();
+            var refreshTokenExpiry = DateTime.UtcNow.AddDays(_jwtTokenGenerator.RefreshTokenExpiryDays);
+
+            var refreshTokenEntity = RefreshToken.Create(
+                refreshTokenHash,
+                identity.Id,
+                refreshTokenExpiry
+            );
+
+            _unitOfWork.RefreshTokens.Add(refreshTokenEntity);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            // Create Profile linked to Identity
-            profile = Profile.Create(
-                identityId: identity.Id,
-                name: command.Name,
-                handle: command.Handle);
+            // Record metrics
+            AppMetrics.RecordUserRegistered(authMethod: "password");
+            activity?.SetSuccess(true);
 
-            _unitOfWork.Profiles.Create(profile);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            // Commit transaction - both Identity and Profile created
-            await transaction.CommitAsync(cancellationToken);
+            // 4. Return result
+            return new RegisterUserResult(
+                IdentityId: identity.Id,
+                ProfileId: profile.Id,
+                Email: identity.Email,
+                Name: profile.Name,
+                Handle: profile.Handle,
+                Role: identity.Role,
+                AccessToken: accessToken,
+                RefreshToken: refreshToken
+            );
         }
-        catch
+        catch (Exception ex)
         {
-            // Rollback on any error - neither Identity nor Profile created
-            await transaction.RollbackAsync(cancellationToken);
+            activity?.RecordError(ex);
             throw;
         }
-
-        // 3. Generate JWT tokens (after successful commit)
-        var accessToken = _jwtTokenGenerator.GenerateAccessToken(identity, profile);
-
-        // Generate refresh token and store in database
-        var (refreshToken, refreshTokenHash) = JwtTokenGenerator.GenerateRefreshToken();
-        var refreshTokenExpiry = DateTime.UtcNow.AddDays(_jwtTokenGenerator.RefreshTokenExpiryDays);
-
-        var refreshTokenEntity = RefreshToken.Create(
-            refreshTokenHash,
-            identity.Id,
-            refreshTokenExpiry
-        );
-
-        _unitOfWork.RefreshTokens.Add(refreshTokenEntity);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        // 4. Return result
-        return new RegisterUserResult(
-            IdentityId: identity.Id,
-            ProfileId: profile.Id,
-            Email: identity.Email,
-            Name: profile.Name,
-            Handle: profile.Handle,
-            Role: identity.Role,
-            AccessToken: accessToken,
-            RefreshToken: refreshToken
-        );
     }
 }

@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Codewrinkles.Domain\Codewrinkles.Domain.csproj" />
+    <ProjectReference Include="..\Codewrinkles.Telemetry\Codewrinkles.Telemetry.csproj" />
   </ItemGroup>
 
   <ItemGroup>

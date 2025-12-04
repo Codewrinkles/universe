@@ -1,5 +1,6 @@
 using Kommand.Abstractions;
 using Codewrinkles.Application.Common.Interfaces;
+using Codewrinkles.Telemetry;
 
 namespace Codewrinkles.Application.Admin;
 
@@ -24,17 +25,32 @@ public sealed class GetDashboardMetricsQueryHandler
         GetDashboardMetricsQuery query,
         CancellationToken cancellationToken)
     {
-        // Execute count queries sequentially (DbContext is not thread-safe for concurrent operations)
-        var totalUsers = await _unitOfWork.Identities.GetTotalCountAsync(cancellationToken);
+        using var activity = TelemetryExtensions.StartApplicationActivity(SpanNames.Admin.GetDashboardMetrics);
 
-        var activeUsersSince = DateTime.UtcNow.AddDays(-30);
-        var activeUsers = await _unitOfWork.Identities.GetActiveCountSinceAsync(activeUsersSince, cancellationToken);
+        try
+        {
+            // Execute count queries sequentially (DbContext is not thread-safe for concurrent operations)
+            var totalUsers = await _unitOfWork.Identities.GetTotalCountAsync(cancellationToken);
 
-        var totalPulses = await _unitOfWork.Pulses.GetTotalCountAsync(cancellationToken);
+            var activeUsersSince = DateTime.UtcNow.AddDays(-30);
+            var activeUsers = await _unitOfWork.Identities.GetActiveCountSinceAsync(activeUsersSince, cancellationToken);
 
-        return new DashboardMetricsResponse(
-            TotalUsers: totalUsers,
-            ActiveUsers: activeUsers,
-            TotalPulses: totalPulses);
+            var totalPulses = await _unitOfWork.Pulses.GetTotalCountAsync(cancellationToken);
+
+            activity?.SetTag("admin.total_users", totalUsers);
+            activity?.SetTag("admin.active_users", activeUsers);
+            activity?.SetTag("admin.total_pulses", totalPulses);
+            activity?.SetSuccess(true);
+
+            return new DashboardMetricsResponse(
+                TotalUsers: totalUsers,
+                ActiveUsers: activeUsers,
+                TotalPulses: totalPulses);
+        }
+        catch (Exception ex)
+        {
+            activity?.RecordError(ex);
+            throw;
+        }
     }
 }

@@ -1,6 +1,7 @@
 using Kommand.Abstractions;
 using Codewrinkles.Application.Common.Interfaces;
 using Codewrinkles.Domain.Identity;
+using Codewrinkles.Telemetry;
 
 namespace Codewrinkles.Application.Users;
 
@@ -43,61 +44,81 @@ public sealed class LoginUserCommandHandler
         LoginUserCommand command,
         CancellationToken cancellationToken)
     {
-        // Validator has already confirmed:
-        // - Identity exists
-        // - Account is active
-        // - Account is not locked out
+        using var activity = TelemetryExtensions.StartApplicationActivity(SpanNames.Authentication.Login);
+        activity?.SetEmailDomain(command.Email);
 
-        // 1. Find identity by email (includes Profile via eager loading)
-        // Identity is guaranteed to exist after validation
-        var identity = (await _unitOfWork.Identities.FindByEmailWithProfileAsync(
-            command.Email,
-            cancellationToken))!;
-
-        // 2. Verify password (has side effect: records failed attempts)
-        if (!_passwordHasher.VerifyPassword(command.Password, identity.PasswordHash))
+        try
         {
-            // Record failed login attempt
-            identity.RecordFailedLogin();
+            // Validator has already confirmed:
+            // - Identity exists
+            // - Account is active
+            // - Account is not locked out
+
+            // 1. Find identity by email (includes Profile via eager loading)
+            // Identity is guaranteed to exist after validation
+            var identity = (await _unitOfWork.Identities.FindByEmailWithProfileAsync(
+                command.Email,
+                cancellationToken))!;
+
+            activity?.SetUserContext(identity.Id, identity.Profile.Id);
+
+            // 2. Verify password (has side effect: records failed attempts)
+            if (!_passwordHasher.VerifyPassword(command.Password, identity.PasswordHash))
+            {
+                // Record failed login attempt
+                identity.RecordFailedLogin();
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                AppMetrics.RecordLoginAttempt(success: false, failureReason: "invalid_password");
+                activity?.SetSuccess(false);
+                throw new InvalidCredentialsException();
+            }
+
+            // 3. Record successful login
+            identity.RecordSuccessfulLogin();
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            throw new InvalidCredentialsException();
+            // 4. Generate JWT tokens
+            var profile = identity.Profile;
+            var accessToken = _jwtTokenGenerator.GenerateAccessToken(identity, profile);
+
+            // Generate refresh token and store in database
+            var (refreshToken, refreshTokenHash) = JwtTokenGenerator.GenerateRefreshToken();
+            var refreshTokenExpiry = DateTime.UtcNow.AddDays(_jwtTokenGenerator.RefreshTokenExpiryDays);
+
+            var refreshTokenEntity = RefreshToken.Create(
+                refreshTokenHash,
+                identity.Id,
+                refreshTokenExpiry
+            );
+
+            _unitOfWork.RefreshTokens.Add(refreshTokenEntity);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            // Record metrics
+            AppMetrics.RecordLoginAttempt(success: true);
+            AppMetrics.RecordUserLoggedIn(authMethod: "password");
+            activity?.SetSuccess(true);
+
+            // 5. Return result
+            return new LoginUserResult(
+                IdentityId: identity.Id,
+                ProfileId: profile.Id,
+                Email: identity.Email,
+                Name: profile.Name,
+                Handle: profile.Handle,
+                Bio: profile.Bio,
+                AvatarUrl: profile.AvatarUrl,
+                Role: identity.Role,
+                AccessToken: accessToken,
+                RefreshToken: refreshToken
+            );
         }
-
-        // 3. Record successful login
-        identity.RecordSuccessfulLogin();
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        // 4. Generate JWT tokens
-        var profile = identity.Profile;
-        var accessToken = _jwtTokenGenerator.GenerateAccessToken(identity, profile);
-
-        // Generate refresh token and store in database
-        var (refreshToken, refreshTokenHash) = JwtTokenGenerator.GenerateRefreshToken();
-        var refreshTokenExpiry = DateTime.UtcNow.AddDays(_jwtTokenGenerator.RefreshTokenExpiryDays);
-
-        var refreshTokenEntity = RefreshToken.Create(
-            refreshTokenHash,
-            identity.Id,
-            refreshTokenExpiry
-        );
-
-        _unitOfWork.RefreshTokens.Add(refreshTokenEntity);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        // 5. Return result
-        return new LoginUserResult(
-            IdentityId: identity.Id,
-            ProfileId: profile.Id,
-            Email: identity.Email,
-            Name: profile.Name,
-            Handle: profile.Handle,
-            Bio: profile.Bio,
-            AvatarUrl: profile.AvatarUrl,
-            Role: identity.Role,
-            AccessToken: accessToken,
-            RefreshToken: refreshToken
-        );
+        catch (Exception ex)
+        {
+            activity?.RecordError(ex);
+            throw;
+        }
     }
 }
 

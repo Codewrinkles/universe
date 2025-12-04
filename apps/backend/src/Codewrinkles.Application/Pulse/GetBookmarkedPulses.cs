@@ -3,6 +3,7 @@ using System.Text.Json;
 using Kommand.Abstractions;
 using Codewrinkles.Application.Common.Interfaces;
 using Codewrinkles.Domain.Pulse;
+using Codewrinkles.Telemetry;
 
 namespace Codewrinkles.Application.Pulse;
 
@@ -25,56 +26,70 @@ public sealed class GetBookmarkedPulsesQueryHandler : ICommandHandler<GetBookmar
         GetBookmarkedPulsesQuery query,
         CancellationToken cancellationToken)
     {
-        // Decode cursor if provided
-        DateTime? beforeCreatedAt = null;
-        Guid? beforeId = null;
+        using var activity = TelemetryExtensions.StartApplicationActivity(SpanNames.Engagement.GetBookmarks);
+        activity?.SetProfileId(query.ProfileId);
 
-        if (!string.IsNullOrWhiteSpace(query.Cursor))
+        try
         {
-            var cursor = DecodeCursor(query.Cursor);
-            beforeCreatedAt = cursor.CreatedAt;
-            beforeId = cursor.Id;
+            // Decode cursor if provided
+            DateTime? beforeCreatedAt = null;
+            Guid? beforeId = null;
+
+            if (!string.IsNullOrWhiteSpace(query.Cursor))
+            {
+                var cursor = DecodeCursor(query.Cursor);
+                beforeCreatedAt = cursor.CreatedAt;
+                beforeId = cursor.Id;
+            }
+
+            // Fetch bookmarked pulses and all metadata in single repository call
+            // Repository handles parallel query optimization internally
+            var feedData = await _bookmarkRepository.GetBookmarkedPulsesWithMetadataAsync(
+                profileId: query.ProfileId,
+                limit: query.Limit,
+                beforeCreatedAt: beforeCreatedAt,
+                beforeId: beforeId,
+                cancellationToken: cancellationToken);
+
+            // Determine if there are more results
+            var hasMore = feedData.Pulses.Count > query.Limit;
+            var pulsesToReturn = hasMore ? feedData.Pulses.Take(query.Limit).ToList() : feedData.Pulses;
+
+            // Generate next cursor
+            string? nextCursor = null;
+            if (hasMore && pulsesToReturn.Count > 0)
+            {
+                var lastPulse = pulsesToReturn.Last();
+                nextCursor = EncodeCursor(lastPulse.CreatedAt, lastPulse.Id);
+            }
+
+            // Group mentions by pulse for DTO mapping
+            var mentionsByPulse = feedData.Mentions
+                .GroupBy(m => m.PulseId)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            // Map to DTOs
+            var pulseDtos = pulsesToReturn.Select(p => MapToPulseDto(
+                p,
+                feedData.LikedPulseIds,
+                feedData.FollowingProfileIds,
+                feedData.BookmarkedPulseIds,
+                mentionsByPulse)).ToList();
+
+            activity?.SetFeedMetadata(resultCount: pulseDtos.Count, hasMore: hasMore);
+            activity?.SetSuccess(true);
+
+            return new FeedResponse(
+                Pulses: pulseDtos,
+                NextCursor: nextCursor,
+                HasMore: hasMore
+            );
         }
-
-        // Fetch bookmarked pulses and all metadata in single repository call
-        // Repository handles parallel query optimization internally
-        var feedData = await _bookmarkRepository.GetBookmarkedPulsesWithMetadataAsync(
-            profileId: query.ProfileId,
-            limit: query.Limit,
-            beforeCreatedAt: beforeCreatedAt,
-            beforeId: beforeId,
-            cancellationToken: cancellationToken);
-
-        // Determine if there are more results
-        var hasMore = feedData.Pulses.Count > query.Limit;
-        var pulsesToReturn = hasMore ? feedData.Pulses.Take(query.Limit).ToList() : feedData.Pulses;
-
-        // Generate next cursor
-        string? nextCursor = null;
-        if (hasMore && pulsesToReturn.Count > 0)
+        catch (Exception ex)
         {
-            var lastPulse = pulsesToReturn.Last();
-            nextCursor = EncodeCursor(lastPulse.CreatedAt, lastPulse.Id);
+            activity?.RecordError(ex);
+            throw;
         }
-
-        // Group mentions by pulse for DTO mapping
-        var mentionsByPulse = feedData.Mentions
-            .GroupBy(m => m.PulseId)
-            .ToDictionary(g => g.Key, g => g.ToList());
-
-        // Map to DTOs
-        var pulseDtos = pulsesToReturn.Select(p => MapToPulseDto(
-            p,
-            feedData.LikedPulseIds,
-            feedData.FollowingProfileIds,
-            feedData.BookmarkedPulseIds,
-            mentionsByPulse)).ToList();
-
-        return new FeedResponse(
-            Pulses: pulseDtos,
-            NextCursor: nextCursor,
-            HasMore: hasMore
-        );
     }
 
     private static PulseDto MapToPulseDto(

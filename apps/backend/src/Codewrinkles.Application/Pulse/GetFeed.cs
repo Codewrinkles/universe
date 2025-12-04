@@ -3,6 +3,7 @@ using System.Text.Json;
 using Kommand.Abstractions;
 using Codewrinkles.Application.Common.Interfaces;
 using Codewrinkles.Domain.Pulse;
+using Codewrinkles.Telemetry;
 
 namespace Codewrinkles.Application.Pulse;
 
@@ -25,56 +26,82 @@ public sealed class GetFeedQueryHandler : ICommandHandler<GetFeedQuery, FeedResp
         GetFeedQuery query,
         CancellationToken cancellationToken)
     {
-        // Decode cursor if provided
-        DateTime? beforeCreatedAt = null;
-        Guid? beforeId = null;
+        using var activity = TelemetryExtensions.StartApplicationActivity(SpanNames.Feed.Load);
 
-        if (!string.IsNullOrWhiteSpace(query.Cursor))
+        var isAuthenticated = query.CurrentUserId.HasValue;
+        if (query.CurrentUserId.HasValue)
         {
-            var cursor = DecodeCursor(query.Cursor);
-            beforeCreatedAt = cursor.CreatedAt;
-            beforeId = cursor.Id;
+            activity?.SetProfileId(query.CurrentUserId.Value);
         }
 
-        // Fetch pulses and all metadata in single repository call
-        // Repository handles parallel query optimization internally
-        var feedData = await _pulseRepository.GetFeedWithMetadataAsync(
-            currentUserId: query.CurrentUserId,
-            limit: query.Limit + 1, // Fetch one extra to determine if there are more
-            beforeCreatedAt: beforeCreatedAt,
-            beforeId: beforeId,
-            cancellationToken: cancellationToken);
-
-        // Determine if there are more results
-        var hasMore = feedData.Pulses.Count > query.Limit;
-        var pulsesToReturn = hasMore ? feedData.Pulses.Take(query.Limit).ToList() : feedData.Pulses;
-
-        // Generate next cursor
-        string? nextCursor = null;
-        if (hasMore)
+        try
         {
-            var lastPulse = pulsesToReturn.Last();
-            nextCursor = EncodeCursor(lastPulse.CreatedAt, lastPulse.Id);
+            // Decode cursor if provided
+            DateTime? beforeCreatedAt = null;
+            Guid? beforeId = null;
+            var cursorType = "initial";
+
+            if (!string.IsNullOrWhiteSpace(query.Cursor))
+            {
+                var cursor = DecodeCursor(query.Cursor);
+                beforeCreatedAt = cursor.CreatedAt;
+                beforeId = cursor.Id;
+                cursorType = "pagination";
+            }
+
+            // Fetch pulses and all metadata in single repository call
+            // Repository handles parallel query optimization internally
+            var feedData = await _pulseRepository.GetFeedWithMetadataAsync(
+                currentUserId: query.CurrentUserId,
+                limit: query.Limit + 1, // Fetch one extra to determine if there are more
+                beforeCreatedAt: beforeCreatedAt,
+                beforeId: beforeId,
+                cancellationToken: cancellationToken);
+
+            // Determine if there are more results
+            var hasMore = feedData.Pulses.Count > query.Limit;
+            var pulsesToReturn = hasMore ? feedData.Pulses.Take(query.Limit).ToList() : feedData.Pulses;
+
+            // Generate next cursor
+            string? nextCursor = null;
+            if (hasMore)
+            {
+                var lastPulse = pulsesToReturn.Last();
+                nextCursor = EncodeCursor(lastPulse.CreatedAt, lastPulse.Id);
+            }
+
+            // Group mentions by pulse for DTO mapping
+            var mentionsByPulse = feedData.Mentions
+                .GroupBy(m => m.PulseId)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            // Map to DTOs
+            var pulseDtos = pulsesToReturn.Select(p => MapToPulseDto(
+                p,
+                feedData.LikedPulseIds,
+                feedData.FollowingProfileIds,
+                feedData.BookmarkedPulseIds,
+                mentionsByPulse)).ToList();
+
+            // Record metrics and set span metadata
+            AppMetrics.RecordFeedLoad(authenticated: isAuthenticated);
+            activity?.SetFeedMetadata(
+                resultCount: pulseDtos.Count,
+                hasMore: hasMore,
+                cursorType: cursorType);
+            activity?.SetSuccess(true);
+
+            return new FeedResponse(
+                Pulses: pulseDtos,
+                NextCursor: nextCursor,
+                HasMore: hasMore
+            );
         }
-
-        // Group mentions by pulse for DTO mapping
-        var mentionsByPulse = feedData.Mentions
-            .GroupBy(m => m.PulseId)
-            .ToDictionary(g => g.Key, g => g.ToList());
-
-        // Map to DTOs
-        var pulseDtos = pulsesToReturn.Select(p => MapToPulseDto(
-            p,
-            feedData.LikedPulseIds,
-            feedData.FollowingProfileIds,
-            feedData.BookmarkedPulseIds,
-            mentionsByPulse)).ToList();
-
-        return new FeedResponse(
-            Pulses: pulseDtos,
-            NextCursor: nextCursor,
-            HasMore: hasMore
-        );
+        catch (Exception ex)
+        {
+            activity?.RecordError(ex);
+            throw;
+        }
     }
 
     private static PulseDto MapToPulseDto(

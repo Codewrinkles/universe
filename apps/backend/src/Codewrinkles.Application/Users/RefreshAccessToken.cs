@@ -1,5 +1,6 @@
 using Codewrinkles.Application.Common.Interfaces;
 using Codewrinkles.Domain.Identity;
+using Codewrinkles.Telemetry;
 using Kommand.Abstractions;
 
 namespace Codewrinkles.Application.Users;
@@ -29,74 +30,102 @@ public sealed class RefreshAccessTokenCommandHandler : ICommandHandler<RefreshAc
 
     public async Task<RefreshAccessTokenResult> HandleAsync(RefreshAccessTokenCommand request, CancellationToken cancellationToken)
     {
-        // 1. Hash the provided refresh token to look it up in database
-        var tokenHash = JwtTokenGenerator.HashToken(request.RefreshToken);
+        using var activity = TelemetryExtensions.StartApplicationActivity(SpanNames.Authentication.TokenRefresh);
 
-        // 2. Find the refresh token in database by hash
-        var refreshToken = await _unitOfWork.RefreshTokens.FindByTokenHashAsync(tokenHash, cancellationToken);
-
-        if (refreshToken == null)
+        try
         {
-            throw new InvalidRefreshTokenException("Invalid refresh token");
-        }
+            // 1. Hash the provided refresh token to look it up in database
+            var tokenHash = JwtTokenGenerator.HashToken(request.RefreshToken);
 
-        // 3. Validate the refresh token
-        if (!refreshToken.IsValid())
-        {
-            if (refreshToken.IsExpired())
+            // 2. Find the refresh token in database by hash
+            var refreshToken = await _unitOfWork.RefreshTokens.FindByTokenHashAsync(tokenHash, cancellationToken);
+
+            if (refreshToken == null)
             {
-                throw new RefreshTokenExpiredException("Refresh token has expired");
+                AppMetrics.RecordTokenRefresh(success: false);
+                activity?.SetTag(TagNames.Auth.FailureReason, "token_not_found");
+                throw new InvalidRefreshTokenException("Invalid refresh token");
             }
 
-            if (refreshToken.IsUsed)
+            activity?.SetIdentityId(refreshToken.IdentityId);
+
+            // 3. Validate the refresh token
+            if (!refreshToken.IsValid())
             {
-                throw new InvalidRefreshTokenException("Refresh token has already been used");
+                AppMetrics.RecordTokenRefresh(success: false);
+
+                if (refreshToken.IsExpired())
+                {
+                    activity?.SetTag(TagNames.Auth.TokenExpired, true);
+                    activity?.SetTag(TagNames.Auth.FailureReason, "expired");
+                    throw new RefreshTokenExpiredException("Refresh token has expired");
+                }
+
+                if (refreshToken.IsUsed)
+                {
+                    activity?.SetTag(TagNames.Auth.FailureReason, "already_used");
+                    throw new InvalidRefreshTokenException("Refresh token has already been used");
+                }
+
+                if (refreshToken.IsRevoked)
+                {
+                    activity?.SetTag(TagNames.Auth.FailureReason, "revoked");
+                    throw new InvalidRefreshTokenException("Refresh token has been revoked");
+                }
+
+                activity?.SetTag(TagNames.Auth.FailureReason, "invalid");
+                throw new InvalidRefreshTokenException("Refresh token is invalid");
             }
 
-            if (refreshToken.IsRevoked)
+            // 4. Load the associated identity and profile
+            var identity = await _unitOfWork.Identities.FindByIdAsync(refreshToken.IdentityId, cancellationToken);
+
+            if (identity == null)
             {
-                throw new InvalidRefreshTokenException("Refresh token has been revoked");
+                AppMetrics.RecordTokenRefresh(success: false);
+                activity?.SetTag(TagNames.Auth.FailureReason, "user_not_found");
+                throw new InvalidRefreshTokenException("Associated user not found");
             }
 
-            throw new InvalidRefreshTokenException("Refresh token is invalid");
+            // Ensure profile is loaded
+            var profile = identity.Profile;
+            activity?.SetUserContext(identity.Id, profile.Id);
+
+            // 5. Generate new access token
+            var newAccessToken = _jwtTokenGenerator.GenerateAccessToken(identity, profile);
+
+            // 6. Generate new refresh token (token rotation)
+            var (newRefreshToken, newTokenHash) = JwtTokenGenerator.GenerateRefreshToken();
+            var newRefreshTokenExpiry = DateTime.UtcNow.AddDays(_jwtTokenGenerator.RefreshTokenExpiryDays);
+
+            var newRefreshTokenEntity = RefreshToken.Create(
+                newTokenHash,
+                identity.Id,
+                newRefreshTokenExpiry
+            );
+
+            // 7. Mark old refresh token as used and link to new one
+            _unitOfWork.RefreshTokens.Add(newRefreshTokenEntity);
+            await _unitOfWork.SaveChangesAsync(cancellationToken); // Save to get ID
+
+            refreshToken.MarkAsUsed(newRefreshTokenEntity.Id);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            // Record metrics
+            AppMetrics.RecordTokenRefresh(success: true);
+            activity?.SetSuccess(true);
+
+            // 8. Return new tokens
+            return new RefreshAccessTokenResult(
+                AccessToken: newAccessToken,
+                RefreshToken: newRefreshToken
+            );
         }
-
-        // 4. Load the associated identity and profile
-        var identity = await _unitOfWork.Identities.FindByIdAsync(refreshToken.IdentityId, cancellationToken);
-
-        if (identity == null)
+        catch (Exception ex)
         {
-            throw new InvalidRefreshTokenException("Associated user not found");
+            activity?.RecordError(ex);
+            throw;
         }
-
-        // Ensure profile is loaded
-        var profile = identity.Profile;
-
-        // 5. Generate new access token
-        var newAccessToken = _jwtTokenGenerator.GenerateAccessToken(identity, profile);
-
-        // 6. Generate new refresh token (token rotation)
-        var (newRefreshToken, newTokenHash) = JwtTokenGenerator.GenerateRefreshToken();
-        var newRefreshTokenExpiry = DateTime.UtcNow.AddDays(_jwtTokenGenerator.RefreshTokenExpiryDays);
-
-        var newRefreshTokenEntity = RefreshToken.Create(
-            newTokenHash,
-            identity.Id,
-            newRefreshTokenExpiry
-        );
-
-        // 7. Mark old refresh token as used and link to new one
-        _unitOfWork.RefreshTokens.Add(newRefreshTokenEntity);
-        await _unitOfWork.SaveChangesAsync(cancellationToken); // Save to get ID
-
-        refreshToken.MarkAsUsed(newRefreshTokenEntity.Id);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        // 8. Return new tokens
-        return new RefreshAccessTokenResult(
-            AccessToken: newAccessToken,
-            RefreshToken: newRefreshToken
-        );
     }
 }
 

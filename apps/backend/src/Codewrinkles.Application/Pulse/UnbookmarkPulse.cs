@@ -1,4 +1,5 @@
 using Codewrinkles.Application.Common.Interfaces;
+using Codewrinkles.Telemetry;
 using Kommand.Abstractions;
 
 namespace Codewrinkles.Application.Pulse;
@@ -23,18 +24,32 @@ public sealed class UnbookmarkPulseCommandHandler : ICommandHandler<UnbookmarkPu
 
     public async Task<UnbookmarkPulseResult> HandleAsync(UnbookmarkPulseCommand command, CancellationToken cancellationToken)
     {
-        // Validator has already confirmed bookmark exists
-        var bookmark = await _unitOfWork.Bookmarks.FindByProfileAndPulseAsync(
-            command.ProfileId,
-            command.PulseId,
-            cancellationToken);
+        using var activity = TelemetryExtensions.StartApplicationActivity(SpanNames.Engagement.Unbookmark);
+        activity?.SetProfileId(command.ProfileId);
+        activity?.SetTag(TagNames.Pulse.Id, command.PulseId.ToString());
 
-        if (bookmark is not null)
+        try
         {
-            _unitOfWork.Bookmarks.Delete(bookmark);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-        }
+            // Validator has already confirmed bookmark exists
+            var bookmark = await _unitOfWork.Bookmarks.FindByProfileAndPulseAsync(
+                command.ProfileId,
+                command.PulseId,
+                cancellationToken);
 
-        return new UnbookmarkPulseResult(Success: true);
+            if (bookmark is not null)
+            {
+                _unitOfWork.Bookmarks.Delete(bookmark);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }
+
+            activity?.SetSuccess(true);
+
+            return new UnbookmarkPulseResult(Success: true);
+        }
+        catch (Exception ex)
+        {
+            activity?.RecordError(ex);
+            throw;
+        }
     }
 }

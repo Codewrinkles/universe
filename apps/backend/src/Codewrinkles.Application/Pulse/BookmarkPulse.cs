@@ -1,5 +1,6 @@
 using Codewrinkles.Application.Common.Interfaces;
 using Codewrinkles.Domain.Pulse;
+using Codewrinkles.Telemetry;
 using Kommand.Abstractions;
 
 namespace Codewrinkles.Application.Pulse;
@@ -24,12 +25,27 @@ public sealed class BookmarkPulseCommandHandler : ICommandHandler<BookmarkPulseC
 
     public async Task<BookmarkPulseResult> HandleAsync(BookmarkPulseCommand command, CancellationToken cancellationToken)
     {
-        // Validator has already confirmed pulse exists and is not already bookmarked
-        var bookmark = PulseBookmark.Create(command.PulseId, command.ProfileId);
+        using var activity = TelemetryExtensions.StartApplicationActivity(SpanNames.Engagement.Bookmark);
+        activity?.SetProfileId(command.ProfileId);
+        activity?.SetTag(TagNames.Pulse.Id, command.PulseId.ToString());
 
-        _unitOfWork.Bookmarks.Create(bookmark);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        try
+        {
+            // Validator has already confirmed pulse exists and is not already bookmarked
+            var bookmark = PulseBookmark.Create(command.PulseId, command.ProfileId);
 
-        return new BookmarkPulseResult(Success: true);
+            _unitOfWork.Bookmarks.Create(bookmark);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            AppMetrics.RecordPulseBookmark();
+            activity?.SetSuccess(true);
+
+            return new BookmarkPulseResult(Success: true);
+        }
+        catch (Exception ex)
+        {
+            activity?.RecordError(ex);
+            throw;
+        }
     }
 }

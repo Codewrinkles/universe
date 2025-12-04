@@ -1,5 +1,6 @@
 using Kommand.Abstractions;
 using Codewrinkles.Application.Common.Interfaces;
+using Codewrinkles.Telemetry;
 
 namespace Codewrinkles.Application.Social;
 
@@ -22,22 +23,37 @@ public sealed class UnfollowUserCommandHandler
         UnfollowUserCommand command,
         CancellationToken cancellationToken)
     {
-        // Validator has already confirmed:
-        // - Both profiles exist
-        // - Follow relationship exists
+        using var activity = TelemetryExtensions.StartApplicationActivity(SpanNames.Social.Unfollow);
+        activity?.SetProfileId(command.FollowerId);
+        activity?.SetTag(TagNames.Social.TargetProfileId, command.FollowingId.ToString());
 
-        // 1. Fetch the follow relationship (guaranteed to exist after validation)
-        var follow = (await _unitOfWork.Follows.FindFollowAsync(
-            command.FollowerId,
-            command.FollowingId,
-            cancellationToken))!;
+        try
+        {
+            // Validator has already confirmed:
+            // - Both profiles exist
+            // - Follow relationship exists
 
-        // 2. Delete the follow
-        _unitOfWork.Follows.DeleteFollow(follow);
+            // 1. Fetch the follow relationship (guaranteed to exist after validation)
+            var follow = (await _unitOfWork.Follows.FindFollowAsync(
+                command.FollowerId,
+                command.FollowingId,
+                cancellationToken))!;
 
-        // 3. Save changes
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+            // 2. Delete the follow
+            _unitOfWork.Follows.DeleteFollow(follow);
 
-        return new UnfollowResult(Success: true);
+            // 3. Save changes
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            AppMetrics.RecordFollowRemoved();
+            activity?.SetSuccess(true);
+
+            return new UnfollowResult(Success: true);
+        }
+        catch (Exception ex)
+        {
+            activity?.RecordError(ex);
+            throw;
+        }
     }
 }

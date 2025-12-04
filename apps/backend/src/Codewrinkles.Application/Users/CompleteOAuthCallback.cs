@@ -1,6 +1,7 @@
 using System.Data;
 using Codewrinkles.Application.Common.Interfaces;
 using Codewrinkles.Domain.Identity;
+using Codewrinkles.Telemetry;
 using Kommand.Abstractions;
 
 namespace Codewrinkles.Application.Users;
@@ -47,52 +48,88 @@ public sealed class CompleteOAuthCallbackCommandHandler
         CompleteOAuthCallbackCommand command,
         CancellationToken cancellationToken)
     {
-        // Exchange code for tokens
-        var tokenResponse = await _oAuthService.ExchangeCodeForTokenAsync(
-            command.Provider,
-            command.Code,
-            command.RedirectUri,
-            cancellationToken);
+        using var activity = TelemetryExtensions.StartApplicationActivity(SpanNames.Authentication.OAuthCallback);
+        activity?.SetOAuthProvider(command.Provider.ToString().ToLowerInvariant());
 
-        // Fetch user info
-        var userInfo = await _oAuthService.GetUserInfoAsync(
-            command.Provider,
-            tokenResponse.AccessToken,
-            cancellationToken);
-
-        // Check existing external login
-        var existingExternalLogin = await _unitOfWork.ExternalLogins
-            .FindByProviderAndUserIdAsync(
+        try
+        {
+            // Exchange code for tokens
+            var tokenResponse = await _oAuthService.ExchangeCodeForTokenAsync(
                 command.Provider,
-                userInfo.ProviderUserId,
+                command.Code,
+                command.RedirectUri,
                 cancellationToken);
 
-        if (existingExternalLogin is not null)
-        {
-            return await HandleReturningUserAsync(existingExternalLogin, tokenResponse, cancellationToken);
-        }
-
-        // Check existing identity by email
-        var identityByEmail = await _unitOfWork.Identities.FindByEmailAsync(
-            userInfo.Email,
-            cancellationToken);
-
-        if (identityByEmail is not null)
-        {
-            return await HandleAccountLinkingAsync(
-                identityByEmail,
+            // Fetch user info
+            var userInfo = await _oAuthService.GetUserInfoAsync(
                 command.Provider,
-                userInfo,
-                tokenResponse,
+                tokenResponse.AccessToken,
                 cancellationToken);
-        }
 
-        // New user registration
-        return await HandleNewUserRegistrationAsync(
-            command.Provider,
-            userInfo,
-            tokenResponse,
-            cancellationToken);
+            activity?.SetEmailDomain(userInfo.Email);
+
+            // Check existing external login
+            var existingExternalLogin = await _unitOfWork.ExternalLogins
+                .FindByProviderAndUserIdAsync(
+                    command.Provider,
+                    userInfo.ProviderUserId,
+                    cancellationToken);
+
+            CompleteOAuthCallbackResult result;
+            if (existingExternalLogin is not null)
+            {
+                activity?.SetTag("oauth.flow", "returning_user");
+                result = await HandleReturningUserAsync(existingExternalLogin, tokenResponse, cancellationToken);
+            }
+            else
+            {
+                // Check existing identity by email
+                var identityByEmail = await _unitOfWork.Identities.FindByEmailAsync(
+                    userInfo.Email,
+                    cancellationToken);
+
+                if (identityByEmail is not null)
+                {
+                    activity?.SetTag("oauth.flow", "account_linking");
+                    result = await HandleAccountLinkingAsync(
+                        identityByEmail,
+                        command.Provider,
+                        userInfo,
+                        tokenResponse,
+                        cancellationToken);
+                }
+                else
+                {
+                    // New user registration
+                    activity?.SetTag("oauth.flow", "new_registration");
+                    result = await HandleNewUserRegistrationAsync(
+                        command.Provider,
+                        userInfo,
+                        tokenResponse,
+                        cancellationToken);
+                }
+            }
+
+            activity?.SetUserContext(result.IdentityId, result.ProfileId);
+            AppMetrics.RecordOAuthCallback(command.Provider.ToString().ToLowerInvariant(), success: true);
+            if (result.IsNewUser)
+            {
+                AppMetrics.RecordUserRegistered($"oauth_{command.Provider.ToString().ToLowerInvariant()}");
+            }
+            else
+            {
+                AppMetrics.RecordUserLoggedIn($"oauth_{command.Provider.ToString().ToLowerInvariant()}");
+            }
+            activity?.SetSuccess(true);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            AppMetrics.RecordOAuthCallback(command.Provider.ToString().ToLowerInvariant(), success: false);
+            activity?.RecordError(ex);
+            throw;
+        }
     }
 
     private async Task<CompleteOAuthCallbackResult> HandleReturningUserAsync(

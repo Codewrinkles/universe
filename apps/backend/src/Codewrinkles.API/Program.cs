@@ -16,6 +16,9 @@ using System.Text;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Logs;
+using Azure.Monitor.OpenTelemetry.AspNetCore;
+using Codewrinkles.Telemetry;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -112,20 +115,63 @@ builder.Services.AddCors(options =>
 });
 
 // Add OpenTelemetry
-builder.Services.AddOpenTelemetry()
-    .ConfigureResource(resource => resource.AddService("Codewrinkles.API"))
-    .WithTracing(tracing => tracing
-        .AddAspNetCoreInstrumentation()
-        .AddHttpClientInstrumentation()
-        .AddEntityFrameworkCoreInstrumentation()
-        .AddSource("Codewrinkles.*")
-        .AddConsoleExporter()
-    )
-    .WithMetrics(metrics => metrics
-        .AddAspNetCoreInstrumentation()
-        .AddHttpClientInstrumentation()
-        .AddConsoleExporter()
-    );
+// Development: Console only (zero Azure costs)
+// Production: Azure Monitor only (no console noise)
+var otelBuilder = builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource
+        .AddService(
+            serviceName: "Codewrinkles.API",
+            serviceNamespace: "Codewrinkles",
+            serviceVersion: typeof(Program).Assembly.GetName().Version?.ToString() ?? "1.0.0"))
+    .WithTracing(tracing =>
+    {
+        tracing
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddEntityFrameworkCoreInstrumentation();
+
+        // Register custom ActivitySources from Telemetry project
+        foreach (var sourceName in ActivitySources.AllSourceNames)
+        {
+            tracing.AddSource(sourceName);
+        }
+
+        if (builder.Environment.IsDevelopment())
+        {
+            // Development: Console exporter only
+            tracing.AddConsoleExporter();
+        }
+    })
+    .WithMetrics(metrics =>
+    {
+        metrics
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddRuntimeInstrumentation();
+
+        // Register custom Meters from Telemetry project
+        foreach (var meterName in Meters.AllMeterNames)
+        {
+            metrics.AddMeter(meterName);
+        }
+
+        if (builder.Environment.IsDevelopment())
+        {
+            // Development: Console exporter only
+            metrics.AddConsoleExporter();
+        }
+    });
+
+// Production: Add Azure Monitor exporter
+// Connection string is read from APPLICATIONINSIGHTS_CONNECTION_STRING environment variable
+if (!builder.Environment.IsDevelopment())
+{
+    otelBuilder.UseAzureMonitor(options =>
+    {
+        // 10% sampling to minimize costs (errors are always captured)
+        options.SamplingRatio = 0.1f;
+    });
+}
 
 // Add OpenAPI
 builder.Services.AddEndpointsApiExplorer();

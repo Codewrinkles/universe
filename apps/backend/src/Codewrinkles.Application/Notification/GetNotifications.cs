@@ -1,5 +1,6 @@
 using Kommand.Abstractions;
 using Codewrinkles.Application.Common.Interfaces;
+using Codewrinkles.Telemetry;
 
 namespace Codewrinkles.Application.Notification;
 
@@ -45,37 +46,53 @@ public sealed class GetNotificationsQueryHandler
         GetNotificationsQuery query,
         CancellationToken cancellationToken)
     {
-        // Get paginated notifications with actor information
-        var (notifications, totalCount) = await _unitOfWork.Notifications.GetByRecipientAsync(
-            query.RecipientId,
-            query.Offset,
-            query.Limit,
-            cancellationToken);
+        using var activity = TelemetryExtensions.StartApplicationActivity(SpanNames.Notification.GetAll);
+        activity?.SetProfileId(query.RecipientId);
 
-        // Get unread count
-        var unreadCount = await _unitOfWork.Notifications.GetUnreadCountAsync(
-            query.RecipientId,
-            cancellationToken);
+        try
+        {
+            // Get paginated notifications with actor information
+            var (notifications, totalCount) = await _unitOfWork.Notifications.GetByRecipientAsync(
+                query.RecipientId,
+                query.Offset,
+                query.Limit,
+                cancellationToken);
 
-        // Map to DTOs
-        var notificationDtos = notifications.Select(n => new NotificationDto(
-            Id: n.Id,
-            Actor: new NotificationActorDto(
-                Id: n.Actor.Id,
-                Name: n.Actor.Name,
-                Handle: n.Actor.Handle ?? "unknown",
-                AvatarUrl: n.Actor.AvatarUrl
-            ),
-            Type: n.Type.ToString().ToLowerInvariant(), // "pulselike", "pulsereply", etc.
-            EntityId: n.EntityId,
-            IsRead: n.IsRead,
-            CreatedAt: n.CreatedAt
-        )).ToList();
+            // Get unread count
+            var unreadCount = await _unitOfWork.Notifications.GetUnreadCountAsync(
+                query.RecipientId,
+                cancellationToken);
 
-        return new GetNotificationsResult(
-            Notifications: notificationDtos,
-            TotalCount: totalCount,
-            UnreadCount: unreadCount
-        );
+            // Map to DTOs
+            var notificationDtos = notifications.Select(n => new NotificationDto(
+                Id: n.Id,
+                Actor: new NotificationActorDto(
+                    Id: n.Actor.Id,
+                    Name: n.Actor.Name,
+                    Handle: n.Actor.Handle ?? "unknown",
+                    AvatarUrl: n.Actor.AvatarUrl
+                ),
+                Type: n.Type.ToString().ToLowerInvariant(), // "pulselike", "pulsereply", etc.
+                EntityId: n.EntityId,
+                IsRead: n.IsRead,
+                CreatedAt: n.CreatedAt
+            )).ToList();
+
+            activity?.SetRecordCount(notificationDtos.Count);
+            activity?.SetTag("notification.total_count", totalCount);
+            activity?.SetTag("notification.unread_count", unreadCount);
+            activity?.SetSuccess(true);
+
+            return new GetNotificationsResult(
+                Notifications: notificationDtos,
+                TotalCount: totalCount,
+                UnreadCount: unreadCount
+            );
+        }
+        catch (Exception ex)
+        {
+            activity?.RecordError(ex);
+            throw;
+        }
     }
 }
