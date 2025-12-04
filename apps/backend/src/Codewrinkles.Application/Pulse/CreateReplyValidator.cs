@@ -47,7 +47,9 @@ public sealed class CreateReplyValidator : IValidator<CreateReplyCommand>
             return;
         }
 
-        var trimmedContent = content.Trim();
+        // Normalize newlines (FormData converts \n to \r\n per HTML spec)
+        var normalizedContent = content.Replace("\r\n", "\n").Replace("\r", "\n");
+        var trimmedContent = normalizedContent.Trim();
         if (trimmedContent.Length > Domain.Pulse.Pulse.MaxContentLength)
         {
             _errors.Add(new ValidationError(

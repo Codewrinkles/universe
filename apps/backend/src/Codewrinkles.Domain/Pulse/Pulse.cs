@@ -37,7 +37,9 @@ public sealed class Pulse
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(content, nameof(content));
 
-        var trimmedContent = content.Trim();
+        // Normalize newlines (FormData converts \n to \r\n per HTML spec)
+        var normalizedContent = content.Replace("\r\n", "\n").Replace("\r", "\n");
+        var trimmedContent = normalizedContent.Trim();
 
         if (trimmedContent.Length > MaxContentLength)
         {
@@ -64,7 +66,9 @@ public sealed class Pulse
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(content, nameof(content));
 
-        var trimmedContent = content.Trim();
+        // Normalize newlines (FormData converts \n to \r\n per HTML spec)
+        var normalizedContent = content.Replace("\r\n", "\n").Replace("\r", "\n");
+        var trimmedContent = normalizedContent.Trim();
 
         if (trimmedContent.Length > MaxContentLength)
         {
@@ -91,7 +95,9 @@ public sealed class Pulse
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(content, nameof(content));
 
-        var trimmedContent = content.Trim();
+        // Normalize newlines (FormData converts \n to \r\n per HTML spec)
+        var normalizedContent = content.Replace("\r\n", "\n").Replace("\r", "\n");
+        var trimmedContent = normalizedContent.Trim();
 
         if (trimmedContent.Length > MaxContentLength)
         {
