@@ -80,6 +80,9 @@ public static class DependencyInjection
         });
         services.AddScoped<ILinkPreviewService, LinkPreviewService>();
 
+        // HttpClient for OAuthService
+        services.AddHttpClient<IOAuthService, OAuthService>();
+
         return services;
     }
 }
