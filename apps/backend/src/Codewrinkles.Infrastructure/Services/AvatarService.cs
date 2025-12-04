@@ -1,6 +1,5 @@
 using Codewrinkles.Application.Common.Interfaces;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Formats.Jpeg;
@@ -14,14 +13,10 @@ public sealed class AvatarService : IAvatarService
     private const string AvatarsFolder = "avatars";
 
     private readonly string _avatarsPath;
-    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public AvatarService(
-        IWebHostEnvironment environment,
-        IHttpContextAccessor httpContextAccessor)
+    public AvatarService(IWebHostEnvironment environment)
     {
         _avatarsPath = Path.Combine(environment.WebRootPath, AvatarsFolder);
-        _httpContextAccessor = httpContextAccessor;
 
         // Ensure the avatars directory exists
         if (!Directory.Exists(_avatarsPath))
@@ -55,20 +50,8 @@ public sealed class AvatarService : IAvatarService
         var encoder = new JpegEncoder { Quality = JpegQuality };
         await image.SaveAsync(filePath, encoder, cancellationToken);
 
-        // Build the full absolute URL
-        var httpContext = _httpContextAccessor.HttpContext;
-        var baseUrl = httpContext is not null
-            ? $"{httpContext.Request.Scheme}://{httpContext.Request.Host}"
-            : GetDefaultBaseUrl();
-
-        return $"{baseUrl}/{AvatarsFolder}/{filename}";
-    }
-
-    private static string GetDefaultBaseUrl()
-    {
-        return Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development"
-            ? "https://localhost:7280"
-            : "https://app-codwrinkles-api.azurewebsites.net";
+        // Return the relative URL path
+        return $"/{AvatarsFolder}/{filename}";
     }
 
     public void DeleteAvatar(Guid profileId)
