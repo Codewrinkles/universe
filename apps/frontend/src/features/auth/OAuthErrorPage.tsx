@@ -5,9 +5,16 @@ export function OAuthErrorPage(): JSX.Element {
   const [searchParams] = useSearchParams();
   const message = searchParams.get("message") || "An error occurred during authentication";
 
+  // TEMPORARILY COMMENTED OUT FOR DEBUGGING - Keep error message in URL
+  // useEffect(() => {
+  //   window.history.replaceState({}, document.title, "/auth/error");
+  // }, []);
+
+  // DEBUG: Log the error message to console
   useEffect(() => {
-    window.history.replaceState({}, document.title, "/auth/error");
-  }, []);
+    console.error("OAuth Error:", message);
+    console.error("Full URL:", window.location.href);
+  }, [message]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface-page">
