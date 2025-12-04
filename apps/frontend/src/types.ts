@@ -228,6 +228,18 @@ export interface UpdateProfileResponse {
   websiteUrl: string | null;
 }
 
+// PHASE 1: Response for GET /api/identity/profile (current user's profile)
+export interface GetCurrentUserProfileResponse {
+  profileId: string;
+  name: string;
+  handle: string | null;
+  bio: string | null;
+  avatarUrl: string | null;
+  location: string | null;
+  websiteUrl: string | null;
+  onboardingCompleted: boolean;
+}
+
 // Onboarding API types
 export interface OnboardingStatus {
   isCompleted: boolean;

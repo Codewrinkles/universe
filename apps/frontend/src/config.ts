@@ -12,6 +12,9 @@ export const config = {
       register: `${API_BASE_URL}/api/identity/register`,
       login: `${API_BASE_URL}/api/identity/login`,
       changePassword: `${API_BASE_URL}/api/identity/change-password`,
+      // PHASE 1: New RESTful endpoint for getting current user's profile (no ID)
+      currentUserProfile: `${API_BASE_URL}/api/identity/profile`,
+      // PHASE 2 TODO: Migrate these to RESTful pattern (no profileId), keep for backward compat
       profile: (profileId: string) => `${API_BASE_URL}/api/identity/profile/${profileId}`,
       avatar: (profileId: string) => `${API_BASE_URL}/api/identity/profile/${profileId}/avatar`,
       pulse: `${API_BASE_URL}/api/pulse`,

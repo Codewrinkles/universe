@@ -1,6 +1,7 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Toggle } from "../../components/ui/Toggle";
 import { useAuth } from "../../hooks/useAuth";
+import { useProfile } from "../../hooks/useProfile";
 import { buildAvatarUrl } from "../../utils/avatarUtils";
 
 interface FieldProps {
@@ -62,25 +63,37 @@ function TextAreaField({ label, value, onChange, placeholder, maxLength, disable
 
 export function SettingsProfile(): JSX.Element {
   const { user, updateProfile, updateAvatar } = useAuth();
+  const { profile, isLoading: isLoadingProfile, error: profileError } = useProfile();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [name, setName] = useState(user?.name ?? "");
-  const [handle, setHandle] = useState(user?.handle ?? "");
-  const [bio, setBio] = useState(user?.bio ?? "");
-  const [location, setLocation] = useState(user?.location ?? "");
-  const [websiteUrl, setWebsiteUrl] = useState(user?.websiteUrl ?? "");
+  const [name, setName] = useState("");
+  const [handle, setHandle] = useState("");
+  const [bio, setBio] = useState("");
+  const [location, setLocation] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
 
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  // Sync form fields when profile data is loaded from API
+  useEffect(() => {
+    if (profile) {
+      setName(profile.name ?? "");
+      setHandle(profile.handle ?? "");
+      setBio(profile.bio ?? "");
+      setLocation(profile.location ?? "");
+      setWebsiteUrl(profile.websiteUrl ?? "");
+    }
+  }, [profile]);
+
   const hasChanges =
-    name !== (user?.name ?? "") ||
-    handle !== (user?.handle ?? "") ||
-    bio !== (user?.bio ?? "") ||
-    location !== (user?.location ?? "") ||
-    websiteUrl !== (user?.websiteUrl ?? "");
+    name !== (profile?.name ?? "") ||
+    handle !== (profile?.handle ?? "") ||
+    bio !== (profile?.bio ?? "") ||
+    location !== (profile?.location ?? "") ||
+    websiteUrl !== (profile?.websiteUrl ?? "");
 
   const handleSave = async (): Promise<void> => {
     if (!hasChanges) return;
@@ -145,6 +158,26 @@ export function SettingsProfile(): JSX.Element {
   };
 
   const avatarUrl = buildAvatarUrl(user?.avatarUrl);
+
+  // Show loading state while fetching profile
+  if (isLoadingProfile) {
+    return (
+      <div className="space-y-6">
+        <div className="text-sm text-text-secondary">Loading profile...</div>
+      </div>
+    );
+  }
+
+  // Show error if profile failed to load
+  if (profileError) {
+    return (
+      <div className="space-y-6">
+        <div className="text-xs px-3 py-2 rounded-lg bg-red-500/10 text-red-400">
+          {profileError}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

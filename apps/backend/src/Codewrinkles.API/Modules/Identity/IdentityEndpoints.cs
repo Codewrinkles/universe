@@ -26,6 +26,16 @@ public static class IdentityEndpoints
         group.MapPost("/refresh", RefreshAccessToken)
             .WithName("RefreshAccessToken");
 
+        // PHASE 1: New RESTful endpoint for getting current user's profile
+        // GET /api/identity/profile (no ID - extracted from JWT)
+        group.MapGet("/profile", GetCurrentUserProfile)
+            .WithName("GetCurrentUserProfile")
+            .RequireAuthorization();
+
+        // PHASE 2 TODO: Migrate these endpoints to RESTful pattern (no profileId in URL):
+        // - PUT /api/identity/profile (instead of /profile/{profileId})
+        // - POST /api/identity/profile/avatar (instead of /profile/{profileId}/avatar)
+        // Keep old endpoints for backward compatibility, mark as deprecated
         group.MapPut("/profile/{profileId:guid}", UpdateProfile)
             .WithName("UpdateProfile")
             .RequireAuthorization("MustBeProfileOwner");
@@ -165,6 +175,41 @@ public static class IdentityEndpoints
                 detail: ex.Message,
                 statusCode: 401
             );
+        }
+    }
+
+    /// <summary>
+    /// PHASE 1: Get current authenticated user's profile
+    /// RESTful endpoint - no ID in URL, extracted from JWT token
+    /// Used by Settings page to load current profile data for editing
+    /// </summary>
+    private static async Task<IResult> GetCurrentUserProfile(
+        HttpContext httpContext,
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var identityId = httpContext.GetCurrentIdentityId();
+
+            var query = new GetCurrentUserProfileQuery(IdentityId: identityId);
+            var result = await mediator.SendAsync(query, cancellationToken);
+
+            return Results.Ok(new
+            {
+                profileId = result.ProfileId,
+                name = result.Name,
+                handle = result.Handle,
+                bio = result.Bio,
+                avatarUrl = result.AvatarUrl,
+                location = result.Location,
+                websiteUrl = result.WebsiteUrl,
+                onboardingCompleted = result.OnboardingCompleted
+            });
+        }
+        catch (CurrentUserProfileNotFoundException)
+        {
+            return Results.NotFound();
         }
     }
 
