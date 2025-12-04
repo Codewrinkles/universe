@@ -23,26 +23,19 @@ public static class ProfileEndpoints
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var query = new GetProfileByHandleQuery(Handle: handle);
-            var result = await mediator.SendAsync(query, cancellationToken);
+        var query = new GetProfileByHandleQuery(Handle: handle);
+        var result = await mediator.SendAsync(query, cancellationToken);
 
-            return Results.Ok(new
-            {
-                profileId = result.ProfileId,
-                name = result.Name,
-                handle = result.Handle,
-                bio = result.Bio,
-                avatarUrl = result.AvatarUrl,
-                location = result.Location,
-                websiteUrl = result.WebsiteUrl
-            });
-        }
-        catch (ProfileNotFoundByHandleException)
+        return Results.Ok(new
         {
-            return Results.NotFound();
-        }
+            profileId = result.ProfileId,
+            name = result.Name,
+            handle = result.Handle,
+            bio = result.Bio,
+            avatarUrl = result.AvatarUrl,
+            location = result.Location,
+            websiteUrl = result.WebsiteUrl
+        });
     }
 
     private static async Task<IResult> SearchHandles(

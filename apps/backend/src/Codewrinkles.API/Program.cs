@@ -76,8 +76,11 @@ builder.Services.AddHttpContextAccessor(); // Required for handlers to access Ht
 builder.Services.AddSingleton<IAuthorizationHandler, MustBeProfileOwnerHandler>();
 builder.Services.AddSingleton<IAuthorizationHandler, MustBePulseOwnerHandler>();
 
-// Add exception handlers
+// Add exception handlers (order matters - more specific handlers first)
 builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
+builder.Services.AddExceptionHandler<DomainExceptionHandler>();
+builder.Services.AddExceptionHandler<InfrastructureExceptionHandler>();
+builder.Services.AddExceptionHandler<CancellationExceptionHandler>();
 builder.Services.AddProblemDetails();
 
 // Add response compression (Brotli for modern browsers, Gzip for fallback)

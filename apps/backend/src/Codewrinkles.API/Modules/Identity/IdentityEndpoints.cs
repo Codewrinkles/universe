@@ -96,49 +96,26 @@ public static class IdentityEndpoints
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var command = new LoginUserCommand(
-                Email: request.Email,
-                Password: request.Password
-            );
+        var command = new LoginUserCommand(
+            Email: request.Email,
+            Password: request.Password
+        );
 
-            var result = await mediator.SendAsync(command, cancellationToken);
+        var result = await mediator.SendAsync(command, cancellationToken);
 
-            return Results.Ok(new
-            {
-                identityId = result.IdentityId,
-                profileId = result.ProfileId,
-                email = result.Email,
-                name = result.Name,
-                handle = result.Handle,
-                bio = result.Bio,
-                avatarUrl = result.AvatarUrl,
-                role = result.Role.ToString(),
-                accessToken = result.AccessToken,
-                refreshToken = result.RefreshToken
-            });
-        }
-        catch (InvalidCredentialsException)
+        return Results.Ok(new
         {
-            return Results.Unauthorized();
-        }
-        catch (AccountSuspendedException ex)
-        {
-            return Results.Problem(
-                title: "Account Suspended",
-                detail: ex.Message,
-                statusCode: 403
-            );
-        }
-        catch (AccountLockedException ex)
-        {
-            return Results.Problem(
-                title: "Account Locked",
-                detail: ex.Message,
-                statusCode: 423
-            );
-        }
+            identityId = result.IdentityId,
+            profileId = result.ProfileId,
+            email = result.Email,
+            name = result.Name,
+            handle = result.Handle,
+            bio = result.Bio,
+            avatarUrl = result.AvatarUrl,
+            role = result.Role.ToString(),
+            accessToken = result.AccessToken,
+            refreshToken = result.RefreshToken
+        });
     }
 
     private static async Task<IResult> RefreshAccessToken(
@@ -146,36 +123,17 @@ public static class IdentityEndpoints
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var command = new RefreshAccessTokenCommand(
-                RefreshToken: request.RefreshToken
-            );
+        var command = new RefreshAccessTokenCommand(
+            RefreshToken: request.RefreshToken
+        );
 
-            var result = await mediator.SendAsync(command, cancellationToken);
+        var result = await mediator.SendAsync(command, cancellationToken);
 
-            return Results.Ok(new
-            {
-                accessToken = result.AccessToken,
-                refreshToken = result.RefreshToken
-            });
-        }
-        catch (InvalidRefreshTokenException ex)
+        return Results.Ok(new
         {
-            return Results.Problem(
-                title: "Invalid Refresh Token",
-                detail: ex.Message,
-                statusCode: 401
-            );
-        }
-        catch (RefreshTokenExpiredException ex)
-        {
-            return Results.Problem(
-                title: "Refresh Token Expired",
-                detail: ex.Message,
-                statusCode: 401
-            );
-        }
+            accessToken = result.AccessToken,
+            refreshToken = result.RefreshToken
+        });
     }
 
     /// <summary>
@@ -188,29 +146,22 @@ public static class IdentityEndpoints
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var identityId = httpContext.GetCurrentIdentityId();
+        var identityId = httpContext.GetCurrentIdentityId();
 
-            var query = new GetCurrentUserProfileQuery(IdentityId: identityId);
-            var result = await mediator.SendAsync(query, cancellationToken);
+        var query = new GetCurrentUserProfileQuery(IdentityId: identityId);
+        var result = await mediator.SendAsync(query, cancellationToken);
 
-            return Results.Ok(new
-            {
-                profileId = result.ProfileId,
-                name = result.Name,
-                handle = result.Handle,
-                bio = result.Bio,
-                avatarUrl = result.AvatarUrl,
-                location = result.Location,
-                websiteUrl = result.WebsiteUrl,
-                onboardingCompleted = result.OnboardingCompleted
-            });
-        }
-        catch (CurrentUserProfileNotFoundException)
+        return Results.Ok(new
         {
-            return Results.NotFound();
-        }
+            profileId = result.ProfileId,
+            name = result.Name,
+            handle = result.Handle,
+            bio = result.Bio,
+            avatarUrl = result.AvatarUrl,
+            location = result.Location,
+            websiteUrl = result.WebsiteUrl,
+            onboardingCompleted = result.OnboardingCompleted
+        });
     }
 
     private static async Task<IResult> UpdateProfile(
@@ -219,42 +170,27 @@ public static class IdentityEndpoints
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var command = new UpdateProfileCommand(
-                ProfileId: profileId,
-                Name: request.Name,
-                Bio: request.Bio,
-                Handle: request.Handle,
-                Location: request.Location,
-                WebsiteUrl: request.WebsiteUrl
-            );
+        var command = new UpdateProfileCommand(
+            ProfileId: profileId,
+            Name: request.Name,
+            Bio: request.Bio,
+            Handle: request.Handle,
+            Location: request.Location,
+            WebsiteUrl: request.WebsiteUrl
+        );
 
-            var result = await mediator.SendAsync(command, cancellationToken);
+        var result = await mediator.SendAsync(command, cancellationToken);
 
-            return Results.Ok(new
-            {
-                profileId = result.ProfileId,
-                name = result.Name,
-                handle = result.Handle,
-                bio = result.Bio,
-                avatarUrl = result.AvatarUrl,
-                location = result.Location,
-                websiteUrl = result.WebsiteUrl
-            });
-        }
-        catch (ProfileNotFoundException)
+        return Results.Ok(new
         {
-            return Results.NotFound();
-        }
-        catch (HandleAlreadyTakenException ex)
-        {
-            return Results.Problem(
-                title: "Handle Already Taken",
-                detail: ex.Message,
-                statusCode: 409
-            );
-        }
+            profileId = result.ProfileId,
+            name = result.Name,
+            handle = result.Handle,
+            bio = result.Bio,
+            avatarUrl = result.AvatarUrl,
+            location = result.Location,
+            websiteUrl = result.WebsiteUrl
+        });
     }
 
     private static async Task<IResult> UploadAvatar(
@@ -283,31 +219,20 @@ public static class IdentityEndpoints
             return Results.BadRequest("Invalid file type. Allowed: JPEG, PNG, GIF, WebP");
         }
 
-        try
-        {
-            await using var stream = file.OpenReadStream();
+        await using var stream = file.OpenReadStream();
 
-            var command = new UploadAvatarCommand(
-                ProfileId: profileId,
-                ImageStream: stream
-            );
+        var command = new UploadAvatarCommand(
+            ProfileId: profileId,
+            ImageStream: stream
+        );
 
-            var result = await mediator.SendAsync(command, cancellationToken);
+        var result = await mediator.SendAsync(command, cancellationToken);
 
-            return Results.Ok(new
-            {
-                profileId = result.ProfileId,
-                avatarUrl = result.AvatarUrl
-            });
-        }
-        catch (ProfileNotFoundException)
+        return Results.Ok(new
         {
-            return Results.NotFound();
-        }
-        catch (InvalidImageException ex)
-        {
-            return Results.BadRequest(ex.Message);
-        }
+            profileId = result.ProfileId,
+            avatarUrl = result.AvatarUrl
+        });
     }
 
     private static async Task<IResult> ChangePassword(
@@ -316,33 +241,18 @@ public static class IdentityEndpoints
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            // Extract IdentityId from JWT claims (user can only change their own password)
-            var identityId = httpContext.GetCurrentIdentityId();
+        // Extract IdentityId from JWT claims (user can only change their own password)
+        var identityId = httpContext.GetCurrentIdentityId();
 
-            var command = new ChangePasswordCommand(
-                IdentityId: identityId,
-                CurrentPassword: request.CurrentPassword,
-                NewPassword: request.NewPassword
-            );
+        var command = new ChangePasswordCommand(
+            IdentityId: identityId,
+            CurrentPassword: request.CurrentPassword,
+            NewPassword: request.NewPassword
+        );
 
-            await mediator.SendAsync(command, cancellationToken);
+        await mediator.SendAsync(command, cancellationToken);
 
-            return Results.Ok(new { success = true });
-        }
-        catch (IdentityNotFoundException)
-        {
-            return Results.NotFound();
-        }
-        catch (CurrentPasswordInvalidException)
-        {
-            return Results.Problem(
-                title: "Invalid Password",
-                detail: "Current password is incorrect",
-                statusCode: 400
-            );
-        }
+        return Results.Ok(new { success = true });
     }
 
     private static async Task<IResult> GetOnboardingStatus(
@@ -463,9 +373,10 @@ public static class IdentityEndpoints
 
             return Results.Redirect(frontendSuccessUrl);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return Results.Redirect($"{GetFrontendUrl()}/auth/error?message={Uri.EscapeDataString(ex.Message)}");
+            // Do not expose internal exception details to the client for security
+            return Results.Redirect($"{GetFrontendUrl()}/auth/error?message={Uri.EscapeDataString("Authentication failed. Please try again.")}");
         }
     }
 

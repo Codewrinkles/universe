@@ -1,5 +1,5 @@
+using Codewrinkles.Application.Common.Exceptions;
 using Codewrinkles.Application.Common.Interfaces;
-using Codewrinkles.Domain.Pulse.Exceptions;
 using Kommand;
 
 namespace Codewrinkles.Application.Pulse;
@@ -61,7 +61,7 @@ public sealed class CreatePulseValidator : IValidator<CreatePulseCommand>
         var profile = await _unitOfWork.Profiles.FindByIdAsync(authorId, cancellationToken);
         if (profile is null)
         {
-            throw new InvalidOperationException($"Profile with ID '{authorId}' not found");
+            throw new AuthorNotFoundException(authorId);
         }
     }
 }

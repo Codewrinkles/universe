@@ -1,3 +1,4 @@
+using Codewrinkles.Application.Common.Exceptions;
 using Codewrinkles.Application.Common.Interfaces;
 using Codewrinkles.Domain.Pulse.Exceptions;
 using Kommand;
@@ -40,7 +41,7 @@ public sealed class UnlikePulseValidator : IValidator<UnlikePulseCommand>
 
         if (pulse.IsDeleted)
         {
-            throw new InvalidOperationException("Cannot unlike a deleted pulse");
+            throw new PulseAlreadyDeletedException(pulseId);
         }
     }
 
@@ -53,7 +54,7 @@ public sealed class UnlikePulseValidator : IValidator<UnlikePulseCommand>
 
         if (!hasLiked)
         {
-            throw new InvalidOperationException("You have not liked this pulse");
+            throw new PulseNotLikedException(pulseId, profileId);
         }
     }
 }

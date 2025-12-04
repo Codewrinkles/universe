@@ -52,44 +52,17 @@ public static class SocialEndpoints
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            // Extract current user's ProfileId from JWT
-            var currentUserId = httpContext.GetCurrentProfileId();
+        // Extract current user's ProfileId from JWT
+        var currentUserId = httpContext.GetCurrentProfileId();
 
-            var command = new FollowUserCommand(
-                FollowerId: currentUserId,
-                FollowingId: profileId
-            );
+        var command = new FollowUserCommand(
+            FollowerId: currentUserId,
+            FollowingId: profileId
+        );
 
-            var result = await mediator.SendAsync(command, cancellationToken);
+        var result = await mediator.SendAsync(command, cancellationToken);
 
-            return Results.Ok(new { success = result.Success });
-        }
-        catch (FollowSelfException ex)
-        {
-            return Results.Problem(
-                title: "Cannot Follow Self",
-                detail: ex.Message,
-                statusCode: 400
-            );
-        }
-        catch (AlreadyFollowingException ex)
-        {
-            return Results.Problem(
-                title: "Already Following",
-                detail: ex.Message,
-                statusCode: 400
-            );
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Results.Problem(
-                title: "Invalid Operation",
-                detail: ex.Message,
-                statusCode: 400
-            );
-        }
+        return Results.Ok(new { success = result.Success });
     }
 
     private static async Task<IResult> UnfollowUser(
@@ -98,36 +71,17 @@ public static class SocialEndpoints
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            // Extract current user's ProfileId from JWT
-            var currentUserId = httpContext.GetCurrentProfileId();
+        // Extract current user's ProfileId from JWT
+        var currentUserId = httpContext.GetCurrentProfileId();
 
-            var command = new UnfollowUserCommand(
-                FollowerId: currentUserId,
-                FollowingId: profileId
-            );
+        var command = new UnfollowUserCommand(
+            FollowerId: currentUserId,
+            FollowingId: profileId
+        );
 
-            var result = await mediator.SendAsync(command, cancellationToken);
+        var result = await mediator.SendAsync(command, cancellationToken);
 
-            return Results.Ok(new { success = result.Success });
-        }
-        catch (NotFollowingException ex)
-        {
-            return Results.Problem(
-                title: "Not Following",
-                detail: ex.Message,
-                statusCode: 400
-            );
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Results.Problem(
-                title: "Invalid Operation",
-                detail: ex.Message,
-                statusCode: 400
-            );
-        }
+        return Results.Ok(new { success = result.Success });
     }
 
     private static async Task<IResult> GetFollowers(

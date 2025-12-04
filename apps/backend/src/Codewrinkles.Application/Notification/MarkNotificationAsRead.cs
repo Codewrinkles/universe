@@ -1,5 +1,6 @@
-using Kommand.Abstractions;
+using Codewrinkles.Application.Common.Exceptions;
 using Codewrinkles.Application.Common.Interfaces;
+using Kommand.Abstractions;
 
 namespace Codewrinkles.Application.Notification;
 
@@ -33,13 +34,13 @@ public sealed class MarkNotificationAsReadCommandHandler
 
         if (notification is null)
         {
-            throw new InvalidOperationException($"Notification with ID '{command.NotificationId}' not found.");
+            throw new NotificationNotFoundException(command.NotificationId);
         }
 
         // Verify user owns this notification
         if (notification.RecipientId != command.UserId)
         {
-            throw new InvalidOperationException("Cannot mark another user's notification as read.");
+            throw new UnauthorizedNotificationAccessException(command.NotificationId, command.UserId);
         }
 
         // Mark as read

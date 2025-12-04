@@ -206,24 +206,17 @@ public static class PulseEndpoints
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            // Extract ProfileId from JWT if present (optional auth)
-            var currentUserId = httpContext.GetCurrentProfileIdOrNull();
+        // Extract ProfileId from JWT if present (optional auth)
+        var currentUserId = httpContext.GetCurrentProfileIdOrNull();
 
-            var query = new GetPulseQuery(
-                PulseId: id,
-                CurrentUserId: currentUserId
-            );
+        var query = new GetPulseQuery(
+            PulseId: id,
+            CurrentUserId: currentUserId
+        );
 
-            var result = await mediator.SendAsync(query, cancellationToken);
+        var result = await mediator.SendAsync(query, cancellationToken);
 
-            return Results.Ok(result);
-        }
-        catch (PulseNotFoundException)
-        {
-            return Results.NotFound();
-        }
+        return Results.Ok(result);
     }
 
     private static async Task<IResult> LikePulse(
@@ -232,32 +225,17 @@ public static class PulseEndpoints
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            // Extract ProfileId from JWT claims (user can only like as themselves)
-            var profileId = httpContext.GetCurrentProfileId();
+        // Extract ProfileId from JWT claims (user can only like as themselves)
+        var profileId = httpContext.GetCurrentProfileId();
 
-            var command = new LikePulseCommand(
-                PulseId: id,
-                ProfileId: profileId
-            );
+        var command = new LikePulseCommand(
+            PulseId: id,
+            ProfileId: profileId
+        );
 
-            var result = await mediator.SendAsync(command, cancellationToken);
+        var result = await mediator.SendAsync(command, cancellationToken);
 
-            return Results.Ok(new { success = result.Success });
-        }
-        catch (PulseNotFoundException)
-        {
-            return Results.NotFound();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Results.Problem(
-                title: "Invalid Operation",
-                detail: ex.Message,
-                statusCode: 400
-            );
-        }
+        return Results.Ok(new { success = result.Success });
     }
 
     private static async Task<IResult> UnlikePulse(
@@ -266,32 +244,17 @@ public static class PulseEndpoints
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            // Extract ProfileId from JWT claims (user can only unlike as themselves)
-            var profileId = httpContext.GetCurrentProfileId();
+        // Extract ProfileId from JWT claims (user can only unlike as themselves)
+        var profileId = httpContext.GetCurrentProfileId();
 
-            var command = new UnlikePulseCommand(
-                PulseId: id,
-                ProfileId: profileId
-            );
+        var command = new UnlikePulseCommand(
+            PulseId: id,
+            ProfileId: profileId
+        );
 
-            var result = await mediator.SendAsync(command, cancellationToken);
+        var result = await mediator.SendAsync(command, cancellationToken);
 
-            return Results.Ok(new { success = result.Success });
-        }
-        catch (PulseNotFoundException)
-        {
-            return Results.NotFound();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Results.Problem(
-                title: "Invalid Operation",
-                detail: ex.Message,
-                statusCode: 400
-            );
-        }
+        return Results.Ok(new { success = result.Success });
     }
 
     private static async Task<IResult> CreateReply(
@@ -302,13 +265,13 @@ public static class PulseEndpoints
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
+        // Extract ProfileId from JWT claims (user can only create replies as themselves)
+        var authorId = httpContext.GetCurrentProfileId();
+
+        // Open image stream if provided
+        Stream? imageStream = null;
         try
         {
-            // Extract ProfileId from JWT claims (user can only create replies as themselves)
-            var authorId = httpContext.GetCurrentProfileId();
-
-            // Open image stream if provided
-            Stream? imageStream = null;
             if (image is not null)
             {
                 imageStream = image.OpenReadStream();
@@ -331,24 +294,12 @@ public static class PulseEndpoints
                 imageUrl = result.ImageUrl
             });
         }
-        catch (PulseNotFoundException)
-        {
-            return Results.NotFound(new { error = "Parent pulse not found" });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Results.Problem(
-                title: "Invalid Operation",
-                detail: ex.Message,
-                statusCode: 400
-            );
-        }
         finally
         {
             // Dispose the image stream if it was opened
-            if (image is not null)
+            if (imageStream is not null)
             {
-                await image.OpenReadStream().DisposeAsync();
+                await imageStream.DisposeAsync();
             }
         }
     }
@@ -437,13 +388,13 @@ public static class PulseEndpoints
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
+        // Extract ProfileId from JWT claims (user can only create repulses as themselves)
+        var authorId = httpContext.GetCurrentProfileId();
+
+        // Open image stream if provided
+        Stream? imageStream = null;
         try
         {
-            // Extract ProfileId from JWT claims (user can only create repulses as themselves)
-            var authorId = httpContext.GetCurrentProfileId();
-
-            // Open image stream if provided
-            Stream? imageStream = null;
             if (image is not null)
             {
                 imageStream = image.OpenReadStream();
@@ -466,24 +417,12 @@ public static class PulseEndpoints
                 imageUrl = result.ImageUrl
             });
         }
-        catch (PulseNotFoundException)
-        {
-            return Results.NotFound(new { error = "Repulsed pulse not found" });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Results.Problem(
-                title: "Invalid Operation",
-                detail: ex.Message,
-                statusCode: 400
-            );
-        }
         finally
         {
             // Dispose the image stream if it was opened
-            if (image is not null)
+            if (imageStream is not null)
             {
-                await image.OpenReadStream().DisposeAsync();
+                await imageStream.DisposeAsync();
             }
         }
     }
@@ -494,40 +433,17 @@ public static class PulseEndpoints
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            // Extract ProfileId from JWT claims (user can only delete their own pulses)
-            var profileId = httpContext.GetCurrentProfileId();
+        // Extract ProfileId from JWT claims (user can only delete their own pulses)
+        var profileId = httpContext.GetCurrentProfileId();
 
-            var command = new DeletePulseCommand(
-                ProfileId: profileId,
-                PulseId: id
-            );
+        var command = new DeletePulseCommand(
+            ProfileId: profileId,
+            PulseId: id
+        );
 
-            var result = await mediator.SendAsync(command, cancellationToken);
+        var result = await mediator.SendAsync(command, cancellationToken);
 
-            return Results.Ok(new { success = result.Success });
-        }
-        catch (PulseNotFoundException)
-        {
-            return Results.NotFound(new { error = "Pulse not found" });
-        }
-        catch (PulseAlreadyDeletedException)
-        {
-            return Results.Problem(
-                title: "Already Deleted",
-                detail: "This pulse has already been deleted",
-                statusCode: 400
-            );
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Results.Problem(
-                title: "Unauthorized",
-                detail: ex.Message,
-                statusCode: 403
-            );
-        }
+        return Results.Ok(new { success = result.Success });
     }
 
     private static async Task<IResult> GetTrendingHashtags(

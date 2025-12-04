@@ -40,7 +40,7 @@ public sealed class LikePulseValidator : IValidator<LikePulseCommand>
 
         if (pulse.IsDeleted)
         {
-            throw new InvalidOperationException("Cannot like a deleted pulse");
+            throw new PulseAlreadyDeletedException(pulseId);
         }
     }
 
@@ -53,7 +53,7 @@ public sealed class LikePulseValidator : IValidator<LikePulseCommand>
 
         if (alreadyLiked)
         {
-            throw new InvalidOperationException("You have already liked this pulse");
+            throw new PulseAlreadyLikedException(pulseId, profileId);
         }
     }
 }

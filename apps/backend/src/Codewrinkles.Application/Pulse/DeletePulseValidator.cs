@@ -1,3 +1,4 @@
+using Codewrinkles.Application.Common.Exceptions;
 using Codewrinkles.Application.Common.Interfaces;
 using Codewrinkles.Domain.Pulse.Exceptions;
 using Kommand;
@@ -33,7 +34,7 @@ public sealed class DeletePulseValidator : IValidator<DeletePulseCommand>
         // Verify user is the author
         if (pulse.AuthorId != request.ProfileId)
         {
-            throw new InvalidOperationException("You can only delete your own pulses");
+            throw new UnauthorizedPulseAccessException(request.PulseId, request.ProfileId);
         }
 
         return ValidationResult.Success();
