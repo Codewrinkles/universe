@@ -20,7 +20,7 @@ public sealed class PulseConfiguration : IEntityTypeConfiguration<Domain.Pulse.P
 
         // Properties
         builder.Property(p => p.Content)
-            .HasMaxLength(300)
+            .HasMaxLength(500)
             .IsRequired();
 
         builder.Property(p => p.Type)

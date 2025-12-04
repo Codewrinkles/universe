@@ -50,7 +50,7 @@ export function UnifiedComposer({
   const { createReply, isCreating: isCreatingReply, error: replyError } = useCreateReply();
   const { createRepulse, isCreating: isCreatingRepulse, error: repulseError } = useCreateRepulse();
 
-  const maxChars = 300;
+  const maxChars = 500;
   const charsLeft = maxChars - value.length;
   const isOverLimit = charsLeft < 0;
   const isSubmitting = mode === "post" ? isCreatingPulse : mode === "reply" ? isCreatingReply : isCreatingRepulse;

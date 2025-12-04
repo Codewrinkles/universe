@@ -26,7 +26,7 @@ export function ReplyComposer({
   const [mentionPosition, setMentionPosition] = useState({ top: 0, left: 0 });
   const { results, search, clearResults } = useHandleSearch();
 
-  const maxChars = 300;
+  const maxChars = 500;
   const charsLeft = maxChars - value.length;
   const isOverLimit = charsLeft < 0;
 

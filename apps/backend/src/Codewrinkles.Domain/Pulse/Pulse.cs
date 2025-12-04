@@ -5,7 +5,7 @@ namespace Codewrinkles.Domain.Pulse;
 public sealed class Pulse
 {
     // Constants
-    public const int MaxContentLength = 300;
+    public const int MaxContentLength = 500;
 
     // Private parameterless constructor for EF Core materialization only
     // EF Core will populate all properties via reflection when loading from database
