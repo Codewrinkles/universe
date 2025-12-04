@@ -92,7 +92,16 @@ public sealed class OAuthService : IOAuthService
         };
 
         var response = await _httpClient.SendAsync(request, cancellationToken);
-        response.EnsureSuccessStatusCode();
+
+        // Capture error details from Google if request fails
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new InvalidOperationException(
+                $"Google token exchange failed with status {response.StatusCode}. " +
+                $"Error details: {errorContent}. " +
+                $"Redirect URI used: {redirectUri}");
+        }
 
         var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
         var tokenData = JsonSerializer.Deserialize<GoogleTokenResponse>(responseContent)
