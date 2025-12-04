@@ -27,9 +27,9 @@ export function ReplyComposer({
   const { results, search, clearResults } = useHandleSearch();
 
   const maxChars = 500;
-  // Normalize newlines for consistent counting (Windows \r\n -> \n)
-  const normalizedLength = value.replace(/\r\n/g, '\n').replace(/\r/g, '\n').length;
-  const charsLeft = maxChars - normalizedLength;
+  // Normalize newlines for consistent counting and sending (Windows \r\n -> \n)
+  const normalizedValue = value.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const charsLeft = maxChars - normalizedValue.length;
   const isOverLimit = charsLeft < 0;
 
   // Clear preview when selectedImage is cleared
@@ -79,12 +79,12 @@ export function ReplyComposer({
   }, [value, search, clearResults]);
 
   const handleSubmit = async (): Promise<void> => {
-    if (value.trim().length === 0 || isOverLimit || isCreating) {
+    if (normalizedValue.trim().length === 0 || isOverLimit || isCreating) {
       return;
     }
 
     try {
-      await createReply(parentPulseId, value, selectedImage);
+      await createReply(parentPulseId, normalizedValue, selectedImage);
       // Clear form on success
       setValue("");
       setSelectedImage(null);

@@ -51,9 +51,9 @@ export function UnifiedComposer({
   const { createRepulse, isCreating: isCreatingRepulse, error: repulseError } = useCreateRepulse();
 
   const maxChars = 500;
-  // Normalize newlines for consistent counting (Windows \r\n -> \n)
-  const normalizedLength = value.replace(/\r\n/g, '\n').replace(/\r/g, '\n').length;
-  const charsLeft = maxChars - normalizedLength;
+  // Normalize newlines for consistent counting and sending (Windows \r\n -> \n)
+  const normalizedValue = value.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const charsLeft = maxChars - normalizedValue.length;
   const isOverLimit = charsLeft < 0;
   const isSubmitting = mode === "post" ? isCreatingPulse : mode === "reply" ? isCreatingReply : isCreatingRepulse;
 
@@ -121,17 +121,17 @@ export function UnifiedComposer({
   }, [value, searchMentions, searchHashtags, clearMentionResults, clearHashtagResults]);
 
   const handleSubmit = async (): Promise<void> => {
-    if (value.trim().length === 0 || isOverLimit || isSubmitting) {
+    if (normalizedValue.trim().length === 0 || isOverLimit || isSubmitting) {
       return;
     }
 
     try {
       if (mode === "post") {
-        await createPulse(value, selectedImage);
+        await createPulse(normalizedValue, selectedImage);
       } else if (mode === "reply" && parentPulseId) {
-        await createReply(parentPulseId, value, selectedImage);
+        await createReply(parentPulseId, normalizedValue, selectedImage);
       } else if (mode === "repulse" && repulsedPulseId) {
-        await createRepulse(repulsedPulseId, value, selectedImage);
+        await createRepulse(repulsedPulseId, normalizedValue, selectedImage);
       }
 
       // Clear form on success
