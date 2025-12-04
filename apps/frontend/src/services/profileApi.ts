@@ -29,17 +29,11 @@ export const profileApi = {
     const formData = new FormData();
     formData.append("file", file);
 
-    const response = await fetch(config.api.endpoints.avatar(profileId), {
+    // Use apiRequest to automatically include Authorization header
+    return apiRequest<UploadAvatarResponse>(config.api.endpoints.avatar(profileId), {
       method: "POST",
       body: formData,
       // Don't set Content-Type header - browser will set it with boundary for multipart
     });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || "Failed to upload avatar");
-    }
-
-    return response.json() as Promise<UploadAvatarResponse>;
   },
 };
