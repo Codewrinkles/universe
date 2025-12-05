@@ -58,12 +58,11 @@ public static class ProfileEndpoints
 
         return Results.Ok(new
         {
-            profiles = result.Profiles.Select(p => new
+            handles = result.Profiles.Select(p => new
             {
                 profileId = p.ProfileId,
                 handle = p.Handle,
                 name = p.Name,
-                bio = p.Bio,
                 avatarUrl = p.AvatarUrl
             })
         });
