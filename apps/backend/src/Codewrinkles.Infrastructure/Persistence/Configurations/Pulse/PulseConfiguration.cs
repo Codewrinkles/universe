@@ -56,6 +56,12 @@ public sealed class PulseConfiguration : IEntityTypeConfiguration<Domain.Pulse.P
             .OnDelete(DeleteBehavior.Restrict)
             .IsRequired(false);
 
+        builder.HasOne(p => p.ThreadRoot)
+            .WithMany()
+            .HasForeignKey(p => p.ThreadRootId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
         builder.HasOne(p => p.Engagement)
             .WithOne(e => e.Pulse)
             .HasForeignKey<Domain.Pulse.PulseEngagement>(e => e.PulseId)
@@ -93,6 +99,11 @@ public sealed class PulseConfiguration : IEntityTypeConfiguration<Domain.Pulse.P
         builder.HasIndex(p => p.ParentPulseId)
             .HasDatabaseName("IX_Pulses_ParentPulseId")
             .HasFilter("[ParentPulseId] IS NOT NULL");
+
+        // Index for fetching all replies in a thread (flat display)
+        builder.HasIndex(p => p.ThreadRootId)
+            .HasDatabaseName("IX_Pulses_ThreadRootId")
+            .HasFilter("[ThreadRootId] IS NOT NULL");
 
         builder.HasIndex(p => p.IsDeleted)
             .HasDatabaseName("IX_Pulses_IsDeleted");

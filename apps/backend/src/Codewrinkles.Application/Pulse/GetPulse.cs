@@ -111,6 +111,8 @@ public sealed class GetPulseQueryHandler : ICommandHandler<GetPulseQuery, PulseD
             IsFollowingAuthor: isFollowingAuthor,
             IsBookmarkedByCurrentUser: isBookmarkedByCurrentUser,
             ParentPulseId: pulse.ParentPulseId,
+            ThreadRootId: pulse.ThreadRootId,
+            ReplyingTo: null, // Not loaded in single pulse context
             RepulsedPulse: pulse.RepulsedPulse is not null
                 ? MapToRepulsedPulseDto(pulse.RepulsedPulse)
                 : null,

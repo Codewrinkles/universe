@@ -248,8 +248,8 @@ public sealed class PulseRepository : IPulseRepository
         _linkPreviews.Add(linkPreview);
     }
 
-    public Task<IReadOnlyList<Pulse>> GetRepliesByParentIdAsync(
-        Guid parentPulseId,
+    public Task<IReadOnlyList<Pulse>> GetRepliesByThreadRootIdAsync(
+        Guid threadRootId,
         int limit,
         DateTime? beforeCreatedAt,
         Guid? beforeId,
@@ -261,7 +261,9 @@ public sealed class PulseRepository : IPulseRepository
             .Include(p => p.Engagement)
             .Include(p => p.Image)
             .Include(p => p.LinkPreview)
-            .Where(p => p.ParentPulseId == parentPulseId && !p.IsDeleted);
+            .Include(p => p.ParentPulse)
+                .ThenInclude(parent => parent!.Author)
+            .Where(p => p.ThreadRootId == threadRootId && !p.IsDeleted);
 
         // Cursor-based pagination (chronological order - oldest first for threads)
         if (beforeCreatedAt.HasValue && beforeId.HasValue)
@@ -280,13 +282,13 @@ public sealed class PulseRepository : IPulseRepository
             .ContinueWith(t => (IReadOnlyList<Pulse>)t.Result, cancellationToken);
     }
 
-    public Task<int> GetReplyCountAsync(
-        Guid parentPulseId,
+    public Task<int> GetReplyCountByThreadRootIdAsync(
+        Guid threadRootId,
         CancellationToken cancellationToken = default)
     {
         return _pulses
             .AsNoTracking()
-            .CountAsync(p => p.ParentPulseId == parentPulseId && !p.IsDeleted, cancellationToken);
+            .CountAsync(p => p.ThreadRootId == threadRootId && !p.IsDeleted, cancellationToken);
     }
 
     public void CreateMention(PulseMention mention)

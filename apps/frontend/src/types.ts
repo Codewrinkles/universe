@@ -70,6 +70,13 @@ export interface Mention {
   handle: string;
 }
 
+// Context for nested replies - shows who the reply is responding to
+export interface ReplyingTo {
+  pulseId: string;
+  authorHandle: string;
+  authorName: string;
+}
+
 export interface Pulse {
   id: string;
   author: PulseAuthor;
@@ -81,6 +88,8 @@ export interface Pulse {
   isFollowingAuthor: boolean;
   isBookmarkedByCurrentUser: boolean;
   parentPulseId?: string | null;
+  threadRootId?: string | null;
+  replyingTo?: ReplyingTo | null;
   imageUrl?: string | null;
   linkPreview?: PulseLinkPreview;
   repulsedPulse?: RepulsedPulse;

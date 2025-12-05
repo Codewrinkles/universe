@@ -90,6 +90,8 @@ public sealed class GetPulsesByHashtagQueryHandler
             IsFollowingAuthor: false, // Simplified - no metadata
             IsBookmarkedByCurrentUser: false, // Simplified - no metadata
             ParentPulseId: pulse.ParentPulseId,
+            ThreadRootId: pulse.ThreadRootId,
+            ReplyingTo: null, // Not loaded in hashtag context
             RepulsedPulse: pulse.RepulsedPulse is not null
                 ? MapToRepulsedPulseDto(pulse.RepulsedPulse)
                 : null,

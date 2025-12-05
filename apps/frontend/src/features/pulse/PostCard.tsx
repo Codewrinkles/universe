@@ -159,10 +159,14 @@ export function PostCard({ post, onReplyClick, onFollowChange, onDelete }: PostC
   const isLikedByCurrentUser = 'isLikedByCurrentUser' in post ? post.isLikedByCurrentUser : false;
 
   const handleCardClick = (): void => {
-    // If this is a reply, navigate to the parent thread and highlight this reply
-    if (post.type === "reply" && post.parentPulseId) {
-      navigate(`/pulse/${post.parentPulseId}?highlight=${post.id}`);
-      return;
+    // If this is a reply, navigate to the thread root and highlight this reply
+    if (post.type === "reply") {
+      // Use threadRootId if available, otherwise fall back to parentPulseId
+      const threadRoot = post.threadRootId || post.parentPulseId;
+      if (threadRoot) {
+        navigate(`/pulse/${threadRoot}?highlight=${post.id}`);
+        return;
+      }
     }
 
     // Otherwise, navigate to this pulse's own thread
@@ -177,8 +181,9 @@ export function PostCard({ post, onReplyClick, onFollowChange, onDelete }: PostC
     }
 
     // Otherwise, navigate to the thread (we're in feed view)
-    const targetPulseId = post.type === "reply" && post.parentPulseId
-      ? post.parentPulseId
+    // Use threadRootId if available, otherwise fall back to parentPulseId
+    const targetPulseId = post.type === "reply"
+      ? (post.threadRootId || post.parentPulseId || post.id)
       : post.id;
     navigate(`/pulse/${targetPulseId}`);
   };
@@ -308,6 +313,20 @@ export function PostCard({ post, onReplyClick, onFollowChange, onDelete }: PostC
               )}
             </div>
           </div>
+
+          {/* Replying to indicator for nested replies */}
+          {post.replyingTo && (
+            <div className="mt-1 text-sm text-text-tertiary">
+              Replying to{" "}
+              <Link
+                to={`/pulse/u/${post.replyingTo.authorHandle}`}
+                onClick={(e) => e.stopPropagation()}
+                className="text-brand-soft hover:underline"
+              >
+                @{post.replyingTo.authorHandle}
+              </Link>
+            </div>
+          )}
 
           {/* Post text content */}
           {post.content && (

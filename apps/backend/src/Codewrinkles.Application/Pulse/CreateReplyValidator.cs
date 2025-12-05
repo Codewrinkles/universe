@@ -72,12 +72,7 @@ public sealed class CreateReplyValidator : IValidator<CreateReplyCommand>
             throw new PulseNotFoundException(parentPulseId);
         }
 
-        // Prevent nested replies: replies can only be made to original pulses or repulses, not to other replies
-        if (parentPulse.Type == Domain.Pulse.PulseType.Reply)
-        {
-            _errors.Add(new ValidationError(
-                nameof(CreateReplyCommand.ParentPulseId),
-                "Cannot reply to a reply. Only one level of nesting is supported."));
-        }
+        // Nested replies are now supported - all replies in a thread are displayed flat
+        // with "Replying to @handle" context shown in the UI
     }
 }

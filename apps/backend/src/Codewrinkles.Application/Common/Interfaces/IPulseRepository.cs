@@ -159,22 +159,22 @@ public interface IPulseRepository
     void CreateLinkPreview(PulseLinkPreviewEntity linkPreview);
 
     /// <summary>
-    /// Get all replies for a parent pulse, ordered by CreatedAt ASC.
-    /// Includes Author, Engagement, and Image for each reply.
+    /// Get all replies in a thread, ordered by CreatedAt ASC.
+    /// Includes Author, Engagement, Image, and ParentPulse (for "Replying to" context).
     /// Excludes deleted replies.
     /// </summary>
-    Task<IReadOnlyList<PulseEntity>> GetRepliesByParentIdAsync(
-        Guid parentPulseId,
+    Task<IReadOnlyList<PulseEntity>> GetRepliesByThreadRootIdAsync(
+        Guid threadRootId,
         int limit,
         DateTime? beforeCreatedAt,
         Guid? beforeId,
         CancellationToken cancellationToken);
 
     /// <summary>
-    /// Get count of replies for a parent pulse (excludes deleted).
+    /// Get count of replies in a thread (excludes deleted).
     /// </summary>
-    Task<int> GetReplyCountAsync(
-        Guid parentPulseId,
+    Task<int> GetReplyCountByThreadRootIdAsync(
+        Guid threadRootId,
         CancellationToken cancellationToken);
 
     /// <summary>

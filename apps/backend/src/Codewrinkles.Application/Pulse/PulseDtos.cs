@@ -11,10 +11,22 @@ public sealed record PulseDto(
     bool IsFollowingAuthor,
     bool IsBookmarkedByCurrentUser,
     Guid? ParentPulseId,
+    Guid? ThreadRootId,
+    ReplyingToDto? ReplyingTo,
     RepulsedPulseDto? RepulsedPulse,
     string? ImageUrl,
     PulseLinkPreviewDto? LinkPreview,
     List<MentionDto> Mentions
+);
+
+/// <summary>
+/// Context for nested replies - shows who the reply is responding to.
+/// Only populated when replying to another reply (not the thread root).
+/// </summary>
+public sealed record ReplyingToDto(
+    Guid PulseId,
+    string AuthorHandle,
+    string AuthorName
 );
 
 public sealed record MentionDto(

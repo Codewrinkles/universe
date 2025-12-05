@@ -136,6 +136,8 @@ public sealed class GetFeedQueryHandler : ICommandHandler<GetFeedQuery, FeedResp
             IsFollowingAuthor: followingProfileIds.Contains(pulse.AuthorId),
             IsBookmarkedByCurrentUser: bookmarkedPulseIds.Contains(pulse.Id),
             ParentPulseId: pulse.ParentPulseId,
+            ThreadRootId: pulse.ThreadRootId,
+            ReplyingTo: null, // Not loaded in feed context
             RepulsedPulse: pulse.RepulsedPulse is not null
                 ? MapToRepulsedPulseDto(pulse.RepulsedPulse)
                 : null,

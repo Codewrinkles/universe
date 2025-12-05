@@ -19,6 +19,7 @@ public sealed class Pulse
     public string Content { get; private set; }
     public Guid? RepulsedPulseId { get; private set; }
     public Guid? ParentPulseId { get; private set; }
+    public Guid? ThreadRootId { get; private set; }
     public PulseType Type { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime? UpdatedAt { get; private set; }
@@ -28,6 +29,7 @@ public sealed class Pulse
     public Profile Author { get; private set; }
     public Pulse? RepulsedPulse { get; private set; }
     public Pulse? ParentPulse { get; private set; }
+    public Pulse? ThreadRoot { get; private set; }
     public PulseEngagement Engagement { get; private set; }
     public PulseImage? Image { get; private set; }
     public PulseLinkPreview? LinkPreview { get; private set; }
@@ -91,7 +93,7 @@ public sealed class Pulse
         };
     }
 
-    public static Pulse CreateReply(Guid authorId, string content, Guid parentPulseId)
+    public static Pulse CreateReply(Guid authorId, string content, Guid parentPulseId, Guid threadRootId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(content, nameof(content));
 
@@ -114,6 +116,7 @@ public sealed class Pulse
             Type = PulseType.Reply,
             RepulsedPulseId = null,
             ParentPulseId = parentPulseId,
+            ThreadRootId = threadRootId,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = null,
             IsDeleted = false

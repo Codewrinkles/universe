@@ -46,8 +46,8 @@ public sealed class GetThreadQueryHandler : ICommandHandler<GetThreadQuery, Thre
                 throw new PulseNotFoundException(query.PulseId);
             }
 
-            // 2. Get replies with pagination
-            var replies = await _unitOfWork.Pulses.GetRepliesByParentIdAsync(
+            // 2. Get all replies in thread with pagination (flat display)
+            var replies = await _unitOfWork.Pulses.GetRepliesByThreadRootIdAsync(
                 query.PulseId,
                 query.Limit + 1, // Fetch one extra to check if there are more
                 query.BeforeCreatedAt,
@@ -65,8 +65,8 @@ public sealed class GetThreadQueryHandler : ICommandHandler<GetThreadQuery, Thre
                 nextCursor = $"{lastReply.CreatedAt:O}_{lastReply.Id}";
             }
 
-            // 4. Get total reply count
-            var totalReplyCount = await _unitOfWork.Pulses.GetReplyCountAsync(
+            // 4. Get total reply count for thread
+            var totalReplyCount = await _unitOfWork.Pulses.GetReplyCountByThreadRootIdAsync(
                 query.PulseId,
                 cancellationToken);
 
@@ -151,6 +151,20 @@ public sealed class GetThreadQueryHandler : ICommandHandler<GetThreadQuery, Thre
             .Select(m => new MentionDto(m.ProfileId, m.Handle))
             .ToList();
 
+        // Determine if this is a nested reply (replying to another reply, not the thread root)
+        // ReplyingTo is populated when ParentPulseId != ThreadRootId
+        ReplyingToDto? replyingTo = null;
+        if (pulse.ParentPulse is not null &&
+            pulse.ThreadRootId.HasValue &&
+            pulse.ParentPulseId != pulse.ThreadRootId)
+        {
+            replyingTo = new ReplyingToDto(
+                PulseId: pulse.ParentPulse.Id,
+                AuthorHandle: pulse.ParentPulse.Author.Handle ?? string.Empty,
+                AuthorName: pulse.ParentPulse.Author.Name
+            );
+        }
+
         return new PulseDto(
             Id: pulse.Id,
             Author: new PulseAuthorDto(
@@ -172,6 +186,8 @@ public sealed class GetThreadQueryHandler : ICommandHandler<GetThreadQuery, Thre
             IsFollowingAuthor: isFollowingAuthor,
             IsBookmarkedByCurrentUser: isBookmarkedByCurrentUser,
             ParentPulseId: pulse.ParentPulseId,
+            ThreadRootId: pulse.ThreadRootId,
+            ReplyingTo: replyingTo,
             RepulsedPulse: pulse.RepulsedPulse is not null
                 ? MapToRepulsedPulseDto(pulse.RepulsedPulse)
                 : null,
