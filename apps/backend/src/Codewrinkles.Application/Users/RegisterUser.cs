@@ -79,6 +79,10 @@ public sealed class RegisterUserCommandHandler
                 _unitOfWork.Profiles.Create(profile);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+                // Record successful login (registration counts as first login)
+                identity.RecordSuccessfulLogin();
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
                 // Commit transaction - both Identity and Profile created
                 await transaction.CommitAsync(cancellationToken);
             }
