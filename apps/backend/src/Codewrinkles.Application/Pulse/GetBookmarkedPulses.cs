@@ -125,7 +125,12 @@ public sealed class GetBookmarkedPulsesQueryHandler : ICommandHandler<GetBookmar
             IsBookmarkedByCurrentUser: bookmarkedPulseIds.Contains(pulse.Id),
             ParentPulseId: pulse.ParentPulseId,
             ThreadRootId: pulse.ThreadRootId,
-            ReplyingTo: null, // Not loaded in bookmarks context
+            ReplyingTo: pulse.ParentPulseId.HasValue && pulse.ParentPulse is not null
+                ? new ReplyingToDto(
+                    PulseId: pulse.ParentPulse.Id,
+                    AuthorHandle: pulse.ParentPulse.Author?.Handle ?? "[deleted]",
+                    AuthorName: pulse.ParentPulse.Author?.Name ?? "[deleted]")
+                : null,
             RepulsedPulse: pulse.RepulsedPulse is not null
                 ? MapToRepulsedPulseDto(pulse.RepulsedPulse)
                 : null,

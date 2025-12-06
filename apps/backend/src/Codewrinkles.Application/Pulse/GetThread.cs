@@ -151,17 +151,14 @@ public sealed class GetThreadQueryHandler : ICommandHandler<GetThreadQuery, Thre
             .Select(m => new MentionDto(m.ProfileId, m.Handle))
             .ToList();
 
-        // Determine if this is a nested reply (replying to another reply, not the thread root)
-        // ReplyingTo is populated when ParentPulseId != ThreadRootId
+        // Populate ReplyingTo for ALL replies (not just nested ones)
         ReplyingToDto? replyingTo = null;
-        if (pulse.ParentPulse is not null &&
-            pulse.ThreadRootId.HasValue &&
-            pulse.ParentPulseId != pulse.ThreadRootId)
+        if (pulse.ParentPulseId.HasValue && pulse.ParentPulse is not null)
         {
             replyingTo = new ReplyingToDto(
                 PulseId: pulse.ParentPulse.Id,
-                AuthorHandle: pulse.ParentPulse.Author.Handle ?? string.Empty,
-                AuthorName: pulse.ParentPulse.Author.Name
+                AuthorHandle: pulse.ParentPulse.Author?.Handle ?? "[deleted]",
+                AuthorName: pulse.ParentPulse.Author?.Name ?? "[deleted]"
             );
         }
 

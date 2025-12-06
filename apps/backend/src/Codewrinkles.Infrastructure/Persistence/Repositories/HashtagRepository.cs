@@ -79,6 +79,9 @@ public sealed class HashtagRepository : IHashtagRepository
             .Include(ph => ph.Pulse)
                 .ThenInclude(p => p.RepulsedPulse!)
                     .ThenInclude(rp => rp.Author)
+            .Include(ph => ph.Pulse)
+                .ThenInclude(p => p.ParentPulse!)
+                    .ThenInclude(parent => parent.Author)
             .Select(ph => ph.Pulse)
             .Where(p => !p.IsDeleted);
 

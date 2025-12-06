@@ -82,6 +82,8 @@ public sealed class PulseRepository : IPulseRepository
                     .Include(p => p.LinkPreview)
                     .Include(p => p.RepulsedPulse)
                         .ThenInclude(rp => rp!.Author)
+                    .Include(p => p.ParentPulse)
+                        .ThenInclude(parent => parent!.Author)
                     .Where(p => !p.IsDeleted);
             }
             else
@@ -100,6 +102,8 @@ public sealed class PulseRepository : IPulseRepository
                     .Include(p => p.LinkPreview)
                     .Include(p => p.RepulsedPulse)
                         .ThenInclude(rp => rp!.Author)
+                    .Include(p => p.ParentPulse)
+                        .ThenInclude(parent => parent!.Author)
                     .Where(p => !p.IsDeleted && followingIds.Contains(p.AuthorId));
             }
         }
@@ -114,6 +118,8 @@ public sealed class PulseRepository : IPulseRepository
                 .Include(p => p.LinkPreview)
                 .Include(p => p.RepulsedPulse)
                     .ThenInclude(rp => rp!.Author)
+                .Include(p => p.ParentPulse)
+                    .ThenInclude(parent => parent!.Author)
                 .Where(p => !p.IsDeleted);
         }
 
@@ -148,6 +154,8 @@ public sealed class PulseRepository : IPulseRepository
             .Include(p => p.LinkPreview)
             .Include(p => p.RepulsedPulse)
                 .ThenInclude(rp => rp!.Author)
+            .Include(p => p.ParentPulse)
+                .ThenInclude(parent => parent!.Author)
             .Where(p => p.AuthorId == authorId && !p.IsDeleted);
 
         // Cursor-based pagination

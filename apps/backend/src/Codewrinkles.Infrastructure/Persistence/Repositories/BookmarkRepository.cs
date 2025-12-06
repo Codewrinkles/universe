@@ -109,6 +109,9 @@ public sealed class BookmarkRepository : IBookmarkRepository
                     .ThenInclude(rp => rp != null ? rp.Author : null)
             .Include(b => b.Pulse)
                 .ThenInclude(p => p.Image)
+            .Include(b => b.Pulse)
+                .ThenInclude(p => p.ParentPulse)
+                    .ThenInclude(parent => parent != null ? parent.Author : null)
             .OrderByDescending(b => b.CreatedAt)
             .ThenByDescending(b => b.Id)
             .Take(limit + 1) // Fetch one extra to determine if there are more

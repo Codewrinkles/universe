@@ -20,8 +20,8 @@ public sealed record PulseDto(
 );
 
 /// <summary>
-/// Context for nested replies - shows who the reply is responding to.
-/// Only populated when replying to another reply (not the thread root).
+/// Context for all replies - shows who the reply is responding to.
+/// Populated for both direct replies (to thread root) and nested replies (to other replies).
 /// </summary>
 public sealed record ReplyingToDto(
     Guid PulseId,
