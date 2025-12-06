@@ -7,6 +7,7 @@ namespace Codewrinkles.Application.Social;
 
 public sealed record GetFollowersQuery(
     Guid ProfileId,
+    Guid? CurrentUserId,
     string? Cursor,
     int Limit = 20
 ) : ICommand<FollowersResponse>;
@@ -62,6 +63,17 @@ public sealed class GetFollowersQueryHandler : ICommandHandler<GetFollowersQuery
             nextCursor = EncodeCursor(DateTime.UtcNow, lastFollower.Id);
         }
 
+        // Batch check which followers the current user is following (if authenticated)
+        var followingProfileIds = new HashSet<Guid>();
+        if (query.CurrentUserId.HasValue)
+        {
+            var followerIds = followersToReturn.Select(p => p.Id).ToList();
+            followingProfileIds = await _unitOfWork.Follows.GetFollowingProfileIdsAsync(
+                followerIds,
+                query.CurrentUserId.Value,
+                cancellationToken);
+        }
+
         // Map to DTOs
         var followerDtos = followersToReturn.Select(p => new FollowerDto(
             ProfileId: p.Id,
@@ -69,7 +81,8 @@ public sealed class GetFollowersQueryHandler : ICommandHandler<GetFollowersQuery
             Handle: p.Handle ?? string.Empty,
             AvatarUrl: p.AvatarUrl,
             Bio: p.Bio,
-            FollowedAt: DateTime.UtcNow // TODO: This should come from Follow.CreatedAt
+            FollowedAt: DateTime.UtcNow, // TODO: This should come from Follow.CreatedAt
+            IsFollowing: followingProfileIds.Contains(p.Id)
         )).ToList();
 
         return new FollowersResponse(

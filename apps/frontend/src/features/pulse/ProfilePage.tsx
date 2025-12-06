@@ -15,6 +15,7 @@ import {
   getFullUrl,
   getDefaultOGImage,
 } from "../../utils/seo";
+import { FollowButton } from "../social/components/FollowButton";
 
 interface ProfileHeaderProps {
   profile: User;
@@ -59,13 +60,15 @@ function ProfileHeader({ profile, isOwnProfile, followersCount, followingCount, 
                 <p className="text-sm text-text-secondary">@{profile.handle}</p>
               )}
             </div>
-            {isOwnProfile && (
+            {isOwnProfile ? (
               <Link
                 to="/settings/profile"
                 className="rounded-full border border-border px-4 py-1.5 text-xs font-medium text-text-primary hover:bg-surface-card2 transition-colors flex-shrink-0"
               >
                 Edit profile
               </Link>
+            ) : (
+              <FollowButton profileId={profile.profileId} size="md" />
             )}
           </div>
 
@@ -521,7 +524,7 @@ export function ProfilePage(): JSX.Element {
                 following.map((user) => (
                   <div key={user.profileId} className="border-b border-border p-4">
                     <div className="flex items-start gap-3">
-                      <div className="h-12 w-12 rounded-full overflow-hidden border border-border flex-shrink-0">
+                      <Link to={`/pulse/u/${user.handle}`} className="h-12 w-12 rounded-full overflow-hidden border border-border flex-shrink-0">
                         {user.avatarUrl ? (
                           <img src={buildAvatarUrl(user.avatarUrl) ?? ''} alt={user.name} className="h-full w-full object-cover" />
                         ) : (
@@ -529,15 +532,20 @@ export function ProfilePage(): JSX.Element {
                             <span className="text-lg text-text-tertiary">{user.name.charAt(0).toUpperCase()}</span>
                           </div>
                         )}
-                      </div>
+                      </Link>
                       <div className="flex-1 min-w-0">
-                        <Link
-                          to={`/pulse/u/${user.handle}`}
-                          className="font-medium text-sm text-text-primary hover:text-brand-soft transition-colors truncate block"
-                        >
-                          {user.name}
-                        </Link>
-                        <p className="text-xs text-text-secondary">@{user.handle}</p>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <Link
+                              to={`/pulse/u/${user.handle}`}
+                              className="font-medium text-sm text-text-primary hover:text-brand-soft transition-colors truncate block"
+                            >
+                              {user.name}
+                            </Link>
+                            <p className="text-xs text-text-secondary">@{user.handle}</p>
+                          </div>
+                          <FollowButton profileId={user.profileId} initialIsFollowing={user.isFollowing} size="sm" />
+                        </div>
                         {user.bio && (
                           <p className="mt-1 text-xs text-text-secondary line-clamp-2">{user.bio}</p>
                         )}
@@ -565,7 +573,7 @@ export function ProfilePage(): JSX.Element {
                 followers.map((user) => (
                   <div key={user.profileId} className="border-b border-border p-4">
                     <div className="flex items-start gap-3">
-                      <div className="h-12 w-12 rounded-full overflow-hidden border border-border flex-shrink-0">
+                      <Link to={`/pulse/u/${user.handle}`} className="h-12 w-12 rounded-full overflow-hidden border border-border flex-shrink-0">
                         {user.avatarUrl ? (
                           <img src={buildAvatarUrl(user.avatarUrl) ?? ''} alt={user.name} className="h-full w-full object-cover" />
                         ) : (
@@ -573,15 +581,20 @@ export function ProfilePage(): JSX.Element {
                             <span className="text-lg text-text-tertiary">{user.name.charAt(0).toUpperCase()}</span>
                           </div>
                         )}
-                      </div>
+                      </Link>
                       <div className="flex-1 min-w-0">
-                        <Link
-                          to={`/pulse/u/${user.handle}`}
-                          className="font-medium text-sm text-text-primary hover:text-brand-soft transition-colors truncate block"
-                        >
-                          {user.name}
-                        </Link>
-                        <p className="text-xs text-text-secondary">@{user.handle}</p>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <Link
+                              to={`/pulse/u/${user.handle}`}
+                              className="font-medium text-sm text-text-primary hover:text-brand-soft transition-colors truncate block"
+                            >
+                              {user.name}
+                            </Link>
+                            <p className="text-xs text-text-secondary">@{user.handle}</p>
+                          </div>
+                          <FollowButton profileId={user.profileId} initialIsFollowing={user.isFollowing} size="sm" />
+                        </div>
                         {user.bio && (
                           <p className="mt-1 text-xs text-text-secondary line-clamp-2">{user.bio}</p>
                         )}

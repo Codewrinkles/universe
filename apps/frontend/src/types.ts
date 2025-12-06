@@ -289,6 +289,7 @@ export interface FollowerDto {
   avatarUrl: string | null;
   bio: string | null;
   followedAt: string;
+  isFollowing: boolean;
 }
 
 export interface FollowingDto {
@@ -298,6 +299,7 @@ export interface FollowingDto {
   avatarUrl: string | null;
   bio: string | null;
   followedAt: string;
+  isFollowing: boolean;
 }
 
 export interface ProfileSuggestion {

@@ -10,7 +10,8 @@ public sealed record FollowerDto(
     string Handle,
     string? AvatarUrl,
     string? Bio,
-    DateTime FollowedAt
+    DateTime FollowedAt,
+    bool IsFollowing
 );
 
 public sealed record FollowingDto(
@@ -19,7 +20,8 @@ public sealed record FollowingDto(
     string Handle,
     string? AvatarUrl,
     string? Bio,
-    DateTime FollowedAt
+    DateTime FollowedAt,
+    bool IsFollowing
 );
 
 public sealed record ProfileSuggestion(

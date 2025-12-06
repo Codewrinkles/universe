@@ -102,6 +102,7 @@ public static class SocialEndpoints
 
             var query = new GetFollowersQuery(
                 ProfileId: profileId,
+                CurrentUserId: httpContext.GetCurrentProfileIdOrNull(),
                 Cursor: cursor,
                 Limit: limit
             );
@@ -144,6 +145,7 @@ public static class SocialEndpoints
 
             var query = new GetFollowingQuery(
                 ProfileId: profileId,
+                CurrentUserId: httpContext.GetCurrentProfileIdOrNull(),
                 Cursor: cursor,
                 Limit: limit
             );
