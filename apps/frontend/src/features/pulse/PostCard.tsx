@@ -5,6 +5,7 @@ import { PostLinkPreview } from "./PostLinkPreview";
 import { PostRepost } from "./PostRepost";
 import { RepulseModal } from "./RepulseModal";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
+import { ImageGalleryOverlay } from "../../components/ui";
 import { formatTimeAgo } from "../../utils/timeUtils";
 import { config } from "../../config";
 import { usePulseLike } from "./hooks/usePulseLike";
@@ -121,6 +122,7 @@ export function PostCard({ post, onReplyClick, onFollowChange, onDelete }: PostC
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(post.isBookmarkedByCurrentUser);
+  const [showImageOverlay, setShowImageOverlay] = useState(false);
 
   // Check if current user is the author
   const isAuthor = user?.profileId === author.id;
@@ -363,7 +365,13 @@ export function PostCard({ post, onReplyClick, onFollowChange, onDelete }: PostC
 
           {/* Photo attachment */}
           {post.imageUrl && (
-            <div className="mt-3 rounded-2xl overflow-hidden border border-border">
+            <div
+              className="mt-3 rounded-2xl overflow-hidden border border-border cursor-pointer hover:opacity-90 transition-opacity"
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent navigation to thread
+                setShowImageOverlay(true);
+              }}
+            >
               <img
                 src={post.imageUrl.startsWith('http') ? post.imageUrl : `${config.api.baseUrl}${post.imageUrl}`}
                 alt="Pulse attachment"
@@ -439,6 +447,15 @@ export function PostCard({ post, onReplyClick, onFollowChange, onDelete }: PostC
         onConfirm={handleDeleteConfirm}
         onCancel={() => setShowDeleteDialog(false)}
         isDeleting={isDeleting}
+      />
+    )}
+
+    {/* Image Gallery Overlay */}
+    {showImageOverlay && post.imageUrl && (
+      <ImageGalleryOverlay
+        imageUrl={post.imageUrl.startsWith('http') ? post.imageUrl : `${config.api.baseUrl}${post.imageUrl}`}
+        altText="Pulse attachment"
+        onClose={() => setShowImageOverlay(false)}
       />
     )}
     </>
