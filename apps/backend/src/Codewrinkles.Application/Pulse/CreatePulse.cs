@@ -24,18 +24,18 @@ public sealed class CreatePulseCommandHandler
     : ICommandHandler<CreatePulseCommand, CreatePulseResult>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IPulseImageService _pulseImageService;
+    private readonly IBlobStorageService _blobStorageService;
     private readonly IProfileRepository _profileRepository;
     private readonly ILinkPreviewService _linkPreviewService;
 
     public CreatePulseCommandHandler(
         IUnitOfWork unitOfWork,
-        IPulseImageService pulseImageService,
+        IBlobStorageService blobStorageService,
         IProfileRepository profileRepository,
         ILinkPreviewService linkPreviewService)
     {
         _unitOfWork = unitOfWork;
-        _pulseImageService = pulseImageService;
+        _blobStorageService = blobStorageService;
         _profileRepository = profileRepository;
         _linkPreviewService = linkPreviewService;
     }
@@ -76,12 +76,11 @@ public sealed class CreatePulseCommandHandler
 
                 activity?.SetEntity("Pulse", pulse.Id);
 
-                // 2. Process and save image to disk (if provided)
-                // This is a file I/O operation, not a database operation
-                // If it fails, we'll rollback the transaction and clean up the file in catch block
+                // 2. Process and save image to blob storage (if provided)
+                // Upload to Azure Blob Storage - if it fails, we'll rollback and clean up the blob
                 if (command.ImageStream is not null)
                 {
-                    var (url, width, height) = await _pulseImageService.SavePulseImageAsync(
+                    var (url, width, height) = await _blobStorageService.UploadPulseImageAsync(
                         command.ImageStream,
                         pulse.Id,
                         cancellationToken);
@@ -210,11 +209,19 @@ public sealed class CreatePulseCommandHandler
                 // Rollback on any error - no database records will be persisted
                 await transaction.RollbackAsync(cancellationToken);
 
-                // Clean up orphaned image file if it was saved to disk
-                // The file I/O isn't part of the database transaction, so we must clean up manually
+                // Clean up orphaned blob if it was uploaded but transaction failed
+                // This prevents accumulating orphaned blobs in storage
                 if (imageUrl is not null)
                 {
-                    _pulseImageService.DeletePulseImage(pulse.Id);
+                    try
+                    {
+                        await _blobStorageService.DeletePulseImageAsync(pulse.Id, cancellationToken);
+                    }
+                    catch
+                    {
+                        // Log but don't throw - cleanup is best effort
+                        // The orphaned blob can be cleaned up by a background job if needed
+                    }
                 }
 
                 throw;

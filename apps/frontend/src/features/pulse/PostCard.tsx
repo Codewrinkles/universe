@@ -365,7 +365,7 @@ export function PostCard({ post, onReplyClick, onFollowChange, onDelete }: PostC
           {post.imageUrl && (
             <div className="mt-3 rounded-2xl overflow-hidden border border-border">
               <img
-                src={`${config.api.baseUrl}${post.imageUrl}`}
+                src={post.imageUrl.startsWith('http') ? post.imageUrl : `${config.api.baseUrl}${post.imageUrl}`}
                 alt="Pulse attachment"
                 className="w-full object-contain max-h-[500px]"
               />

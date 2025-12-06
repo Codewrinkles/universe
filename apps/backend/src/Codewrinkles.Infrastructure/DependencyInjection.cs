@@ -1,5 +1,8 @@
+using Azure.Identity;
+using Azure.Storage.Blobs;
 using Codewrinkles.Application.Common.Interfaces;
 using Codewrinkles.Domain.Identity;
+using Codewrinkles.Infrastructure.Configuration;
 using Codewrinkles.Infrastructure.Options;
 using Codewrinkles.Infrastructure.Persistence;
 using Codewrinkles.Infrastructure.Persistence.Repositories;
@@ -68,9 +71,36 @@ public static class DependencyInjection
             return new JwtTokenGenerator(jwtSettings);
         });
 
-        // Application Services
-        services.AddScoped<IAvatarService, AvatarService>();
-        services.AddScoped<IPulseImageService, PulseImageService>();
+        // Blob Storage Configuration
+        var blobStorageSection = configuration.GetSection(BlobStorageSettings.SectionName);
+        services.Configure<BlobStorageSettings>(blobStorageSection);
+
+        // BlobServiceClient - Singleton for connection pooling
+        services.AddSingleton(sp =>
+        {
+            var settings = sp.GetRequiredService<IOptions<BlobStorageSettings>>().Value;
+
+            if (settings.UseManagedIdentity)
+            {
+                // Production: Use Managed Identity (no credentials needed)
+                var blobUri = new Uri(settings.GetBlobStorageUrl());
+                return new BlobServiceClient(blobUri, new DefaultAzureCredential());
+            }
+            else
+            {
+                // Local development: Use connection string from User Secrets
+                if (string.IsNullOrWhiteSpace(settings.ConnectionString))
+                {
+                    throw new InvalidOperationException(
+                        "BlobStorage:ConnectionString is required when UseManagedIdentity is false. " +
+                        "Store the connection string in User Secrets for local development.");
+                }
+                return new BlobServiceClient(settings.ConnectionString);
+            }
+        });
+
+        // Blob Storage Service
+        services.AddSingleton<IBlobStorageService, AzureBlobStorageService>();
 
         // HttpClient for LinkPreviewService
         services.AddHttpClient("LinkPreview", client =>

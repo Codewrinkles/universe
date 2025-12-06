@@ -23,14 +23,14 @@ public sealed class UploadAvatarCommandHandler
     : ICommandHandler<UploadAvatarCommand, UploadAvatarResult>
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IAvatarService _avatarService;
+    private readonly IBlobStorageService _blobStorageService;
 
     public UploadAvatarCommandHandler(
         IUnitOfWork unitOfWork,
-        IAvatarService avatarService)
+        IBlobStorageService blobStorageService)
     {
         _unitOfWork = unitOfWork;
-        _avatarService = avatarService;
+        _blobStorageService = blobStorageService;
     }
 
     public async Task<UploadAvatarResult> HandleAsync(
@@ -41,27 +41,15 @@ public sealed class UploadAvatarCommandHandler
         // - Profile exists
         // - Image stream is valid
 
-        string? avatarUrl = null;
+        string? blobUrl = null;
 
-        // Perform all operations atomically within a transaction
-        // Isolation Level: ReadCommitted
-        // - Prevents dirty reads (other transactions won't see profile with uncommitted avatar URL)
-        // - No unnecessary locking (single entity update)
-        await using var transaction = await _unitOfWork.BeginTransactionAsync(
-            IsolationLevel.ReadCommitted,
-            cancellationToken);
         try
         {
-            // 1. Find the profile (guaranteed to exist after validation)
-            var profile = (await _unitOfWork.Profiles.FindByIdAsync(
-                command.ProfileId,
-                cancellationToken))!;
-
-            // 2. Process and save the avatar image to disk
-            // This is a file I/O operation - if it fails, we'll rollback and clean up
+            // 1. Upload to blob storage FIRST (outside transaction)
+            // Process and save the avatar image to Azure Blob Storage
             try
             {
-                avatarUrl = await _avatarService.SaveAvatarAsync(
+                blobUrl = await _blobStorageService.UploadAvatarAsync(
                     command.ImageStream,
                     command.ProfileId,
                     cancellationToken);
@@ -72,32 +60,58 @@ public sealed class UploadAvatarCommandHandler
                     "Failed to process image. Please upload a valid image file (JPEG, PNG, GIF, or WebP).");
             }
 
-            // 3. Update profile with new avatar URL
-            profile.UpdateAvatarUrl(avatarUrl);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            // 2. Update database within transaction
+            // Isolation Level: ReadCommitted
+            // - Prevents dirty reads (other transactions won't see profile with uncommitted avatar URL)
+            // - No unnecessary locking (single entity update)
+            await using var transaction = await _unitOfWork.BeginTransactionAsync(
+                IsolationLevel.ReadCommitted,
+                cancellationToken);
+            try
+            {
+                // Find the profile (guaranteed to exist after validation)
+                var profile = (await _unitOfWork.Profiles.FindByIdAsync(
+                    command.ProfileId,
+                    cancellationToken))!;
 
-            // Commit transaction - profile updated successfully
-            await transaction.CommitAsync(cancellationToken);
+                // Update profile with blob URL (full absolute URL)
+                profile.UpdateAvatarUrl(blobUrl);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                // Commit transaction - profile updated successfully
+                await transaction.CommitAsync(cancellationToken);
+            }
+            catch
+            {
+                // Rollback database transaction on error
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
         }
         catch
         {
-            // Rollback on any error - no database changes persisted
-            await transaction.RollbackAsync(cancellationToken);
-
-            // Clean up orphaned avatar file if it was saved to disk
-            // The file I/O isn't part of the database transaction, so we must clean up manually
-            if (avatarUrl is not null)
+            // Clean up orphaned blob if it was uploaded but database update failed
+            // This prevents accumulating orphaned blobs in storage
+            if (blobUrl is not null)
             {
-                _avatarService.DeleteAvatar(command.ProfileId);
+                try
+                {
+                    await _blobStorageService.DeleteAvatarAsync(command.ProfileId, cancellationToken);
+                }
+                catch
+                {
+                    // Log but don't throw - cleanup is best effort
+                    // The orphaned blob can be cleaned up by a background job if needed
+                }
             }
 
             throw;
         }
 
-        // 4. Return result
+        // 3. Return result
         return new UploadAvatarResult(
             ProfileId: command.ProfileId,
-            AvatarUrl: avatarUrl!
+            AvatarUrl: blobUrl!
         );
     }
 }
