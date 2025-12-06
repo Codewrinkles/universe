@@ -10,6 +10,8 @@ interface UseNotificationsResult {
   refetch: () => void;
   markAsRead: (notificationId: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
+  deleteNotification: (notificationId: string) => Promise<void>;
+  clearAll: () => Promise<void>;
 }
 
 export function useNotifications(): UseNotificationsResult {
@@ -59,6 +61,54 @@ export function useNotifications(): UseNotificationsResult {
     }
   }, []);
 
+  const deleteNotification = useCallback(async (notificationId: string) => {
+    // Save current state for rollback
+    const previousNotifications = notifications;
+    const previousUnreadCount = unreadCount;
+
+    // Find the notification to check if it was unread
+    const notification = notifications.find((n) => n.id === notificationId);
+    const wasUnread = notification ? !notification.isRead : false;
+
+    try {
+      // Optimistic update - remove notification
+      setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+      if (wasUnread) {
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      }
+
+      // Call API
+      await notificationApi.deleteNotification(notificationId);
+    } catch (err) {
+      // Rollback on error
+      setNotifications(previousNotifications);
+      setUnreadCount(previousUnreadCount);
+      setError("Failed to delete notification");
+      console.error("Failed to delete notification:", err);
+    }
+  }, [notifications, unreadCount]);
+
+  const clearAll = useCallback(async () => {
+    // Save current state for rollback
+    const previousNotifications = notifications;
+    const previousUnreadCount = unreadCount;
+
+    try {
+      // Optimistic update - clear all
+      setNotifications([]);
+      setUnreadCount(0);
+
+      // Call API
+      await notificationApi.clearAll();
+    } catch (err) {
+      // Rollback on error
+      setNotifications(previousNotifications);
+      setUnreadCount(previousUnreadCount);
+      setError("Failed to clear all notifications");
+      console.error("Failed to clear all notifications:", err);
+    }
+  }, [notifications, unreadCount]);
+
   // Initial fetch
   useEffect(() => {
     fetchNotifications();
@@ -72,6 +122,8 @@ export function useNotifications(): UseNotificationsResult {
     refetch: fetchNotifications,
     markAsRead,
     markAllAsRead,
+    deleteNotification,
+    clearAll,
   };
 }
 

@@ -6,9 +6,10 @@ import { config } from "../../config";
 export interface NotificationItemProps {
   notification: Notification;
   onMarkAsRead: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
-export function NotificationItem({ notification, onMarkAsRead }: NotificationItemProps): JSX.Element {
+export function NotificationItem({ notification, onMarkAsRead, onDelete }: NotificationItemProps): JSX.Element {
   const { actor, type, entityId, isRead, createdAt } = notification;
 
   const avatarUrl = actor.avatarUrl
@@ -21,6 +22,12 @@ export function NotificationItem({ notification, onMarkAsRead }: NotificationIte
     if (!isRead) {
       onMarkAsRead(notification.id);
     }
+  };
+
+  const handleDelete = (e: React.MouseEvent): void => {
+    e.preventDefault();
+    e.stopPropagation();
+    onDelete(notification.id);
   };
 
   // Determine notification message and link
@@ -53,7 +60,7 @@ export function NotificationItem({ notification, onMarkAsRead }: NotificationIte
     <Link
       to={linkTo}
       onClick={handleClick}
-      className={`block px-4 py-3 hover:bg-surface-card1/50 transition-colors border-b border-border ${
+      className={`group block px-4 py-3 hover:bg-surface-card1/50 transition-colors border-b border-border ${
         !isRead ? "bg-brand-soft/5" : ""
       }`}
     >
@@ -83,11 +90,19 @@ export function NotificationItem({ notification, onMarkAsRead }: NotificationIte
               </p>
               <p className="text-xs text-text-tertiary mt-0.5">{timeAgo}</p>
             </div>
-            {!isRead && (
-              <div className="flex-shrink-0">
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="opacity-0 group-hover:opacity-100 hover:bg-red-500/10 rounded-full p-1.5 transition-all text-red-500 text-2xl font-bold leading-none"
+                title="Delete notification"
+              >
+                ×
+              </button>
+              {!isRead && (
                 <div className="h-2 w-2 rounded-full bg-brand-soft" title="Unread" />
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>

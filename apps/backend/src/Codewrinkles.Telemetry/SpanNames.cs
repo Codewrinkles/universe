@@ -72,6 +72,8 @@ public static class SpanNames
         public const string GetUnreadCount = "Notification.GetUnreadCount";
         public const string MarkAsRead = "Notification.MarkAsRead";
         public const string MarkAllAsRead = "Notification.MarkAllAsRead";
+        public const string Delete = "Notification.Delete";
+        public const string DeleteAll = "Notification.DeleteAll";
     }
 
     public static class Admin

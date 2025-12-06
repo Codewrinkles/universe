@@ -64,4 +64,25 @@ export const notificationApi = {
       method: "PUT",
     });
   },
+
+  /**
+   * Delete a single notification
+   */
+  deleteNotification(notificationId: string): Promise<{ success: boolean }> {
+    return apiRequest<{ success: boolean }>(
+      config.api.endpoints.notificationDelete(notificationId),
+      {
+        method: "DELETE",
+      }
+    );
+  },
+
+  /**
+   * Clear all notifications for the current user
+   */
+  clearAll(): Promise<{ deletedCount: number }> {
+    return apiRequest<{ deletedCount: number }>(config.api.endpoints.notificationsClearAll, {
+      method: "DELETE",
+    });
+  },
 };

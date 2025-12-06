@@ -5,7 +5,13 @@ import { PulseRightSidebar } from "./PulseRightSidebar";
 import { LoadingNotification } from "../../components/ui";
 
 export function NotificationsPage(): JSX.Element {
-  const { notifications, unreadCount, isLoading, error, markAsRead, markAllAsRead } = useNotifications();
+  const { notifications, unreadCount, isLoading, error, markAsRead, markAllAsRead, deleteNotification, clearAll } = useNotifications();
+
+  const handleClearAll = (): void => {
+    if (window.confirm("Are you sure you want to delete all notifications? This cannot be undone.")) {
+      void clearAll();
+    }
+  };
 
   return (
     <div className="flex justify-center">
@@ -24,14 +30,25 @@ export function NotificationsPage(): JSX.Element {
             <h1 className="text-base font-semibold tracking-tight text-text-primary">
               Notifications
             </h1>
-            {unreadCount > 0 && (
-              <button
-                type="button"
-                onClick={() => void markAllAsRead()}
-                className="text-xs text-brand-soft hover:text-brand transition-colors font-medium"
-              >
-                Mark all as read
-              </button>
+            {notifications.length > 0 && (
+              <div className="flex items-center gap-3">
+                {unreadCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => void markAllAsRead()}
+                    className="text-xs text-brand-soft hover:text-brand transition-colors font-medium"
+                  >
+                    Mark all as read
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleClearAll}
+                  className="text-xs text-text-tertiary hover:text-red-400 transition-colors font-medium"
+                >
+                  Clear all
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -64,6 +81,7 @@ export function NotificationsPage(): JSX.Element {
                 key={notification.id}
                 notification={notification}
                 onMarkAsRead={markAsRead}
+                onDelete={deleteNotification}
               />
             ))}
           </div>

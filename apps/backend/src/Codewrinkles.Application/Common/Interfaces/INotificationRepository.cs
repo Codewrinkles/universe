@@ -31,4 +31,15 @@ public interface INotificationRepository
     /// Marks all notifications for a user as read
     /// </summary>
     Task MarkAllAsReadAsync(Guid recipientId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes a notification
+    /// </summary>
+    void Delete(Domain.Notification.Notification notification);
+
+    /// <summary>
+    /// Deletes all notifications for a user
+    /// Returns the number of notifications deleted
+    /// </summary>
+    Task<int> DeleteAllForRecipientAsync(Guid recipientId, CancellationToken cancellationToken = default);
 }

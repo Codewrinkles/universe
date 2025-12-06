@@ -28,6 +28,14 @@ public static class NotificationEndpoints
             .WithName("MarkAllNotificationsAsRead")
             .RequireAuthorization();
 
+        group.MapDelete("{id:guid}", DeleteNotification)
+            .WithName("DeleteNotification")
+            .RequireAuthorization();
+
+        group.MapDelete("all", ClearAllNotifications)
+            .WithName("ClearAllNotifications")
+            .RequireAuthorization();
+
         return app;
     }
 
@@ -169,6 +177,64 @@ public static class NotificationEndpoints
         {
             return Results.Problem(
                 title: "Failed to Mark All Notifications as Read",
+                detail: ex.Message,
+                statusCode: 500
+            );
+        }
+    }
+
+    private static async Task<IResult> DeleteNotification(
+        HttpContext httpContext,
+        Guid id,
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Extract ProfileId from JWT claims
+            var profileId = httpContext.GetCurrentProfileId();
+
+            var command = new DeleteNotificationCommand(
+                NotificationId: id,
+                UserId: profileId
+            );
+
+            var result = await mediator.SendAsync(command, cancellationToken);
+
+            return Results.Ok(new { success = result.Success });
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem(
+                title: "Failed to Delete Notification",
+                detail: ex.Message,
+                statusCode: 500
+            );
+        }
+    }
+
+    private static async Task<IResult> ClearAllNotifications(
+        HttpContext httpContext,
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Extract ProfileId from JWT claims
+            var profileId = httpContext.GetCurrentProfileId();
+
+            var command = new ClearAllNotificationsCommand(
+                UserId: profileId
+            );
+
+            var result = await mediator.SendAsync(command, cancellationToken);
+
+            return Results.Ok(new { deletedCount = result.DeletedCount });
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem(
+                title: "Failed to Clear All Notifications",
                 detail: ex.Message,
                 statusCode: 500
             );

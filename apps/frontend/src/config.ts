@@ -27,6 +27,8 @@ export const config = {
       notificationsUnreadCount: `${API_BASE_URL}/api/notifications/unread-count`,
       notificationMarkAsRead: (id: string) => `${API_BASE_URL}/api/notifications/${id}/read`,
       notificationsMarkAllAsRead: `${API_BASE_URL}/api/notifications/read-all`,
+      notificationDelete: (id: string) => `${API_BASE_URL}/api/notifications/${id}`,
+      notificationsClearAll: `${API_BASE_URL}/api/notifications/all`,
       pulseThread: (id: string) => `${API_BASE_URL}/api/pulse/${id}/thread`,
       socialFollow: (profileId: string) => `${API_BASE_URL}/api/social/${profileId}/follow`,
       socialFollowers: (profileId: string) => `${API_BASE_URL}/api/social/${profileId}/followers`,

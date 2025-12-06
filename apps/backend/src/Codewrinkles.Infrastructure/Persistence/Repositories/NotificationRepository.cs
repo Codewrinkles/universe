@@ -64,4 +64,16 @@ public sealed class NotificationRepository : INotificationRepository
                     .SetProperty(n => n.ReadAt, DateTime.UtcNow),
                 cancellationToken);
     }
+
+    public void Delete(Notification notification)
+    {
+        _context.Notifications.Remove(notification);
+    }
+
+    public async Task<int> DeleteAllForRecipientAsync(Guid recipientId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Notifications
+            .Where(n => n.RecipientId == recipientId)
+            .ExecuteDeleteAsync(cancellationToken);
+    }
 }

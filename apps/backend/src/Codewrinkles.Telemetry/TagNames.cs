@@ -101,6 +101,16 @@ public static class TagNames
     }
 
     /// <summary>
+    /// Notification attributes.
+    /// </summary>
+    public static class Notification
+    {
+        public const string Id = "notification.id";
+        public const string Type = "notification.type";
+        public const string RecipientId = "notification.recipient_id";
+    }
+
+    /// <summary>
     /// External service attributes.
     /// </summary>
     public static class External
