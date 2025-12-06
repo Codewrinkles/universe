@@ -4,7 +4,9 @@ import { UnifiedComposer } from "./UnifiedComposer";
 import { Feed } from "./Feed";
 import { PulseNavigation } from "./PulseNavigation";
 import { PulseRightSidebar } from "./PulseRightSidebar";
+import { FeedFilterControl } from "./FeedFilterControl";
 import { useFeed } from "./hooks/useFeed";
+import { useFeedFilter } from "./hooks/useFeedFilter";
 import { useAuth } from "../../hooks/useAuth";
 import { LoadingCard, Spinner } from "../../components/ui";
 import { getPulseFeedOGImage } from "../../utils/seo";
@@ -18,6 +20,9 @@ export function PulsePage(): JSX.Element {
 
   // Fetch feed data
   const { pulses, isLoading, error, hasMore, loadMore, refetch } = useFeed();
+
+  // Feed filter state
+  const { hideReplies, toggleHideReplies } = useFeedFilter();
 
   const handleReplyClick = (pulseId: string): void => {
     setReplyingToPulseId(pulseId);
@@ -84,6 +89,19 @@ export function PulsePage(): JSX.Element {
           </div>
         )}
 
+        {/* Feed Header with Filter Control */}
+        <div className="sticky top-0 z-10 bg-surface-page/95 backdrop-blur-sm border-b border-border">
+          <div className="flex items-center justify-between px-4 py-3">
+            <h2 className="text-base font-semibold tracking-tight text-text-primary">
+              {user ? "Your Feed" : "Explore"}
+            </h2>
+            <FeedFilterControl
+              hideReplies={hideReplies}
+              onToggleReplies={toggleHideReplies}
+            />
+          </div>
+        </div>
+
         {/* Feed */}
         {error && (
           <div className="p-4 border-b border-border bg-red-500/10 text-red-400 text-sm">
@@ -111,6 +129,7 @@ export function PulsePage(): JSX.Element {
                 replyingToPulseId={replyingToPulseId}
                 onReplyCreated={handleReplyCreated}
                 onDelete={handleDelete}
+                hideReplies={hideReplies}
               />
             </div>
 
