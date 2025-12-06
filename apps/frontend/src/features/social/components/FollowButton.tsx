@@ -37,6 +37,7 @@ export function FollowButton({
   // Use prop if provided, otherwise use fetched value
   const initialIsFollowing = initialIsFollowingProp ?? fetchedIsFollowing;
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
+  const [isHovering, setIsHovering] = useState(false);
 
   // Update local state when remote state or prop changes
   useEffect(() => {
@@ -102,10 +103,12 @@ export function FollowButton({
       <button
         type="button"
         onClick={handleToggleFollow}
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
         disabled={isLoading}
         className={`flex-shrink-0 rounded-full border border-border bg-surface-card1 text-text-secondary hover:border-red-500/60 hover:bg-red-500/10 hover:text-red-500 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed ${sizeClasses[size]} ${className}`}
       >
-        {isLoading ? "..." : "Following"}
+        {isLoading ? "..." : isHovering ? "Unfollow" : "Following"}
       </button>
     );
   }
