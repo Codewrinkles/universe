@@ -1,5 +1,4 @@
 using System.Data;
-using System.Text.RegularExpressions;
 using Kommand.Abstractions;
 using Codewrinkles.Application.Common.Interfaces;
 using Codewrinkles.Domain.Pulse;
@@ -20,15 +19,18 @@ public sealed class CreateRepulseCommandHandler
     private readonly IUnitOfWork _unitOfWork;
     private readonly IBlobStorageService _blobStorageService;
     private readonly IProfileRepository _profileRepository;
+    private readonly PulseContentProcessor _contentProcessor;
 
     public CreateRepulseCommandHandler(
         IUnitOfWork unitOfWork,
         IBlobStorageService blobStorageService,
-        IProfileRepository profileRepository)
+        IProfileRepository profileRepository,
+        PulseContentProcessor contentProcessor)
     {
         _unitOfWork = unitOfWork;
         _blobStorageService = blobStorageService;
         _profileRepository = profileRepository;
+        _contentProcessor = contentProcessor;
     }
 
     public async Task<CreatePulseResult> HandleAsync(
@@ -49,6 +51,7 @@ public sealed class CreateRepulseCommandHandler
 
             string? imageUrl = null;
             var hasImage = command.ImageStream is not null;
+            var hashtagCount = 0;
 
             // Perform all database operations atomically within a transaction
             // Isolation Level: ReadCommitted
@@ -91,29 +94,35 @@ public sealed class CreateRepulseCommandHandler
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             // 4. Extract and create mentions
-            var mentionedHandles = ExtractMentions(repulse.Content);
-            if (mentionedHandles.Count > 0)
-            {
-                var mentionedProfiles = await _profileRepository.FindByHandlesAsync(mentionedHandles, cancellationToken);
-                foreach (var profile in mentionedProfiles)
-                {
-                    var mention = PulseMention.Create(repulse.Id, profile.Id, profile.Handle!);
-                    _unitOfWork.Pulses.CreateMention(mention);
+            var mentionResult = await _contentProcessor.ProcessMentionsAsync(
+                repulse.Id,
+                repulse.Content,
+                cancellationToken);
 
-                    // Create mention notification (only if not mentioning self)
-                    if (profile.Id != command.AuthorId)
-                    {
-                        var mentionNotification = Domain.Notification.Notification.CreateMentionNotification(
-                            recipientId: profile.Id,
-                            actorId: command.AuthorId,
-                            pulseId: repulse.Id);
-                        _unitOfWork.Notifications.Create(mentionNotification);
-                    }
+            // Create mention notifications (only if not mentioning self)
+            foreach (var profile in mentionResult.MentionedProfiles)
+            {
+                if (profile.Id != command.AuthorId)
+                {
+                    var mentionNotification = Domain.Notification.Notification.CreateMentionNotification(
+                        recipientId: profile.Id,
+                        actorId: command.AuthorId,
+                        pulseId: repulse.Id);
+                    _unitOfWork.Notifications.Create(mentionNotification);
                 }
+            }
+            if (mentionResult.MentionedProfiles.Count > 0)
+            {
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
             }
 
-            // 5. Increment repulsed pulse's repulse count
+            // 5. Extract and process hashtags
+            hashtagCount = await _contentProcessor.ProcessHashtagsAsync(
+                repulse.Id,
+                repulse.Content,
+                cancellationToken);
+
+            // 6. Increment repulsed pulse's repulse count
             var repulsedEngagement = await _unitOfWork.Pulses.FindEngagementAsync(
                 command.RepulsedPulseId,
                 cancellationToken);
@@ -121,7 +130,7 @@ public sealed class CreateRepulseCommandHandler
             repulsedEngagement!.IncrementRepulseCount();
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            // 6. Create repulse notification (only if not repulsing own pulse)
+            // 7. Create repulse notification (only if not repulsing own pulse)
             var repulsedPulse = await _unitOfWork.Pulses.FindByIdAsync(command.RepulsedPulseId, cancellationToken);
             if (repulsedPulse is not null && repulsedPulse.AuthorId != command.AuthorId)
             {
@@ -168,7 +177,7 @@ public sealed class CreateRepulseCommandHandler
                 AppMetrics.RecordImageUpload(imageType: "pulse", success: true);
             }
             activity?.SetEntity("Pulse", repulse.Id);
-            activity?.SetPulseMetadata(pulseType: "repulse", hasImage: hasImage, hasLink: false);
+            activity?.SetPulseMetadata(pulseType: "repulse", hasImage: hasImage, hasLink: false, hashtagCount: hashtagCount);
             activity?.SetSuccess(true);
 
             return new CreatePulseResult(
@@ -183,17 +192,5 @@ public sealed class CreateRepulseCommandHandler
             activity?.RecordError(ex);
             throw;
         }
-    }
-
-    private static List<string> ExtractMentions(string content)
-    {
-        // Regex to match @handle (alphanumeric + underscore, 3-30 chars)
-        var mentionPattern = @"@(\w{3,30})";
-        var matches = Regex.Matches(content, mentionPattern);
-
-        return matches
-            .Select(m => m.Groups[1].Value.ToLowerInvariant())
-            .Distinct()
-            .ToList();
     }
 }

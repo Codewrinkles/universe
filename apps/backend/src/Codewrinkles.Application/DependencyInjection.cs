@@ -13,6 +13,9 @@ public static class DependencyInjection
                   .WithValidation();
         });
 
+        // Application services
+        services.AddScoped<Pulse.PulseContentProcessor>();
+
         return services;
     }
 }

@@ -1,5 +1,4 @@
 using System.Data;
-using System.Text.RegularExpressions;
 using Kommand.Abstractions;
 using Codewrinkles.Application.Common.Interfaces;
 using Codewrinkles.Domain.Pulse;
@@ -27,17 +26,20 @@ public sealed class CreatePulseCommandHandler
     private readonly IBlobStorageService _blobStorageService;
     private readonly IProfileRepository _profileRepository;
     private readonly ILinkPreviewService _linkPreviewService;
+    private readonly PulseContentProcessor _contentProcessor;
 
     public CreatePulseCommandHandler(
         IUnitOfWork unitOfWork,
         IBlobStorageService blobStorageService,
         IProfileRepository profileRepository,
-        ILinkPreviewService linkPreviewService)
+        ILinkPreviewService linkPreviewService,
+        PulseContentProcessor contentProcessor)
     {
         _unitOfWork = unitOfWork;
         _blobStorageService = blobStorageService;
         _profileRepository = profileRepository;
         _linkPreviewService = linkPreviewService;
+        _contentProcessor = contentProcessor;
     }
 
     public async Task<CreatePulseResult> HandleAsync(
@@ -106,29 +108,29 @@ public sealed class CreatePulseCommandHandler
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                 // 4. Extract and create mentions
-                var mentionedHandles = ExtractMentions(pulse.Content);
-                if (mentionedHandles.Count > 0)
-                {
-                    var mentionedProfiles = await _profileRepository.FindByHandlesAsync(mentionedHandles, cancellationToken);
-                    foreach (var profile in mentionedProfiles)
-                    {
-                        var mention = PulseMention.Create(pulse.Id, profile.Id, profile.Handle!);
-                        _unitOfWork.Pulses.CreateMention(mention);
+                var mentionResult = await _contentProcessor.ProcessMentionsAsync(
+                    pulse.Id,
+                    pulse.Content,
+                    cancellationToken);
 
-                        // Create mention notification (only if not mentioning self)
-                        if (profile.Id != command.AuthorId)
-                        {
-                            var mentionNotification = Domain.Notification.Notification.CreateMentionNotification(
-                                recipientId: profile.Id,
-                                actorId: command.AuthorId,
-                                pulseId: pulse.Id);
-                            _unitOfWork.Notifications.Create(mentionNotification);
-                            AppMetrics.RecordNotificationCreated("mention");
-                        }
+                // Create mention notifications (only if not mentioning self)
+                foreach (var profile in mentionResult.MentionedProfiles)
+                {
+                    if (profile.Id != command.AuthorId)
+                    {
+                        var mentionNotification = Domain.Notification.Notification.CreateMentionNotification(
+                            recipientId: profile.Id,
+                            actorId: command.AuthorId,
+                            pulseId: pulse.Id);
+                        _unitOfWork.Notifications.Create(mentionNotification);
+                        AppMetrics.RecordNotificationCreated("mention");
                     }
-                    await _unitOfWork.SaveChangesAsync(cancellationToken);
-                    mentionCount = mentionedProfiles.Count;
                 }
+                if (mentionResult.MentionedProfiles.Count > 0)
+                {
+                    await _unitOfWork.SaveChangesAsync(cancellationToken);
+                }
+                mentionCount = mentionResult.Count;
 
                 // 5. Generate link preview if URL detected
                 var firstUrl = _linkPreviewService.ExtractFirstUrl(pulse.Content);
@@ -160,45 +162,10 @@ public sealed class CreatePulseCommandHandler
                 }
 
                 // 6. Extract and process hashtags
-                var hashtagsWithPositions = ExtractHashtags(pulse.Content);
-                if (hashtagsWithPositions.Count > 0)
-                {
-                    foreach (var (tagDisplay, position) in hashtagsWithPositions)
-                    {
-                        // Try to find existing hashtag by normalized tag
-                        var normalizedTag = tagDisplay.ToLowerInvariant();
-                        var existingHashtag = await _unitOfWork.Hashtags.FindByTagAsync(
-                            normalizedTag,
-                            cancellationToken);
-
-                        Hashtag hashtag;
-                        if (existingHashtag is not null)
-                        {
-                            // Hashtag exists - increment usage
-                            existingHashtag.IncrementUsage();
-                            hashtag = existingHashtag;
-                        }
-                        else
-                        {
-                            // New hashtag - create it
-                            hashtag = Hashtag.Create(tagDisplay);
-                            hashtag.IncrementUsage(); // Increment for the current pulse
-                            _unitOfWork.Hashtags.CreateHashtag(hashtag);
-                            await _unitOfWork.SaveChangesAsync(cancellationToken);
-                            // Hashtag.Id is now available (generated by EF Core)
-                        }
-
-                        // Create pulse-hashtag association
-                        var pulseHashtag = PulseHashtag.Create(
-                            pulseId: pulse.Id,
-                            hashtagId: hashtag.Id,
-                            position: position);
-                        _unitOfWork.Hashtags.CreatePulseHashtag(pulseHashtag);
-                    }
-
-                    await _unitOfWork.SaveChangesAsync(cancellationToken);
-                    hashtagCount = hashtagsWithPositions.Count;
-                }
+                hashtagCount = await _contentProcessor.ProcessHashtagsAsync(
+                    pulse.Id,
+                    pulse.Content,
+                    cancellationToken);
 
                 // Commit transaction - all entities created successfully
                 // Database state is now consistent: Pulse + Engagement + (optional) PulseImage + (optional) Mentions + (optional) Hashtags
@@ -249,43 +216,5 @@ public sealed class CreatePulseCommandHandler
             activity?.RecordError(ex);
             throw;
         }
-    }
-
-    private static List<string> ExtractMentions(string content)
-    {
-        // Regex to match @handle (alphanumeric + underscore, 3-30 chars)
-        var mentionPattern = @"@(\w{3,30})";
-        var matches = Regex.Matches(content, mentionPattern);
-
-        return matches
-            .Select(m => m.Groups[1].Value.ToLowerInvariant())
-            .Distinct()
-            .ToList();
-    }
-
-    private static List<(string TagDisplay, int Position)> ExtractHashtags(string content)
-    {
-        // Regex to match #hashtag (alphanumeric + underscore, 2-100 chars)
-        // Match pattern: # followed by word characters
-        var hashtagPattern = @"#(\w{2,100})";
-        var matches = Regex.Matches(content, hashtagPattern);
-
-        var hashtagsWithPositions = new List<(string, int)>();
-        var seenTags = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        for (var i = 0; i < matches.Count; i++)
-        {
-            var tagDisplay = matches[i].Groups[1].Value;
-            var normalizedTag = tagDisplay.ToLowerInvariant();
-
-            // Track unique hashtags (case-insensitive)
-            // If #coding and #Coding both appear, only count the first one
-            if (seenTags.Add(normalizedTag))
-            {
-                hashtagsWithPositions.Add((tagDisplay, i));
-            }
-        }
-
-        return hashtagsWithPositions;
     }
 }

@@ -1,5 +1,4 @@
 using System.Data;
-using System.Text.RegularExpressions;
 using Kommand.Abstractions;
 using Codewrinkles.Application.Common.Interfaces;
 using Codewrinkles.Domain.Pulse;
@@ -20,15 +19,18 @@ public sealed class CreateReplyCommandHandler
     private readonly IUnitOfWork _unitOfWork;
     private readonly IBlobStorageService _blobStorageService;
     private readonly IProfileRepository _profileRepository;
+    private readonly PulseContentProcessor _contentProcessor;
 
     public CreateReplyCommandHandler(
         IUnitOfWork unitOfWork,
         IBlobStorageService blobStorageService,
-        IProfileRepository profileRepository)
+        IProfileRepository profileRepository,
+        PulseContentProcessor contentProcessor)
     {
         _unitOfWork = unitOfWork;
         _blobStorageService = blobStorageService;
         _profileRepository = profileRepository;
+        _contentProcessor = contentProcessor;
     }
 
     public async Task<CreatePulseResult> HandleAsync(
@@ -69,6 +71,8 @@ public sealed class CreateReplyCommandHandler
 
             string? imageUrl = null;
             var hasImage = command.ImageStream is not null;
+            var hashtagCount = 0;
+            MentionProcessingResult mentionResult;
 
             // Perform all database operations atomically within a transaction
             // Isolation Level: ReadCommitted
@@ -114,30 +118,36 @@ public sealed class CreateReplyCommandHandler
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                 // 4. Extract and create mentions
-                var mentionedHandles = ExtractMentions(reply.Content);
-                if (mentionedHandles.Count > 0)
-                {
-                    var mentionedProfiles = await _profileRepository.FindByHandlesAsync(mentionedHandles, cancellationToken);
-                    foreach (var profile in mentionedProfiles)
-                    {
-                        var mention = PulseMention.Create(reply.Id, profile.Id, profile.Handle!);
-                        _unitOfWork.Pulses.CreateMention(mention);
+                mentionResult = await _contentProcessor.ProcessMentionsAsync(
+                    reply.Id,
+                    reply.Content,
+                    cancellationToken);
 
-                        // Create mention notification (only if not mentioning self)
-                        if (profile.Id != command.AuthorId)
-                        {
-                            var mentionNotification = Domain.Notification.Notification.CreateMentionNotification(
-                                recipientId: profile.Id,
-                                actorId: command.AuthorId,
-                                pulseId: reply.Id);
-                            _unitOfWork.Notifications.Create(mentionNotification);
-                            AppMetrics.RecordNotificationCreated("mention");
-                        }
+                // Create mention notifications (only if not mentioning self)
+                foreach (var profile in mentionResult.MentionedProfiles)
+                {
+                    if (profile.Id != command.AuthorId)
+                    {
+                        var mentionNotification = Domain.Notification.Notification.CreateMentionNotification(
+                            recipientId: profile.Id,
+                            actorId: command.AuthorId,
+                            pulseId: reply.Id);
+                        _unitOfWork.Notifications.Create(mentionNotification);
+                        AppMetrics.RecordNotificationCreated("mention");
                     }
+                }
+                if (mentionResult.MentionedProfiles.Count > 0)
+                {
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
                 }
 
-                // 5. Increment thread root's reply count (so total is shown on original pulse)
+                // 5. Extract and process hashtags
+                hashtagCount = await _contentProcessor.ProcessHashtagsAsync(
+                    reply.Id,
+                    reply.Content,
+                    cancellationToken);
+
+                // 6. Increment thread root's reply count (so total is shown on original pulse)
                 var threadRootEngagement = await _unitOfWork.Pulses.FindEngagementAsync(
                     threadRootId,
                     cancellationToken);
@@ -145,7 +155,7 @@ public sealed class CreateReplyCommandHandler
                 threadRootEngagement!.IncrementReplyCount();
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                // 6. Create reply notification (only if not replying to own pulse)
+                // 7. Create reply notification (only if not replying to own pulse)
                 // parentPulse was already fetched above to determine thread root
                 if (parentPulse.AuthorId != command.AuthorId)
                 {
@@ -192,7 +202,8 @@ public sealed class CreateReplyCommandHandler
                 pulseType: "reply",
                 hasImage: hasImage,
                 hasLink: false,
-                mentionCount: 0);
+                mentionCount: mentionResult.Count,
+                hashtagCount: hashtagCount);
             activity?.SetSuccess(true);
 
             return new CreatePulseResult(
@@ -207,17 +218,5 @@ public sealed class CreateReplyCommandHandler
             activity?.RecordError(ex);
             throw;
         }
-    }
-
-    private static List<string> ExtractMentions(string content)
-    {
-        // Regex to match @handle (alphanumeric + underscore, 3-30 chars)
-        var mentionPattern = @"@(\w{3,30})";
-        var matches = Regex.Matches(content, mentionPattern);
-
-        return matches
-            .Select(m => m.Groups[1].Value.ToLowerInvariant())
-            .Distinct()
-            .ToList();
     }
 }
