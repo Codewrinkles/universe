@@ -1,3 +1,5 @@
+import { HTML_TEMPLATE } from './index.template';
+
 export const config = {
   runtime: 'edge',
 };
@@ -263,29 +265,18 @@ export default async function handler(request: Request) {
   const userAgent = request.headers.get('user-agent') || '';
   const pathname = url.pathname;
 
-  // Prevent infinite loop: if this request came from ourselves, just serve the static file
-  if (request.headers.get('x-middleware-bypass') === 'true') {
-    return fetch(request);
-  }
-
-  // Skip static assets (performance optimization)
+  // Skip static assets - serve them directly (no processing needed)
   if (
     pathname.startsWith('/assets/') ||
     pathname.startsWith('/src/') ||
     pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|webp)$/)
   ) {
-    return fetch(request);
+    // For static assets, fetch from origin and pass through
+    return fetch(new URL(pathname, url.origin));
   }
 
-  // Fetch the original HTML with bypass header to prevent loop
-  const modifiedRequest = new Request(request.url, {
-    headers: {
-      ...Object.fromEntries(request.headers.entries()),
-      'x-middleware-bypass': 'true',
-    },
-  });
-  const response = await fetch(modifiedRequest);
-  let html = await response.text();
+  // Use bundled HTML template (no fetch, no infinite loop)
+  let html = HTML_TEMPLATE;
 
   // Log bot detection
   const isBotRequest = isBot(userAgent);
