@@ -1,6 +1,8 @@
 import type { RepulsedPulse } from "../../types";
 import { formatTimeAgo } from "../../utils/timeUtils";
 import { config } from "../../config";
+import { parseMentions } from "./parseMentions";
+import { Link } from "react-router";
 
 interface PostRepostProps {
   repost: RepulsedPulse;
@@ -51,7 +53,35 @@ export function PostRepost({ repost }: PostRepostProps): JSX.Element {
 
       {/* Reposted content */}
       <p className="mt-2 text-sm text-text-primary line-clamp-3">
-        {repost.content}
+        {parseMentions(repost.content, []).map((part, index) => {
+          if (part.type === "hashtag" && part.tag) {
+            return (
+              <Link
+                key={index}
+                to={`/social/hashtag/${part.tag.toLowerCase()}`}
+                className="text-brand-link hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {part.content}
+              </Link>
+            );
+          }
+          if (part.type === "url" && part.url) {
+            return (
+              <a
+                key={index}
+                href={part.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-brand-link hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {part.content}
+              </a>
+            );
+          }
+          return <span key={index}>{part.content}</span>;
+        })}
       </p>
 
       {/* Reposted image (single only in backend for now) */}

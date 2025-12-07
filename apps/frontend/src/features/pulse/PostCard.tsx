@@ -358,6 +358,20 @@ export function PostCard({ post, onReplyClick, onFollowChange, onDelete }: PostC
                     </Link>
                   );
                 }
+                if (part.type === "url" && part.url) {
+                  return (
+                    <a
+                      key={index}
+                      href={part.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand-link hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {part.content}
+                    </a>
+                  );
+                }
                 return <span key={index}>{part.content}</span>;
               })}
             </p>

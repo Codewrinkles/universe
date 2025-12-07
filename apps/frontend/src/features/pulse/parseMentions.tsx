@@ -1,19 +1,21 @@
 import type { Mention } from "../../types";
 
 export interface ParsedContent {
-  type: "text" | "mention" | "hashtag";
+  type: "text" | "mention" | "hashtag" | "url";
   content: string;
   handle?: string;
   tag?: string;
+  url?: string;
 }
 
 export function parseMentions(content: string, mentions: Mention[]): ParsedContent[] {
   const mentionHandles = new Set(mentions.map((m) => m.handle.toLowerCase()));
   const parts: ParsedContent[] = [];
 
-  // Combined regex to match @mentions and #hashtags
-  // Matches @handle (3-30 chars) or #hashtag (2-100 chars)
-  const combinedRegex = /(@\w{3,30})|(#\w{2,100})/g;
+  // Combined regex to match @mentions, #hashtags, and URLs
+  // Matches @handle (3-30 chars) or #hashtag (2-100 chars) or http(s)://url
+  // URL pattern excludes trailing punctuation (.,;:!?) to handle "Check this out https://example.com."
+  const combinedRegex = /(@\w{3,30})|(#\w{2,100})|(https?:\/\/[^\s]+?(?=[.,;:!?)\]}\s]|$))/gi;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
@@ -51,6 +53,13 @@ export function parseMentions(content: string, mentions: Mention[]): ParsedConte
         type: "hashtag",
         content: match[2],
         tag: tag,
+      });
+    } else if (match[3]) {
+      // This is a URL (http:// or https://)
+      parts.push({
+        type: "url",
+        content: match[3],
+        url: match[3],
       });
     }
 

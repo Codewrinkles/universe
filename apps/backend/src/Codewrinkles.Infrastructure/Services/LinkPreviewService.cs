@@ -8,8 +8,10 @@ namespace Codewrinkles.Infrastructure.Services;
 
 public sealed class LinkPreviewService : ILinkPreviewService
 {
+    // Matches URLs but excludes trailing punctuation (.,;:!?)
+    // Example: "Check this out https://example.com." extracts "https://example.com" (without the period)
     private static readonly Regex UrlRegex = new(
-        @"https?://[^\s]+",
+        @"https?://[^\s]+?(?=[.,;:!?)\]}\s]|$)",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     private readonly HttpClient _httpClient;
@@ -35,14 +37,25 @@ public sealed class LinkPreviewService : ILinkPreviewService
     {
         try
         {
+            _logger.LogInformation("Fetching link preview for: {Url}", url);
+
             // Validate URL
             if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            {
+                _logger.LogWarning("Invalid URL format: {Url}", url);
                 return null;
+            }
 
             // Fetch HTML
             var response = await _httpClient.GetAsync(uri, cancellationToken);
             if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning(
+                    "Link preview fetch failed for {Url} with HTTP {StatusCode}",
+                    url,
+                    (int)response.StatusCode);
                 return null;
+            }
 
             var html = await response.Content.ReadAsStringAsync(cancellationToken);
 
