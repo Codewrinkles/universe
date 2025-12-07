@@ -92,6 +92,16 @@ public sealed class LinkPreviewService : ILinkPreviewService
             title = WebUtility.HtmlDecode(title);
             description = description is not null ? WebUtility.HtmlDecode(description) : null;
 
+            // Only return preview if it's actually useful (not generic)
+            // If we don't have good Open Graph data, return null so the URL stays clickable without a preview card
+            if (!IsPreviewWorthShowing(ogTitle, description, imageUrl, uri.Host))
+            {
+                _logger.LogInformation(
+                    "Preview for {Url} is too generic (no og:title or insufficient metadata). Skipping preview.",
+                    url);
+                return null;
+            }
+
             return new LinkPreviewData(
                 Url: url,
                 Title: title,
@@ -106,11 +116,29 @@ public sealed class LinkPreviewService : ILinkPreviewService
         }
     }
 
+    private static bool IsPreviewWorthShowing(
+        string? ogTitle,
+        string? description,
+        string? imageUrl,
+        string domain)
+    {
+        // Must have og:title to be worth showing
+        // If we only have HTML <title> or domain fallback, it's too generic
+        if (string.IsNullOrWhiteSpace(ogTitle))
+        {
+            return false;
+        }
+
+        // If og:title exists, we consider it worth showing
+        // (description and image are nice-to-have but not required)
+        return true;
+    }
+
     private static string? GetMetaContent(HtmlDocument doc, string property)
     {
         var node = doc.DocumentNode.SelectSingleNode($"//meta[@property='{property}']")
             ?? doc.DocumentNode.SelectSingleNode($"//meta[@name='{property}']");
 
-        return node?.GetAttributeValue("content", null)?.Trim();
+        return node?.GetAttributeValue("content", string.Empty)?.Trim();
     }
 }
