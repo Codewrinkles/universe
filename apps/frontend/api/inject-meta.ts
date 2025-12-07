@@ -265,18 +265,22 @@ export default async function handler(request: Request) {
   const userAgent = request.headers.get('user-agent') || '';
   const pathname = url.pathname;
 
+  console.log(`[Edge Function] Request: ${pathname}`);
+
   // Skip static assets - serve them directly (no processing needed)
   if (
     pathname.startsWith('/assets/') ||
     pathname.startsWith('/src/') ||
     pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|webp)$/)
   ) {
+    console.log(`[Edge Function] Skipping static asset: ${pathname}`);
     // For static assets, fetch from origin and pass through
     return fetch(new URL(pathname, url.origin));
   }
 
   // Use bundled HTML template (no fetch, no infinite loop)
   let html = HTML_TEMPLATE;
+  console.log(`[Edge Function] Using HTML template, length: ${html.length}`);
 
   // Log bot detection
   const isBotRequest = isBot(userAgent);
@@ -411,6 +415,7 @@ export default async function handler(request: Request) {
 
     // Handle other static pages (/, /privacy, /terms, etc.)
     const staticMeta = STATIC_PAGE_META[pathname];
+    console.log(`[Edge Function] Checking static meta for ${pathname}: ${staticMeta ? 'FOUND' : 'NOT FOUND'}`);
     if (staticMeta) {
       const pageUrl = pathname === '/' ? 'https://codewrinkles.com/' : `${SITE_URL}${pathname}`;
       const structuredData = generateStructuredData('website', {
@@ -419,6 +424,7 @@ export default async function handler(request: Request) {
         url: pageUrl,
       });
 
+      console.log(`[Edge Function] Injecting meta tags for ${pathname}, structured data length: ${structuredData.length}`);
       html = injectMetaTags(
         html,
         staticMeta.title,
@@ -430,6 +436,7 @@ export default async function handler(request: Request) {
         'website',
         structuredData
       );
+      console.log(`[Edge Function] After injection, HTML contains placeholder: ${html.includes('__STRUCTURED_DATA__')}`);
       return new Response(html, {
         status: 200,
         headers: {
