@@ -67,7 +67,8 @@ public sealed record PulseLinkPreviewDto(
 public sealed record FeedResponse(
     IReadOnlyList<PulseDto> Pulses,
     string? NextCursor,
-    bool HasMore
+    bool HasMore,
+    int? TotalCount = null
 );
 
 public sealed record ThreadResponse(

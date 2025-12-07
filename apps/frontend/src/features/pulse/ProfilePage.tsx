@@ -146,8 +146,11 @@ export function ProfilePage(): JSX.Element {
   const [activeTab, setActiveTab] = useState<Tab>("pulses");
   const [profile, setProfile] = useState<User | null>(null);
   const [pulses, setPulses] = useState<Pulse[]>([]);
+  const [totalPulsesCount, setTotalPulsesCount] = useState<number>(0);
   const [followers, setFollowers] = useState<FollowerDto[]>([]);
+  const [totalFollowersCount, setTotalFollowersCount] = useState<number>(0);
   const [following, setFollowing] = useState<FollowingDto[]>([]);
+  const [totalFollowingCount, setTotalFollowingCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingPulses, setIsLoadingPulses] = useState(false);
   const [isLoadingFollowers, setIsLoadingFollowers] = useState(false);
@@ -215,6 +218,7 @@ export function ProfilePage(): JSX.Element {
         if (response.ok) {
           const data = await response.json();
           setPulses(data.pulses || []);
+          setTotalPulsesCount(data.totalCount ?? 0);
         }
       } catch (err) {
         console.error("Error fetching pulses:", err);
@@ -244,6 +248,7 @@ export function ProfilePage(): JSX.Element {
         if (response.ok) {
           const data = await response.json();
           setFollowers(data.followers || []);
+          setTotalFollowersCount(data.totalCount ?? 0);
         }
       } catch (err) {
         console.error("Error fetching followers:", err);
@@ -273,6 +278,7 @@ export function ProfilePage(): JSX.Element {
         if (response.ok) {
           const data = await response.json();
           setFollowing(data.following || []);
+          setTotalFollowingCount(data.totalCount ?? 0);
         }
       } catch (err) {
         console.error("Error fetching following:", err);
@@ -309,6 +315,7 @@ export function ProfilePage(): JSX.Element {
           if (response.ok) {
             const data = await response.json();
             setPulses(data.pulses || []);
+            setTotalPulsesCount(data.totalCount ?? 0);
           }
         } catch (err) {
           console.error("Error fetching pulses:", err);
@@ -320,8 +327,9 @@ export function ProfilePage(): JSX.Element {
   };
 
   const handleDelete = (pulseId: string): void => {
-    // Remove the pulse from the local state
+    // Remove the pulse from the local state and decrement count
     setPulses((prevPulses) => prevPulses.filter((p) => p.id !== pulseId));
+    setTotalPulsesCount((prev) => Math.max(0, prev - 1));
   };
 
   const isOwnProfile = currentUser?.profileId === profile?.profileId;
@@ -424,9 +432,9 @@ export function ProfilePage(): JSX.Element {
         <ProfileHeader
           profile={profile}
           isOwnProfile={isOwnProfile}
-          followersCount={followers.length}
-          followingCount={following.length}
-          pulsesCount={pulses.length}
+          followersCount={totalFollowersCount}
+          followingCount={totalFollowingCount}
+          pulsesCount={totalPulsesCount}
           isLoadingCounts={isLoadingPulses || isLoadingFollowers || isLoadingFollowing}
         />
 

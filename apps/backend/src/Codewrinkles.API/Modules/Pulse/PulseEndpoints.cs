@@ -187,7 +187,8 @@ public static class PulseEndpoints
             {
                 pulses = result.Pulses,
                 nextCursor = result.NextCursor,
-                hasMore = result.HasMore
+                hasMore = result.HasMore,
+                totalCount = result.TotalCount
             });
         }
         catch (InvalidOperationException ex)
