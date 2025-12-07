@@ -103,37 +103,11 @@ public static class DependencyInjection
         services.AddSingleton<IBlobStorageService, AzureBlobStorageService>();
 
         // HttpClient for LinkPreviewService
-        // Configured to mimic a real Chrome browser to avoid bot detection
-        // Modern sites check Sec-Fetch-* headers - bots that don't send these get blocked/served generic HTML
+        // Simple, honest User-Agent - no browser impersonation
         services.AddHttpClient("LinkPreview", client =>
         {
-            client.Timeout = TimeSpan.FromSeconds(10);
-
-            // Use TryAddWithoutValidation for better header compatibility
-            // Chrome 120+ headers (Dec 2024)
-            client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent",
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-
-            client.DefaultRequestHeaders.TryAddWithoutValidation("Accept",
-                "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8");
-            client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "en-US,en;q=0.9");
-            client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate, br");
-
-            // CRITICAL: Sec-Fetch headers - sites use these to detect bots
-            // Real browsers always send these, bots typically don't
-            client.DefaultRequestHeaders.TryAddWithoutValidation("Sec-Fetch-Dest", "document");
-            client.DefaultRequestHeaders.TryAddWithoutValidation("Sec-Fetch-Mode", "navigate");
-            client.DefaultRequestHeaders.TryAddWithoutValidation("Sec-Fetch-Site", "none");
-            client.DefaultRequestHeaders.TryAddWithoutValidation("Sec-Fetch-User", "?1");
-
-            // Client Hints headers - must match User-Agent
-            client.DefaultRequestHeaders.TryAddWithoutValidation("Sec-Ch-Ua",
-                "\"Not_A Brand\";v=\"8\", \"Chromium\";v=\"120\", \"Google Chrome\";v=\"120\"");
-            client.DefaultRequestHeaders.TryAddWithoutValidation("Sec-Ch-Ua-Mobile", "?0");
-            client.DefaultRequestHeaders.TryAddWithoutValidation("Sec-Ch-Ua-Platform", "\"Windows\"");
-
-            client.DefaultRequestHeaders.TryAddWithoutValidation("Upgrade-Insecure-Requests", "1");
-            client.DefaultRequestHeaders.TryAddWithoutValidation("Cache-Control", "max-age=0");
+            client.Timeout = TimeSpan.FromSeconds(5);
+            client.DefaultRequestHeaders.Add("User-Agent", "Codewrinkles/1.0");
         });
         services.AddScoped<ILinkPreviewService, LinkPreviewService>();
 

@@ -73,11 +73,11 @@ public sealed class LinkPreviewService : ILinkPreviewService
             var ogTitle = GetMetaContent(doc, "og:title");
             var htmlTitle = doc.DocumentNode.SelectSingleNode("//title")?.InnerText?.Trim();
 
-            // Log if no Open Graph tags found (helps diagnose bot detection issues)
+            // Log if no Open Graph tags found (common for sites that don't have them or block bots)
             if (ogTitle is null)
             {
                 _logger.LogWarning(
-                    "No og:title found for {Url}. HTML title: {HtmlTitle}. Site may be detecting bot despite browser headers.",
+                    "No og:title found for {Url}. Falling back to HTML title: {HtmlTitle}",
                     url,
                     htmlTitle ?? "(none)");
             }
