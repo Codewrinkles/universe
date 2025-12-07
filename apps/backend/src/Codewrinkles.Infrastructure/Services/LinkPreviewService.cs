@@ -70,10 +70,19 @@ public sealed class LinkPreviewService : ILinkPreviewService
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
 
-            var title = GetMetaContent(doc, "og:title")
-                ?? doc.DocumentNode.SelectSingleNode("//title")?.InnerText?.Trim()
-                ?? uri.Host;
+            var ogTitle = GetMetaContent(doc, "og:title");
+            var htmlTitle = doc.DocumentNode.SelectSingleNode("//title")?.InnerText?.Trim();
 
+            // Log if no Open Graph tags found (helps diagnose bot detection issues)
+            if (ogTitle is null)
+            {
+                _logger.LogWarning(
+                    "No og:title found for {Url}. HTML title: {HtmlTitle}. Site may be detecting bot despite browser headers.",
+                    url,
+                    htmlTitle ?? "(none)");
+            }
+
+            var title = ogTitle ?? htmlTitle ?? uri.Host;
             var description = GetMetaContent(doc, "og:description")
                 ?? GetMetaContent(doc, "description");
 
