@@ -422,7 +422,6 @@ apps/frontend/dist/
 apps/frontend/.vite/
 apps/frontend/dist-ssr/
 apps/frontend/*.local
-apps/frontend/api/index.template.ts
 
 # Backend secrets and local configuration
 **/appsettings.*.local.json
