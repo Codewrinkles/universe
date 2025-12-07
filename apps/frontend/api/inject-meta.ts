@@ -263,6 +263,11 @@ export default async function handler(request: Request) {
   const userAgent = request.headers.get('user-agent') || '';
   const pathname = url.pathname;
 
+  // Prevent infinite loop: if this request came from ourselves, just serve the static file
+  if (request.headers.get('x-middleware-bypass') === 'true') {
+    return fetch(request);
+  }
+
   // Skip static assets (performance optimization)
   if (
     pathname.startsWith('/assets/') ||
@@ -272,8 +277,14 @@ export default async function handler(request: Request) {
     return fetch(request);
   }
 
-  // Fetch the original HTML (for both bots and humans)
-  const response = await fetch(request);
+  // Fetch the original HTML with bypass header to prevent loop
+  const modifiedRequest = new Request(request.url, {
+    headers: {
+      ...Object.fromEntries(request.headers.entries()),
+      'x-middleware-bypass': 'true',
+    },
+  });
+  const response = await fetch(modifiedRequest);
   let html = await response.text();
 
   // Log bot detection
