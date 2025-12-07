@@ -1,3 +1,0 @@
-# Prevent index.html from being deployed as static file
-# Edge function will serve it instead
-dist/index.html

@@ -704,6 +704,155 @@ npm install         # Install all dependencies
 - ✅ Custom authentication (no ASP.NET Core Identity)
 - ✅ JWT + refresh tokens with revocation
 
+### 🚨 CRITICAL: CQRS Handler Reuse - NEVER REUSE
+
+**❌ NEVER REUSE QUERIES, COMMANDS, OR HANDLERS**
+
+This is a **fundamental architectural rule** that prevents spaghetti code:
+
+**The Iron Rule:**
+> For any specific action in the app, there is always **exactly 1 handler** that executes with its corresponding request and response records.
+
+**NEVER reuse in these scenarios:**
+
+1. ❌ **NOT in middleware**
+   ```csharp
+   // ❌ WRONG - Middleware reusing existing query
+   public async Task InvokeAsync(HttpContext context, IMediator mediator)
+   {
+       var query = new GetPulseQuery(pulseId); // Reusing GetPulse
+       var result = await mediator.SendAsync(query);
+   }
+
+   // ✅ CORRECT - Create dedicated query for middleware use case
+   public async Task InvokeAsync(HttpContext context, IMediator mediator)
+   {
+       var query = new GetPulseHtmlQuery(pulseId); // New query for SEO
+       var result = await mediator.SendAsync(query);
+   }
+   ```
+
+2. ❌ **NOT in API endpoints**
+   ```csharp
+   // ❌ WRONG - Endpoint reusing query from another feature
+   app.MapGet("/admin/users", async (IMediator mediator) =>
+   {
+       var query = new GetUsersQuery(); // Reusing from user feature
+       return await mediator.SendAsync(query);
+   });
+
+   // ✅ CORRECT - Create dedicated query for admin endpoint
+   app.MapGet("/admin/users", async (IMediator mediator) =>
+   {
+       var query = new GetUsersForAdminQuery(); // Admin-specific query
+       return await mediator.SendAsync(query);
+   });
+   ```
+
+3. ❌ **NOT calling handler from another handler**
+   ```csharp
+   // ❌ WRONG - Handler calling another handler via IMediator
+   public sealed class CreatePulseCommandHandler : ICommandHandler<CreatePulseCommand, CreatePulseResult>
+   {
+       public async Task<CreatePulseResult> HandleAsync(CreatePulseCommand command, CancellationToken ct)
+       {
+           // Create pulse logic...
+
+           // ❌ Calling another handler
+           var query = new GetProfileQuery(command.AuthorId);
+           var profile = await _mediator.SendAsync(query, ct);
+       }
+   }
+
+   // ✅ CORRECT - Use repositories directly via IUnitOfWork
+   public sealed class CreatePulseCommandHandler : ICommandHandler<CreatePulseCommand, CreatePulseResult>
+   {
+       public async Task<CreatePulseResult> HandleAsync(CreatePulseCommand command, CancellationToken ct)
+       {
+           // Create pulse logic...
+
+           // ✅ Use repository directly
+           var profile = await _unitOfWork.Profiles.FindByIdAsync(command.AuthorId, ct);
+       }
+   }
+   ```
+
+**Why This Rule Exists:**
+
+- ✅ **Single Responsibility**: Each handler serves exactly one use case
+- ✅ **Independent Evolution**: Handlers can change without affecting others
+- ✅ **Clear Boundaries**: Easy to understand what each handler does
+- ✅ **No Coupling**: Handlers don't depend on each other
+- ✅ **Prevents Spaghetti**: No tangled web of handler dependencies
+- ❌ Reusing handlers creates hidden coupling and cascading changes
+- ❌ "It seems like duplication" is NOT a valid reason to reuse
+- ❌ Different code blocks have different reasons for change (even if similar)
+
+**What Looks Like Duplication (But Isn't):**
+
+```csharp
+// These two handlers look similar, but serve different use cases
+// GetPulse: For API endpoint returning JSON
+public sealed class GetPulseQueryHandler { /* ... */ }
+
+// GetPulseHtml: For SEO bots returning HTML
+public sealed class GetPulseHtmlQueryHandler { /* ... */ }
+
+// They have DIFFERENT:
+// - Response types (PulseDto vs HTML string)
+// - Data requirements (full engagement vs minimal data)
+// - Validation rules (user permissions vs public access)
+// - Reasons for change (API contract vs SEO requirements)
+```
+
+**Shared Logic:**
+
+If multiple handlers need the same logic, extract it to:
+- ✅ **Domain methods** (on entities)
+- ✅ **Application services** (in Application layer)
+- ✅ **Repository methods** (for data access)
+
+```csharp
+// ✅ CORRECT - Shared logic in service
+public sealed class HtmlGenerationService
+{
+    public string GeneratePulseHtml(PulseHtmlData data) { /* ... */ }
+}
+
+// Multiple handlers can use the service
+public sealed class GetPulseHtmlQueryHandler
+{
+    public async Task<GetPulseHtmlResult> HandleAsync(/* ... */)
+    {
+        var html = _htmlGenerator.GeneratePulseHtml(data); // Shared service
+    }
+}
+
+public sealed class GetProfileHtmlQueryHandler
+{
+    public async Task<GetProfileHtmlResult> HandleAsync(/* ... */)
+    {
+        var html = _htmlGenerator.GenerateProfileHtml(data); // Shared service
+    }
+}
+```
+
+**Rules:**
+
+1. ❌ **NEVER** reuse queries/commands/handlers across different use cases
+2. ❌ **NEVER** call a handler from another handler via IMediator
+3. ❌ **NEVER** reuse handlers in middleware or endpoints
+4. ✅ **ALWAYS** create a new query/command/handler for each distinct action
+5. ✅ **ALWAYS** use repositories directly (via IUnitOfWork) when handlers need data
+6. ✅ **ALWAYS** extract shared logic to services, not by reusing handlers
+7. ⚠️ When in doubt: Create a new handler. "Duplication" is better than coupling.
+
+**Exception:**
+
+The ONLY time you can reuse a query/command is when calling it from the **exact same context** (e.g., same endpoint retrying, same middleware on different request). Even then, prefer a new query.
+
+---
+
 ### 🚨 CRITICAL: Kommand Validator/Handler Pattern
 
 **Validators validate. Handlers orchestrate.**
@@ -947,4 +1096,4 @@ app.MapPost("/api/users", CreateUser)
 
 ---
 
-**Last Updated**: 2025-11-28 (update this when making significant changes)
+**Last Updated**: 2025-12-06 (update this when making significant changes)
