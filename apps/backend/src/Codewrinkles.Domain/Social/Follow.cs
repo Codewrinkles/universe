@@ -18,7 +18,7 @@ public sealed class Follow
     // Properties - Composite Primary Key
     public Guid FollowerId { get; private set; }   // Who is following
     public Guid FollowingId { get; private set; }  // Who is being followed
-    public DateTime CreatedAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
 
     // Navigation properties (cross-domain reference to Identity.Profile)
     public Profile Follower { get; private set; }
@@ -39,7 +39,7 @@ public sealed class Follow
         {
             FollowerId = followerId,
             FollowingId = followingId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow
         };
     }
 }

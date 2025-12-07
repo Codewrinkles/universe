@@ -18,8 +18,8 @@ public sealed class Profile
     public string? Location { get; private set; }
     public string? WebsiteUrl { get; private set; }
     public bool OnboardingCompleted { get; private set; }
-    public DateTime CreatedAt { get; private set; }
-    public DateTime UpdatedAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
+    public DateTimeOffset UpdatedAt { get; private set; }
 
     // Navigation property
     public Identity Identity { get; private set; }
@@ -44,8 +44,8 @@ public sealed class Profile
             Location = null,
             WebsiteUrl = null,
             OnboardingCompleted = false,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
         };
     }
 
@@ -59,7 +59,7 @@ public sealed class Profile
 
         Bio = string.IsNullOrWhiteSpace(bio) ? null : bio.Trim();
         AvatarUrl = string.IsNullOrWhiteSpace(avatarUrl) ? null : avatarUrl.Trim();
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     public void UpdateProfileDetails(string name, string? bio, string? handle, string? location, string? websiteUrl)
@@ -77,19 +77,19 @@ public sealed class Profile
         Location = string.IsNullOrWhiteSpace(location) ? null : location.Trim();
         WebsiteUrl = string.IsNullOrWhiteSpace(websiteUrl) ? null : websiteUrl.Trim();
 
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     public void UpdateAvatarUrl(string? avatarUrl)
     {
         AvatarUrl = string.IsNullOrWhiteSpace(avatarUrl) ? null : avatarUrl.Trim();
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     public void CompleteOnboarding()
     {
         OnboardingCompleted = true;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     // Private methods

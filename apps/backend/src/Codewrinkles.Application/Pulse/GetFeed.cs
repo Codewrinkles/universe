@@ -37,7 +37,7 @@ public sealed class GetFeedQueryHandler : ICommandHandler<GetFeedQuery, FeedResp
         try
         {
             // Decode cursor if provided
-            DateTime? beforeCreatedAt = null;
+            DateTimeOffset? beforeCreatedAt = null;
             Guid? beforeId = null;
             var cursorType = "initial";
 
@@ -181,7 +181,7 @@ public sealed class GetFeedQueryHandler : ICommandHandler<GetFeedQuery, FeedResp
         );
     }
 
-    private static string EncodeCursor(DateTime createdAt, Guid id)
+    private static string EncodeCursor(DateTimeOffset createdAt, Guid id)
     {
         var cursor = new { CreatedAt = createdAt, Id = id };
         var json = JsonSerializer.Serialize(cursor);
@@ -189,7 +189,7 @@ public sealed class GetFeedQueryHandler : ICommandHandler<GetFeedQuery, FeedResp
         return Convert.ToBase64String(bytes);
     }
 
-    private static (DateTime CreatedAt, Guid Id) DecodeCursor(string cursor)
+    private static (DateTimeOffset CreatedAt, Guid Id) DecodeCursor(string cursor)
     {
         try
         {
@@ -210,5 +210,5 @@ public sealed class GetFeedQueryHandler : ICommandHandler<GetFeedQuery, FeedResp
         }
     }
 
-    private sealed record CursorData(DateTime CreatedAt, Guid Id);
+    private sealed record CursorData(DateTimeOffset CreatedAt, Guid Id);
 }

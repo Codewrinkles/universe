@@ -28,7 +28,7 @@ public interface IHashtagRepository
     Task<List<Domain.Pulse.Pulse>> GetPulsesByHashtagAsync(
         string tag,
         int limit,
-        DateTime? beforeCreatedAt,
+        DateTimeOffset? beforeCreatedAt,
         Guid? beforeId,
         CancellationToken cancellationToken = default);
 }

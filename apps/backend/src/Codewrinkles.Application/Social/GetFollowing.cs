@@ -26,7 +26,7 @@ public sealed class GetFollowingQueryHandler : ICommandHandler<GetFollowingQuery
         CancellationToken cancellationToken)
     {
         // Decode cursor if provided
-        DateTime? beforeCreatedAt = null;
+        DateTimeOffset? beforeCreatedAt = null;
         Guid? beforeId = null;
 
         if (!string.IsNullOrWhiteSpace(query.Cursor))
@@ -36,7 +36,7 @@ public sealed class GetFollowingQueryHandler : ICommandHandler<GetFollowingQuery
             beforeId = cursor.Id;
         }
 
-        // Fetch following from repository
+        // Fetch following from repository (now returns ProfileWithFollowDate)
         var following = await _unitOfWork.Follows.GetFollowingAsync(
             profileId: query.ProfileId,
             limit: query.Limit + 1, // Fetch one extra to determine if there are more
@@ -53,34 +53,34 @@ public sealed class GetFollowingQueryHandler : ICommandHandler<GetFollowingQuery
         var hasMore = following.Count > query.Limit;
         var followingToReturn = hasMore ? following.Take(query.Limit).ToList() : following;
 
-        // Generate next cursor
+        // Generate next cursor using the actual FollowedAt from the Follow entity
         string? nextCursor = null;
         if (hasMore)
         {
             var lastFollowing = followingToReturn.Last();
-            nextCursor = EncodeCursor(DateTime.UtcNow, lastFollowing.Id);
+            nextCursor = EncodeCursor(lastFollowing.FollowedAt, lastFollowing.Profile.Id);
         }
 
         // Batch check which following the current user is also following (if authenticated)
         var followingProfileIds = new HashSet<Guid>();
         if (query.CurrentUserId.HasValue)
         {
-            var profileIds = followingToReturn.Select(p => p.Id).ToList();
+            var profileIds = followingToReturn.Select(f => f.Profile.Id).ToList();
             followingProfileIds = await _unitOfWork.Follows.GetFollowingProfileIdsAsync(
                 profileIds,
                 query.CurrentUserId.Value,
                 cancellationToken);
         }
 
-        // Map to DTOs
-        var followingDtos = followingToReturn.Select(p => new FollowingDto(
-            ProfileId: p.Id,
-            Name: p.Name,
-            Handle: p.Handle ?? string.Empty,
-            AvatarUrl: p.AvatarUrl,
-            Bio: p.Bio,
-            FollowedAt: DateTime.UtcNow, // TODO: This should come from Follow.CreatedAt
-            IsFollowing: followingProfileIds.Contains(p.Id)
+        // Map to DTOs - now using the actual FollowedAt from the Follow entity
+        var followingDtos = followingToReturn.Select(f => new FollowingDto(
+            ProfileId: f.Profile.Id,
+            Name: f.Profile.Name,
+            Handle: f.Profile.Handle ?? string.Empty,
+            AvatarUrl: f.Profile.AvatarUrl,
+            Bio: f.Profile.Bio,
+            FollowedAt: f.FollowedAt,
+            IsFollowing: followingProfileIds.Contains(f.Profile.Id)
         )).ToList();
 
         return new FollowingResponse(
@@ -91,7 +91,7 @@ public sealed class GetFollowingQueryHandler : ICommandHandler<GetFollowingQuery
         );
     }
 
-    private static string EncodeCursor(DateTime createdAt, Guid id)
+    private static string EncodeCursor(DateTimeOffset createdAt, Guid id)
     {
         var cursor = new { CreatedAt = createdAt, Id = id };
         var json = JsonSerializer.Serialize(cursor);
@@ -99,7 +99,7 @@ public sealed class GetFollowingQueryHandler : ICommandHandler<GetFollowingQuery
         return Convert.ToBase64String(bytes);
     }
 
-    private static (DateTime CreatedAt, Guid Id) DecodeCursor(string cursor)
+    private static (DateTimeOffset CreatedAt, Guid Id) DecodeCursor(string cursor)
     {
         try
         {
@@ -120,5 +120,5 @@ public sealed class GetFollowingQueryHandler : ICommandHandler<GetFollowingQuery
         }
     }
 
-    private sealed record CursorData(DateTime CreatedAt, Guid Id);
+    private sealed record CursorData(DateTimeOffset CreatedAt, Guid Id);
 }

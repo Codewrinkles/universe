@@ -37,11 +37,11 @@ public sealed class ExternalLoginConfiguration : IEntityTypeConfiguration<Extern
 
         builder.Property(el => el.CreatedAt)
             .IsRequired()
-            .HasDefaultValueSql("GETUTCDATE()");
+            .HasDefaultValueSql("SYSDATETIMEOFFSET()");
 
         builder.Property(el => el.UpdatedAt)
             .IsRequired()
-            .HasDefaultValueSql("GETUTCDATE()");
+            .HasDefaultValueSql("SYSDATETIMEOFFSET()");
 
         // Unique constraint on Provider + ProviderUserId
         builder.HasIndex(el => new { el.Provider, el.ProviderUserId })

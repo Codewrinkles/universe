@@ -45,7 +45,7 @@ public interface IBookmarkRepository
     Task<(List<Domain.Pulse.Pulse> Pulses, bool HasMore)> GetBookmarkedPulsesAsync(
         Guid profileId,
         int limit,
-        DateTime? beforeCreatedAt = null,
+        DateTimeOffset? beforeCreatedAt = null,
         Guid? beforeId = null,
         CancellationToken cancellationToken = default);
 
@@ -58,7 +58,7 @@ public interface IBookmarkRepository
     Task<FeedData> GetBookmarkedPulsesWithMetadataAsync(
         Guid profileId,
         int limit,
-        DateTime? beforeCreatedAt = null,
+        DateTimeOffset? beforeCreatedAt = null,
         Guid? beforeId = null,
         CancellationToken cancellationToken = default);
 }

@@ -309,6 +309,73 @@ public void Configure(EntityTypeBuilder<Identity> builder)
 
 ---
 
+### 🚨 CRITICAL: DateTime vs DateTimeOffset - ALWAYS Use DateTimeOffset
+
+**❌ NEVER USE `DateTime` - ALWAYS USE `DateTimeOffset`**
+
+This is a **non-negotiable standard** for all timestamp handling in the backend. `DateTime` loses timezone information, causing bugs when data crosses timezone boundaries.
+
+**Anti-Pattern (NEVER DO THIS):**
+```csharp
+// ❌ WRONG - DateTime loses timezone context
+public DateTime CreatedAt { get; private set; }
+public DateTime? UpdatedAt { get; private set; }
+CreatedAt = DateTime.UtcNow;
+```
+
+**The Correct Pattern:**
+```csharp
+// ✅ CORRECT - DateTimeOffset preserves timezone offset
+public DateTimeOffset CreatedAt { get; private set; }
+public DateTimeOffset? UpdatedAt { get; private set; }
+CreatedAt = DateTimeOffset.UtcNow;
+```
+
+**EF Core Configuration:**
+```csharp
+// ✅ Use SYSDATETIMEOFFSET() for database defaults
+builder.Property(e => e.CreatedAt)
+    .IsRequired()
+    .HasDefaultValueSql("SYSDATETIMEOFFSET()");
+
+// ❌ NEVER use GETUTCDATE() - it returns datetime2, not datetimeoffset
+```
+
+**SQL Server Column Type:**
+- `DateTimeOffset` in C# → `datetimeoffset` in SQL Server
+- `DateTime` in C# → `datetime2` in SQL Server (loses timezone)
+
+**Why DateTimeOffset:**
+- ✅ **Preserves timezone offset**: UTC offset is stored with the value
+- ✅ **Unambiguous**: No confusion about local vs UTC
+- ✅ **API friendly**: JSON serialization includes offset (+00:00)
+- ✅ **Cross-timezone safe**: Works correctly across server/client timezones
+- ❌ `DateTime` loses context and causes subtle timezone bugs
+
+**JWT Tokens Exception:**
+The `JwtSecurityToken` class requires `DateTime`. Use `.UtcDateTime` to extract:
+```csharp
+// JWT token requires DateTime, so extract from DateTimeOffset
+var token = new JwtSecurityToken(
+    expires: DateTimeOffset.UtcNow.AddMinutes(15).UtcDateTime,
+    // ...
+);
+```
+
+**Rules:**
+1. ✅ **ALWAYS** use `DateTimeOffset` for all timestamp properties
+2. ✅ **ALWAYS** use `DateTimeOffset.UtcNow` instead of `DateTime.UtcNow`
+3. ✅ **ALWAYS** use `SYSDATETIMEOFFSET()` for SQL Server defaults
+4. ❌ **NEVER** use `DateTime` in domain entities or DTOs
+5. ❌ **NEVER** use `GETUTCDATE()` in EF Core configurations
+6. ⚠️ JWT tokens are the ONLY exception (use `.UtcDateTime`)
+
+**References:**
+- [DateTimeOffset vs DateTime - Stack Overflow](https://stackoverflow.com/questions/4331189/datetime-vs-datetimeoffset)
+- [Best Practices for DateTimeOffset - Microsoft](https://learn.microsoft.com/en-us/dotnet/standard/datetime/choosing-between-datetime)
+
+---
+
 ### 🚨 CRITICAL: C# Async/Await Patterns
 
 **✅ ALWAYS USE `async`/`await` - NEVER USE `.AsTask()` OR OTHER WORKAROUNDS**

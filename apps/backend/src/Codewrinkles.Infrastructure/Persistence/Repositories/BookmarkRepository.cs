@@ -77,7 +77,7 @@ public sealed class BookmarkRepository : IBookmarkRepository
     public async Task<(List<Pulse> Pulses, bool HasMore)> GetBookmarkedPulsesAsync(
         Guid profileId,
         int limit,
-        DateTime? beforeCreatedAt = null,
+        DateTimeOffset? beforeCreatedAt = null,
         Guid? beforeId = null,
         CancellationToken cancellationToken = default)
     {
@@ -135,7 +135,7 @@ public sealed class BookmarkRepository : IBookmarkRepository
     public async Task<FeedData> GetBookmarkedPulsesWithMetadataAsync(
         Guid profileId,
         int limit,
-        DateTime? beforeCreatedAt = null,
+        DateTimeOffset? beforeCreatedAt = null,
         Guid? beforeId = null,
         CancellationToken cancellationToken = default)
     {

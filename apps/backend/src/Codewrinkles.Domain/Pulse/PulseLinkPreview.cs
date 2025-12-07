@@ -10,7 +10,7 @@ public sealed class PulseLinkPreview
     public string? Description { get; private set; }
     public string? ImageUrl { get; private set; }
     public string Domain { get; private set; }
-    public DateTime CreatedAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
 
     // Navigation property
     public Pulse Pulse { get; private set; }
@@ -43,7 +43,7 @@ public sealed class PulseLinkPreview
             Description = description?.Trim(),
             ImageUrl = imageUrl?.Trim(),
             Domain = domain.Trim().ToLowerInvariant(),
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow
         };
     }
 }

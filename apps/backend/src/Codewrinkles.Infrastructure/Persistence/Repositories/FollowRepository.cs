@@ -30,10 +30,10 @@ public sealed class FollowRepository : IFollowRepository
                 cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Profile>> GetFollowersAsync(
+    public async Task<IReadOnlyList<ProfileWithFollowDate>> GetFollowersAsync(
         Guid profileId,
         int limit,
-        DateTime? beforeCreatedAt,
+        DateTimeOffset? beforeCreatedAt,
         Guid? beforeId,
         CancellationToken cancellationToken)
     {
@@ -53,16 +53,16 @@ public sealed class FollowRepository : IFollowRepository
             .OrderByDescending(f => f.CreatedAt)
             .ThenByDescending(f => f.FollowerId)
             .Take(limit)
-            .Select(f => f.Follower)
+            .Select(f => new ProfileWithFollowDate(f.Follower, f.CreatedAt))
             .ToListAsync(cancellationToken);
 
         return followers;
     }
 
-    public async Task<IReadOnlyList<Profile>> GetFollowingAsync(
+    public async Task<IReadOnlyList<ProfileWithFollowDate>> GetFollowingAsync(
         Guid profileId,
         int limit,
-        DateTime? beforeCreatedAt,
+        DateTimeOffset? beforeCreatedAt,
         Guid? beforeId,
         CancellationToken cancellationToken)
     {
@@ -82,7 +82,7 @@ public sealed class FollowRepository : IFollowRepository
             .OrderByDescending(f => f.CreatedAt)
             .ThenByDescending(f => f.FollowingId)
             .Take(limit)
-            .Select(f => f.Following)
+            .Select(f => new ProfileWithFollowDate(f.Following, f.CreatedAt))
             .ToListAsync(cancellationToken);
 
         return following;

@@ -96,7 +96,7 @@ public sealed class RefreshAccessTokenCommandHandler : ICommandHandler<RefreshAc
 
             // 6. Generate new refresh token (token rotation)
             var (newRefreshToken, newTokenHash) = JwtTokenGenerator.GenerateRefreshToken();
-            var newRefreshTokenExpiry = DateTime.UtcNow.AddDays(_jwtTokenGenerator.RefreshTokenExpiryDays);
+            var newRefreshTokenExpiry = DateTimeOffset.UtcNow.AddDays(_jwtTokenGenerator.RefreshTokenExpiryDays);
 
             var newRefreshTokenEntity = RefreshToken.Create(
                 newTokenHash,

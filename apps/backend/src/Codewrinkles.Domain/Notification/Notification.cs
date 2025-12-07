@@ -18,8 +18,8 @@ public sealed class Notification
     public Guid? EntityId { get; private set; }
     public string? EntityType { get; private set; }
     public bool IsRead { get; private set; }
-    public DateTime CreatedAt { get; private set; }
-    public DateTime? ReadAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
+    public DateTimeOffset? ReadAt { get; private set; }
 
     // Navigation properties
     public Profile Recipient { get; private set; }
@@ -40,7 +40,7 @@ public sealed class Notification
             EntityId = pulseId,
             EntityType = "Pulse",
             IsRead = false,
-            CreatedAt = DateTime.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow,
             ReadAt = null
         };
     }
@@ -58,7 +58,7 @@ public sealed class Notification
             EntityId = pulseId,
             EntityType = "Pulse",
             IsRead = false,
-            CreatedAt = DateTime.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow,
             ReadAt = null
         };
     }
@@ -76,7 +76,7 @@ public sealed class Notification
             EntityId = pulseId,
             EntityType = "Pulse",
             IsRead = false,
-            CreatedAt = DateTime.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow,
             ReadAt = null
         };
     }
@@ -94,7 +94,7 @@ public sealed class Notification
             EntityId = pulseId,
             EntityType = "Pulse",
             IsRead = false,
-            CreatedAt = DateTime.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow,
             ReadAt = null
         };
     }
@@ -111,7 +111,7 @@ public sealed class Notification
             EntityId = null,
             EntityType = "Profile",
             IsRead = false,
-            CreatedAt = DateTime.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow,
             ReadAt = null
         };
     }
@@ -122,7 +122,7 @@ public sealed class Notification
         if (!IsRead)
         {
             IsRead = true;
-            ReadAt = DateTime.UtcNow;
+            ReadAt = DateTimeOffset.UtcNow;
         }
     }
 }

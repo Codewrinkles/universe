@@ -7,8 +7,8 @@ public sealed class Hashtag
     public string Tag { get; private set; }
     public string TagDisplay { get; private set; }
     public int PulseCount { get; private set; }
-    public DateTime LastUsedAt { get; private set; }
-    public DateTime CreatedAt { get; private set; }
+    public DateTimeOffset LastUsedAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
 
     // Navigation property
     public ICollection<PulseHashtag> PulseHashtags { get; private set; } = [];
@@ -32,8 +32,8 @@ public sealed class Hashtag
             Tag = normalized,
             TagDisplay = tagDisplay.Trim().TrimStart('#'),
             PulseCount = 0,
-            LastUsedAt = DateTime.UtcNow,
-            CreatedAt = DateTime.UtcNow
+            LastUsedAt = DateTimeOffset.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow
         };
     }
 
@@ -41,7 +41,7 @@ public sealed class Hashtag
     public void IncrementUsage()
     {
         PulseCount++;
-        LastUsedAt = DateTime.UtcNow;
+        LastUsedAt = DateTimeOffset.UtcNow;
     }
 
     public void DecrementUsage()

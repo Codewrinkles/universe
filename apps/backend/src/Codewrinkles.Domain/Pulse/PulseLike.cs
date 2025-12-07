@@ -13,7 +13,7 @@ public sealed class PulseLike
     public Guid ProfileId { get; private set; }
 
     // Timestamp
-    public DateTime CreatedAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
 
     // Navigation properties
     public Pulse Pulse { get; private set; }
@@ -33,7 +33,7 @@ public sealed class PulseLike
         {
             PulseId = pulseId,
             ProfileId = profileId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow
         };
     }
 }

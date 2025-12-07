@@ -21,8 +21,8 @@ public sealed class Pulse
     public Guid? ParentPulseId { get; private set; }
     public Guid? ThreadRootId { get; private set; }
     public PulseType Type { get; private set; }
-    public DateTime CreatedAt { get; private set; }
-    public DateTime? UpdatedAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
+    public DateTimeOffset? UpdatedAt { get; private set; }
     public bool IsDeleted { get; private set; }
 
     // Navigation properties
@@ -58,7 +58,7 @@ public sealed class Pulse
             Type = PulseType.Original,
             RepulsedPulseId = null,
             ParentPulseId = null,
-            CreatedAt = DateTime.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = null,
             IsDeleted = false
         };
@@ -87,7 +87,7 @@ public sealed class Pulse
             Type = PulseType.Repulse,
             RepulsedPulseId = repulsedPulseId,
             ParentPulseId = null,
-            CreatedAt = DateTime.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = null,
             IsDeleted = false
         };
@@ -117,7 +117,7 @@ public sealed class Pulse
             RepulsedPulseId = null,
             ParentPulseId = parentPulseId,
             ThreadRootId = threadRootId,
-            CreatedAt = DateTime.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = null,
             IsDeleted = false
         };
@@ -127,6 +127,6 @@ public sealed class Pulse
     public void MarkAsDeleted()
     {
         IsDeleted = true;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
     }
 }

@@ -17,10 +17,10 @@ public sealed class Identity
     public bool IsActive { get; private set; }
     public UserRole Role { get; private set; }
     public int FailedLoginAttempts { get; private set; }
-    public DateTime? LockedUntil { get; private set; }
-    public DateTime CreatedAt { get; private set; }
-    public DateTime UpdatedAt { get; private set; }
-    public DateTime? LastLoginAt { get; private set; }
+    public DateTimeOffset? LockedUntil { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
+    public DateTimeOffset UpdatedAt { get; private set; }
+    public DateTimeOffset? LastLoginAt { get; private set; }
 
     // Navigation properties
     public Profile Profile { get; private set; }
@@ -43,8 +43,8 @@ public sealed class Identity
             Role = UserRole.User,
             FailedLoginAttempts = 0,
             LockedUntil = null,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
             LastLoginAt = null
         };
     }
@@ -61,8 +61,8 @@ public sealed class Identity
             IsEmailVerified = isEmailVerified,
             IsActive = true,
             FailedLoginAttempts = 0,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
             Role = UserRole.User
         };
     }
@@ -71,44 +71,44 @@ public sealed class Identity
     public void MarkEmailAsVerified()
     {
         IsEmailVerified = true;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     public void RecordSuccessfulLogin()
     {
         FailedLoginAttempts = 0;
         LockedUntil = null;
-        LastLoginAt = DateTime.UtcNow;
-        UpdatedAt = DateTime.UtcNow;
+        LastLoginAt = DateTimeOffset.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     public void RecordFailedLogin()
     {
         FailedLoginAttempts++;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
 
         // Lock account after 5 failed attempts for 15 minutes
         if (FailedLoginAttempts >= 5)
         {
-            LockedUntil = DateTime.UtcNow.AddMinutes(15);
+            LockedUntil = DateTimeOffset.UtcNow.AddMinutes(15);
         }
     }
 
     public bool IsLockedOut()
     {
-        return LockedUntil.HasValue && LockedUntil.Value > DateTime.UtcNow;
+        return LockedUntil.HasValue && LockedUntil.Value > DateTimeOffset.UtcNow;
     }
 
     public void Suspend()
     {
         IsActive = false;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     public void Activate()
     {
         IsActive = true;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     public void ChangePassword(string newPasswordHash)
@@ -116,13 +116,13 @@ public sealed class Identity
         ArgumentException.ThrowIfNullOrWhiteSpace(newPasswordHash, nameof(newPasswordHash));
 
         PasswordHash = newPasswordHash;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     public void PromoteToAdmin()
     {
         Role = UserRole.Admin;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     public bool HasOAuthProvider(OAuthProvider provider)

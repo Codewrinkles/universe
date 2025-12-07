@@ -29,7 +29,7 @@ public sealed class PulseConfiguration : IEntityTypeConfiguration<Domain.Pulse.P
 
         builder.Property(p => p.CreatedAt)
             .IsRequired()
-            .HasDefaultValueSql("GETUTCDATE()");
+            .HasDefaultValueSql("SYSDATETIMEOFFSET()");
 
         builder.Property(p => p.UpdatedAt)
             .IsRequired(false);

@@ -3,6 +3,11 @@ using Codewrinkles.Domain.Social;
 
 namespace Codewrinkles.Application.Common.Interfaces;
 
+/// <summary>
+/// Profile with the date it was followed. Used for pagination cursors.
+/// </summary>
+public sealed record ProfileWithFollowDate(Profile Profile, DateTimeOffset FollowedAt);
+
 public interface IFollowRepository
 {
     // Queries
@@ -11,17 +16,17 @@ public interface IFollowRepository
         Guid followingId,
         CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<Profile>> GetFollowersAsync(
+    Task<IReadOnlyList<ProfileWithFollowDate>> GetFollowersAsync(
         Guid profileId,
         int limit,
-        DateTime? beforeCreatedAt,
+        DateTimeOffset? beforeCreatedAt,
         Guid? beforeId,
         CancellationToken cancellationToken);
 
-    Task<IReadOnlyList<Profile>> GetFollowingAsync(
+    Task<IReadOnlyList<ProfileWithFollowDate>> GetFollowingAsync(
         Guid profileId,
         int limit,
-        DateTime? beforeCreatedAt,
+        DateTimeOffset? beforeCreatedAt,
         Guid? beforeId,
         CancellationToken cancellationToken);
 

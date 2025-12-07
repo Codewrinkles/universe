@@ -10,7 +10,7 @@ public sealed record GetThreadQuery(
     Guid PulseId,
     Guid? CurrentUserId,
     int Limit = 20,
-    DateTime? BeforeCreatedAt = null,
+    DateTimeOffset? BeforeCreatedAt = null,
     Guid? BeforeId = null
 ) : ICommand<ThreadResponse>;
 

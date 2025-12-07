@@ -27,7 +27,7 @@ public sealed class GetPulsesByAuthorQueryHandler : ICommandHandler<GetPulsesByA
         CancellationToken cancellationToken)
     {
         // Decode cursor if provided
-        DateTime? beforeCreatedAt = null;
+        DateTimeOffset? beforeCreatedAt = null;
         Guid? beforeId = null;
 
         if (!string.IsNullOrWhiteSpace(query.Cursor))
@@ -156,7 +156,7 @@ public sealed class GetPulsesByAuthorQueryHandler : ICommandHandler<GetPulsesByA
         );
     }
 
-    private static string EncodeCursor(DateTime createdAt, Guid id)
+    private static string EncodeCursor(DateTimeOffset createdAt, Guid id)
     {
         var cursor = new { CreatedAt = createdAt, Id = id };
         var json = JsonSerializer.Serialize(cursor);
@@ -164,7 +164,7 @@ public sealed class GetPulsesByAuthorQueryHandler : ICommandHandler<GetPulsesByA
         return Convert.ToBase64String(bytes);
     }
 
-    private static (DateTime CreatedAt, Guid Id) DecodeCursor(string cursor)
+    private static (DateTimeOffset CreatedAt, Guid Id) DecodeCursor(string cursor)
     {
         try
         {
@@ -185,5 +185,5 @@ public sealed class GetPulsesByAuthorQueryHandler : ICommandHandler<GetPulsesByA
         }
     }
 
-    private sealed record CursorData(DateTime CreatedAt, Guid Id);
+    private sealed record CursorData(DateTimeOffset CreatedAt, Guid Id);
 }

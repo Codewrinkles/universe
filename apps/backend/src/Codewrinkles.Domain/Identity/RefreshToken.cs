@@ -17,11 +17,11 @@ public sealed class RefreshToken
     public Identity Identity { get; private set; }
 
     // Expiration and validity
-    public DateTime CreatedAt { get; private set; }
-    public DateTime ExpiresAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
+    public DateTimeOffset ExpiresAt { get; private set; }
     public bool IsUsed { get; private set; }
     public bool IsRevoked { get; private set; }
-    public DateTime? RevokedAt { get; private set; }
+    public DateTimeOffset? RevokedAt { get; private set; }
     public string? RevokedReason { get; private set; }
 
     // Token rotation tracking
@@ -38,11 +38,11 @@ public sealed class RefreshToken
     public static RefreshToken Create(
         string tokenHash,
         Guid identityId,
-        DateTime expiresAt)
+        DateTimeOffset expiresAt)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(tokenHash);
 
-        if (expiresAt <= DateTime.UtcNow)
+        if (expiresAt <= DateTimeOffset.UtcNow)
         {
             throw new ArgumentException("Expiration date must be in the future", nameof(expiresAt));
         }
@@ -52,7 +52,7 @@ public sealed class RefreshToken
             Id = Guid.NewGuid(), // Will be overwritten by EF Core sequential GUID
             TokenHash = tokenHash,
             IdentityId = identityId,
-            CreatedAt = DateTime.UtcNow,
+            CreatedAt = DateTimeOffset.UtcNow,
             ExpiresAt = expiresAt,
             IsUsed = false,
             IsRevoked = false
@@ -72,7 +72,7 @@ public sealed class RefreshToken
     /// </summary>
     public bool IsExpired()
     {
-        return DateTime.UtcNow >= ExpiresAt;
+        return DateTimeOffset.UtcNow >= ExpiresAt;
     }
 
     /// <summary>
@@ -92,7 +92,7 @@ public sealed class RefreshToken
         ArgumentException.ThrowIfNullOrWhiteSpace(reason);
 
         IsRevoked = true;
-        RevokedAt = DateTime.UtcNow;
+        RevokedAt = DateTimeOffset.UtcNow;
         RevokedReason = reason;
     }
 }

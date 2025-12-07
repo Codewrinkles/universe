@@ -6,7 +6,7 @@ public sealed class PulseHashtag
     public Guid PulseId { get; private set; }
     public Guid HashtagId { get; private set; }
     public int Position { get; private set; }
-    public DateTime CreatedAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
 
     // Navigation properties
     public Pulse Pulse { get; private set; }
@@ -26,7 +26,7 @@ public sealed class PulseHashtag
             PulseId = pulseId,
             HashtagId = hashtagId,
             Position = position,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow
         };
     }
 }

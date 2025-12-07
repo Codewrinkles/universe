@@ -100,7 +100,7 @@ public sealed class RegisterUserCommandHandler
 
             // Generate refresh token and store in database
             var (refreshToken, refreshTokenHash) = JwtTokenGenerator.GenerateRefreshToken();
-            var refreshTokenExpiry = DateTime.UtcNow.AddDays(_jwtTokenGenerator.RefreshTokenExpiryDays);
+            var refreshTokenExpiry = DateTimeOffset.UtcNow.AddDays(_jwtTokenGenerator.RefreshTokenExpiryDays);
 
             var refreshTokenEntity = RefreshToken.Create(
                 refreshTokenHash,

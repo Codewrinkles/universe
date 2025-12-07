@@ -5,7 +5,7 @@ public sealed record PulseDto(
     PulseAuthorDto Author,
     string Content,
     string Type,
-    DateTime CreatedAt,
+    DateTimeOffset CreatedAt,
     PulseEngagementDto Engagement,
     bool IsLikedByCurrentUser,
     bool IsFollowingAuthor,
@@ -52,7 +52,7 @@ public sealed record RepulsedPulseDto(
     Guid Id,
     PulseAuthorDto Author,
     string Content,
-    DateTime CreatedAt,
+    DateTimeOffset CreatedAt,
     bool IsDeleted
 );
 

@@ -22,7 +22,7 @@ public sealed record NotificationDto(
     string Type,
     Guid? EntityId,
     bool IsRead,
-    DateTime CreatedAt
+    DateTimeOffset CreatedAt
 );
 
 public sealed record NotificationActorDto(

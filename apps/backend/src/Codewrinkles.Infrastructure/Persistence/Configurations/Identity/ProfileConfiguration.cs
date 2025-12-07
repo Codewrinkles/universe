@@ -49,11 +49,11 @@ public sealed class ProfileConfiguration : IEntityTypeConfiguration<Profile>
 
         builder.Property(p => p.CreatedAt)
             .IsRequired()
-            .HasDefaultValueSql("GETUTCDATE()");
+            .HasDefaultValueSql("SYSDATETIMEOFFSET()");
 
         builder.Property(p => p.UpdatedAt)
             .IsRequired()
-            .HasDefaultValueSql("GETUTCDATE()");
+            .HasDefaultValueSql("SYSDATETIMEOFFSET()");
 
         // Indexes
         builder.HasIndex(p => p.IdentityId)

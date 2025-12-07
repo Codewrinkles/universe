@@ -53,7 +53,7 @@ public sealed class PulseRepository : IPulseRepository
     public async Task<IReadOnlyList<Pulse>> GetFeedAsync(
         Guid? currentUserId,
         int limit,
-        DateTime? beforeCreatedAt,
+        DateTimeOffset? beforeCreatedAt,
         Guid? beforeId,
         CancellationToken cancellationToken = default)
     {
@@ -142,7 +142,7 @@ public sealed class PulseRepository : IPulseRepository
     public Task<IReadOnlyList<Pulse>> GetByAuthorIdAsync(
         Guid authorId,
         int limit,
-        DateTime? beforeCreatedAt,
+        DateTimeOffset? beforeCreatedAt,
         Guid? beforeId,
         CancellationToken cancellationToken = default)
     {
@@ -259,7 +259,7 @@ public sealed class PulseRepository : IPulseRepository
     public Task<IReadOnlyList<Pulse>> GetRepliesByThreadRootIdAsync(
         Guid threadRootId,
         int limit,
-        DateTime? beforeCreatedAt,
+        DateTimeOffset? beforeCreatedAt,
         Guid? beforeId,
         CancellationToken cancellationToken = default)
     {
@@ -326,7 +326,7 @@ public sealed class PulseRepository : IPulseRepository
     public async Task<FeedData> GetFeedWithMetadataAsync(
         Guid? currentUserId,
         int limit,
-        DateTime? beforeCreatedAt,
+        DateTimeOffset? beforeCreatedAt,
         Guid? beforeId,
         CancellationToken cancellationToken = default)
     {
@@ -417,7 +417,7 @@ public sealed class PulseRepository : IPulseRepository
         Guid authorId,
         Guid? currentUserId,
         int limit,
-        DateTime? beforeCreatedAt,
+        DateTimeOffset? beforeCreatedAt,
         Guid? beforeId,
         CancellationToken cancellationToken = default)
     {

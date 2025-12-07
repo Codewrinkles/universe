@@ -10,7 +10,7 @@ public sealed class PulseMention
     public Guid PulseId { get; private set; }
     public Guid ProfileId { get; private set; }
     public string Handle { get; private set; }
-    public DateTime CreatedAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
 
     // Navigation properties
     public Pulse Pulse { get; private set; }
@@ -32,7 +32,7 @@ public sealed class PulseMention
             PulseId = pulseId,
             ProfileId = profileId,
             Handle = handle.Trim().ToLowerInvariant(),
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow
         };
     }
 }

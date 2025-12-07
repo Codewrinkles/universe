@@ -84,7 +84,7 @@ public sealed class LoginUserCommandHandler
 
             // Generate refresh token and store in database
             var (refreshToken, refreshTokenHash) = JwtTokenGenerator.GenerateRefreshToken();
-            var refreshTokenExpiry = DateTime.UtcNow.AddDays(_jwtTokenGenerator.RefreshTokenExpiryDays);
+            var refreshTokenExpiry = DateTimeOffset.UtcNow.AddDays(_jwtTokenGenerator.RefreshTokenExpiryDays);
 
             var refreshTokenEntity = RefreshToken.Create(
                 refreshTokenHash,
@@ -146,9 +146,9 @@ public sealed class AccountSuspendedException : Exception
 /// </summary>
 public sealed class AccountLockedException : Exception
 {
-    public DateTime LockedUntil { get; }
+    public DateTimeOffset LockedUntil { get; }
 
-    public AccountLockedException(DateTime lockedUntil)
+    public AccountLockedException(DateTimeOffset lockedUntil)
         : base($"Account is locked. Please try again after {lockedUntil:HH:mm} UTC")
     {
         LockedUntil = lockedUntil;

@@ -11,9 +11,9 @@ public sealed class ExternalLogin
     public string? ProviderAvatarUrl { get; private set; }
     public string? AccessToken { get; private set; }
     public string? RefreshToken { get; private set; }
-    public DateTime? TokenExpiresAt { get; private set; }
-    public DateTime CreatedAt { get; private set; }
-    public DateTime UpdatedAt { get; private set; }
+    public DateTimeOffset? TokenExpiresAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
+    public DateTimeOffset UpdatedAt { get; private set; }
 
     public Identity Identity { get; private set; }
 
@@ -32,7 +32,7 @@ public sealed class ExternalLogin
         string? providerAvatarUrl = null,
         string? accessToken = null,
         string? refreshToken = null,
-        DateTime? tokenExpiresAt = null)
+        DateTimeOffset? tokenExpiresAt = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(providerUserId);
         ArgumentException.ThrowIfNullOrWhiteSpace(providerEmail);
@@ -48,17 +48,17 @@ public sealed class ExternalLogin
             AccessToken = accessToken,
             RefreshToken = refreshToken,
             TokenExpiresAt = tokenExpiresAt,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
         };
     }
 
-    public void UpdateTokens(string accessToken, string? refreshToken, DateTime expiresAt)
+    public void UpdateTokens(string accessToken, string? refreshToken, DateTimeOffset expiresAt)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(accessToken);
         AccessToken = accessToken;
         if (!string.IsNullOrWhiteSpace(refreshToken)) RefreshToken = refreshToken;
         TokenExpiresAt = expiresAt;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTimeOffset.UtcNow;
     }
 }

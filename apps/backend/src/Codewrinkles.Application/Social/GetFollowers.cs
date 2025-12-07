@@ -26,7 +26,7 @@ public sealed class GetFollowersQueryHandler : ICommandHandler<GetFollowersQuery
         CancellationToken cancellationToken)
     {
         // Decode cursor if provided
-        DateTime? beforeCreatedAt = null;
+        DateTimeOffset? beforeCreatedAt = null;
         Guid? beforeId = null;
 
         if (!string.IsNullOrWhiteSpace(query.Cursor))
@@ -36,7 +36,7 @@ public sealed class GetFollowersQueryHandler : ICommandHandler<GetFollowersQuery
             beforeId = cursor.Id;
         }
 
-        // Fetch followers from repository
+        // Fetch followers from repository (now returns ProfileWithFollowDate)
         var followers = await _unitOfWork.Follows.GetFollowersAsync(
             profileId: query.ProfileId,
             limit: query.Limit + 1, // Fetch one extra to determine if there are more
@@ -53,36 +53,34 @@ public sealed class GetFollowersQueryHandler : ICommandHandler<GetFollowersQuery
         var hasMore = followers.Count > query.Limit;
         var followersToReturn = hasMore ? followers.Take(query.Limit).ToList() : followers;
 
-        // Generate next cursor
+        // Generate next cursor using the actual FollowedAt from the Follow entity
         string? nextCursor = null;
         if (hasMore)
         {
             var lastFollower = followersToReturn.Last();
-            // Note: We need to get the follow CreatedAt, which we'll approximate with DateTime.UtcNow for now
-            // This is a limitation - ideally we'd return Follow entities with Profile data
-            nextCursor = EncodeCursor(DateTime.UtcNow, lastFollower.Id);
+            nextCursor = EncodeCursor(lastFollower.FollowedAt, lastFollower.Profile.Id);
         }
 
         // Batch check which followers the current user is following (if authenticated)
         var followingProfileIds = new HashSet<Guid>();
         if (query.CurrentUserId.HasValue)
         {
-            var followerIds = followersToReturn.Select(p => p.Id).ToList();
+            var followerIds = followersToReturn.Select(f => f.Profile.Id).ToList();
             followingProfileIds = await _unitOfWork.Follows.GetFollowingProfileIdsAsync(
                 followerIds,
                 query.CurrentUserId.Value,
                 cancellationToken);
         }
 
-        // Map to DTOs
-        var followerDtos = followersToReturn.Select(p => new FollowerDto(
-            ProfileId: p.Id,
-            Name: p.Name,
-            Handle: p.Handle ?? string.Empty,
-            AvatarUrl: p.AvatarUrl,
-            Bio: p.Bio,
-            FollowedAt: DateTime.UtcNow, // TODO: This should come from Follow.CreatedAt
-            IsFollowing: followingProfileIds.Contains(p.Id)
+        // Map to DTOs - now using the actual FollowedAt from the Follow entity
+        var followerDtos = followersToReturn.Select(f => new FollowerDto(
+            ProfileId: f.Profile.Id,
+            Name: f.Profile.Name,
+            Handle: f.Profile.Handle ?? string.Empty,
+            AvatarUrl: f.Profile.AvatarUrl,
+            Bio: f.Profile.Bio,
+            FollowedAt: f.FollowedAt,
+            IsFollowing: followingProfileIds.Contains(f.Profile.Id)
         )).ToList();
 
         return new FollowersResponse(
@@ -93,7 +91,7 @@ public sealed class GetFollowersQueryHandler : ICommandHandler<GetFollowersQuery
         );
     }
 
-    private static string EncodeCursor(DateTime createdAt, Guid id)
+    private static string EncodeCursor(DateTimeOffset createdAt, Guid id)
     {
         var cursor = new { CreatedAt = createdAt, Id = id };
         var json = JsonSerializer.Serialize(cursor);
@@ -101,7 +99,7 @@ public sealed class GetFollowersQueryHandler : ICommandHandler<GetFollowersQuery
         return Convert.ToBase64String(bytes);
     }
 
-    private static (DateTime CreatedAt, Guid Id) DecodeCursor(string cursor)
+    private static (DateTimeOffset CreatedAt, Guid Id) DecodeCursor(string cursor)
     {
         try
         {
@@ -122,5 +120,5 @@ public sealed class GetFollowersQueryHandler : ICommandHandler<GetFollowersQuery
         }
     }
 
-    private sealed record CursorData(DateTime CreatedAt, Guid Id);
+    private sealed record CursorData(DateTimeOffset CreatedAt, Guid Id);
 }

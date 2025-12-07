@@ -15,7 +15,7 @@ public sealed record CreatePulseCommand(
 public sealed record CreatePulseResult(
     Guid PulseId,
     string Content,
-    DateTime CreatedAt,
+    DateTimeOffset CreatedAt,
     string? ImageUrl = null
 );
 

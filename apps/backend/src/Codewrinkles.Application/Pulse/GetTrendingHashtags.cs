@@ -12,7 +12,7 @@ public sealed record HashtagDto(
     string Tag,
     string TagDisplay,
     int PulseCount,
-    DateTime LastUsedAt
+    DateTimeOffset LastUsedAt
 );
 
 public sealed class GetTrendingHashtagsQueryHandler

@@ -49,11 +49,11 @@ public sealed class IdentityConfiguration : IEntityTypeConfiguration<Domain.Iden
 
         builder.Property(i => i.CreatedAt)
             .IsRequired()
-            .HasDefaultValueSql("GETUTCDATE()");
+            .HasDefaultValueSql("SYSDATETIMEOFFSET()");
 
         builder.Property(i => i.UpdatedAt)
             .IsRequired()
-            .HasDefaultValueSql("GETUTCDATE()");
+            .HasDefaultValueSql("SYSDATETIMEOFFSET()");
 
         builder.Property(i => i.LastLoginAt)
             .IsRequired(false);

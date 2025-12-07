@@ -57,7 +57,7 @@ public sealed class HashtagRepository : IHashtagRepository
     public async Task<List<Pulse>> GetPulsesByHashtagAsync(
         string tag,
         int limit,
-        DateTime? beforeCreatedAt,
+        DateTimeOffset? beforeCreatedAt,
         Guid? beforeId,
         CancellationToken cancellationToken = default)
     {

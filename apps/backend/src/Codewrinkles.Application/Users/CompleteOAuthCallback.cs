@@ -148,7 +148,7 @@ public sealed class CompleteOAuthCallbackCommandHandler
         externalLogin.UpdateTokens(
             tokenResponse.AccessToken,
             tokenResponse.RefreshToken,
-            DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn));
+            DateTimeOffset.UtcNow.AddSeconds(tokenResponse.ExpiresIn));
 
         identity.RecordSuccessfulLogin();
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -157,7 +157,7 @@ public sealed class CompleteOAuthCallbackCommandHandler
 
         // Generate refresh token and store in database
         var (refreshToken, refreshTokenHash) = JwtTokenGenerator.GenerateRefreshToken();
-        var refreshTokenExpiry = DateTime.UtcNow.AddDays(_jwtTokenGenerator.RefreshTokenExpiryDays);
+        var refreshTokenExpiry = DateTimeOffset.UtcNow.AddDays(_jwtTokenGenerator.RefreshTokenExpiryDays);
 
         var refreshTokenEntity = RefreshToken.Create(
             refreshTokenHash,
@@ -198,7 +198,7 @@ public sealed class CompleteOAuthCallbackCommandHandler
             userInfo.Picture,
             tokenResponse.AccessToken,
             tokenResponse.RefreshToken,
-            DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn));
+            DateTimeOffset.UtcNow.AddSeconds(tokenResponse.ExpiresIn));
 
         _unitOfWork.ExternalLogins.Add(externalLogin);
 
@@ -219,7 +219,7 @@ public sealed class CompleteOAuthCallbackCommandHandler
 
         // Generate refresh token and store in database
         var (refreshToken, refreshTokenHash) = JwtTokenGenerator.GenerateRefreshToken();
-        var refreshTokenExpiry = DateTime.UtcNow.AddDays(_jwtTokenGenerator.RefreshTokenExpiryDays);
+        var refreshTokenExpiry = DateTimeOffset.UtcNow.AddDays(_jwtTokenGenerator.RefreshTokenExpiryDays);
 
         var refreshTokenEntity = RefreshToken.Create(
             refreshTokenHash,
@@ -290,7 +290,7 @@ public sealed class CompleteOAuthCallbackCommandHandler
                 userInfo.Picture,
                 tokenResponse.AccessToken,
                 tokenResponse.RefreshToken,
-                DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn));
+                DateTimeOffset.UtcNow.AddSeconds(tokenResponse.ExpiresIn));
 
             _unitOfWork.ExternalLogins.Add(externalLogin);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -307,7 +307,7 @@ public sealed class CompleteOAuthCallbackCommandHandler
 
         // Generate refresh token and store in database
         var (refreshToken, refreshTokenHash) = JwtTokenGenerator.GenerateRefreshToken();
-        var refreshTokenExpiry = DateTime.UtcNow.AddDays(_jwtTokenGenerator.RefreshTokenExpiryDays);
+        var refreshTokenExpiry = DateTimeOffset.UtcNow.AddDays(_jwtTokenGenerator.RefreshTokenExpiryDays);
 
         var refreshTokenEntity = RefreshToken.Create(
             refreshTokenHash,
@@ -369,6 +369,6 @@ public sealed class CompleteOAuthCallbackCommandHandler
             }
         }
 
-        return $"{baseHandle}_{DateTime.UtcNow.Ticks}";
+        return $"{baseHandle}_{DateTimeOffset.UtcNow.Ticks}";
     }
 }
