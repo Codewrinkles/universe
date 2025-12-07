@@ -14,8 +14,8 @@ export function parseMentions(content: string, mentions: Mention[]): ParsedConte
 
   // Combined regex to match @mentions, #hashtags, and URLs
   // Matches @handle (3-30 chars) or #hashtag (2-100 chars) or http(s)://url
-  // URL pattern excludes trailing punctuation (.,;:!?) to handle "Check this out https://example.com."
-  const combinedRegex = /(@\w{3,30})|(#\w{2,100})|(https?:\/\/[^\s]+?(?=[.,;:!?)\]}\s]|$))/gi;
+  // URL pattern matches liberally, we'll clean trailing punctuation after
+  const combinedRegex = /(@\w{3,30})|(#\w{2,100})|(https?:\/\/[^\s]+)/gi;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
@@ -56,10 +56,19 @@ export function parseMentions(content: string, mentions: Mention[]): ParsedConte
       });
     } else if (match[3]) {
       // This is a URL (http:// or https://)
+      // Clean trailing sentence punctuation that's not part of the URL
+      let url = match[3];
+
+      // Remove common sentence-ending punctuation from the end
+      // Examples: "Check this out https://example.com." → "https://example.com"
+      // But preserve URL-specific punctuation like query params: "?foo=bar"
+      // Only trim single trailing . , ; : ! ? characters
+      url = url.replace(/[.,;:!?]+$/, '');
+
       parts.push({
         type: "url",
-        content: match[3],
-        url: match[3],
+        content: url,
+        url: url,
       });
     }
 

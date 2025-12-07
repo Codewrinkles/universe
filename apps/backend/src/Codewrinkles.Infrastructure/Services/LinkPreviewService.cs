@@ -8,10 +8,9 @@ namespace Codewrinkles.Infrastructure.Services;
 
 public sealed class LinkPreviewService : ILinkPreviewService
 {
-    // Matches URLs but excludes trailing punctuation (.,;:!?)
-    // Example: "Check this out https://example.com." extracts "https://example.com" (without the period)
+    // Matches URLs liberally - we clean trailing punctuation in ExtractFirstUrl
     private static readonly Regex UrlRegex = new(
-        @"https?://[^\s]+?(?=[.,;:!?)\]}\s]|$)",
+        @"https?://[^\s]+",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     private readonly HttpClient _httpClient;
@@ -28,7 +27,15 @@ public sealed class LinkPreviewService : ILinkPreviewService
     public string? ExtractFirstUrl(string content)
     {
         var match = UrlRegex.Match(content);
-        return match.Success ? match.Value : null;
+        if (!match.Success)
+            return null;
+
+        // Clean trailing sentence punctuation (.,;:!?) from URL
+        // Example: "Check this out https://example.com." → "https://example.com"
+        var url = match.Value;
+        url = Regex.Replace(url, @"[.,;:!?]+$", string.Empty);
+
+        return url;
     }
 
     public async Task<LinkPreviewData?> FetchPreviewAsync(
