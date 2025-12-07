@@ -37,8 +37,9 @@ public sealed class GetPulsesByAuthorQueryHandler : ICommandHandler<GetPulsesByA
             beforeId = cursor.Id;
         }
 
-        // Fetch pulses and metadata, plus total count in parallel
-        var feedDataTask = _pulseRepository.GetPulsesByAuthorWithMetadataAsync(
+        // Fetch pulses and all metadata in single repository call
+        // Repository handles parallel query optimization internally
+        var feedData = await _pulseRepository.GetPulsesByAuthorWithMetadataAsync(
             authorId: query.AuthorId,
             currentUserId: query.CurrentUserId,
             limit: query.Limit + 1, // Fetch one extra to determine if there are more
@@ -46,14 +47,10 @@ public sealed class GetPulsesByAuthorQueryHandler : ICommandHandler<GetPulsesByA
             beforeId: beforeId,
             cancellationToken: cancellationToken);
 
-        var totalCountTask = _pulseRepository.GetPulseCountByAuthorAsync(
+        // Fetch total count separately (cannot run in parallel - DbContext is not thread-safe)
+        var totalCount = await _pulseRepository.GetPulseCountByAuthorAsync(
             query.AuthorId,
             cancellationToken);
-
-        await Task.WhenAll(feedDataTask, totalCountTask);
-
-        var feedData = await feedDataTask;
-        var totalCount = await totalCountTask;
 
         // Determine if there are more results
         var hasMore = feedData.Pulses.Count > query.Limit;
