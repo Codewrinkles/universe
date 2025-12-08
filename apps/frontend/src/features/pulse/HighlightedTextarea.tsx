@@ -40,11 +40,12 @@ export const HighlightedTextarea = forwardRef<HTMLTextAreaElement, HighlightedTe
 
       // Escape HTML and replace mentions and hashtags with colored spans
       // Uses CSS variable --color-brand-link which adapts to light/dark theme
+      // Note: [\w-] for mentions aligns with handle validation which allows hyphens
       return value
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
-        .replace(/(@\w{3,30})/g, '<span style="color: var(--color-brand-link)">$1</span>')
+        .replace(/(@[\w-]{3,30})/g, '<span style="color: var(--color-brand-link)">$1</span>')
         .replace(/(#\w{2,100})/g, '<span style="color: var(--color-brand-link)">$1</span>')
         .replace(/\n/g, "<br/>");
     };

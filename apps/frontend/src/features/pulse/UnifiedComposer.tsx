@@ -72,8 +72,8 @@ export function UnifiedComposer({
     const cursorPosition = textareaRef.current?.selectionStart ?? 0;
     const textBeforeCursor = value.slice(0, cursorPosition);
 
-    // Check for mention (@)
-    const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
+    // Check for mention (@) - allows hyphens to match handle validation
+    const mentionMatch = textBeforeCursor.match(/@([\w-]*)$/);
     // Check for hashtag (#)
     const hashtagMatch = textBeforeCursor.match(/#(\w*)$/);
 
@@ -176,8 +176,8 @@ export function UnifiedComposer({
     const textBeforeCursor = value.slice(0, cursorPosition);
     const textAfterCursor = value.slice(cursorPosition);
 
-    // Replace the partial mention with the full handle
-    const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
+    // Replace the partial mention with the full handle (allows hyphens)
+    const mentionMatch = textBeforeCursor.match(/@([\w-]*)$/);
     if (mentionMatch) {
       const mentionStart = textBeforeCursor.lastIndexOf("@");
       const newText = textBeforeCursor.slice(0, mentionStart) + `@${handle} ` + textAfterCursor;

@@ -13,9 +13,10 @@ export function parseMentions(content: string, mentions: Mention[]): ParsedConte
   const parts: ParsedContent[] = [];
 
   // Combined regex to match @mentions, #hashtags, and URLs
-  // Matches @handle (3-30 chars) or #hashtag (2-100 chars) or http(s)://url
+  // Matches @handle (3-30 chars, allows hyphens) or #hashtag (2-100 chars) or http(s)://url
   // URL pattern matches liberally, we'll clean trailing punctuation after
-  const combinedRegex = /(@\w{3,30})|(#\w{2,100})|(https?:\/\/[^\s]+)/gi;
+  // Note: [\w-] for mentions aligns with handle validation which allows hyphens
+  const combinedRegex = /(@[\w-]{3,30})|(#\w{2,100})|(https?:\/\/[^\s]+)/gi;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 

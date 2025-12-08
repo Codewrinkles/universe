@@ -19,8 +19,10 @@ public sealed record MentionProcessingResult(
 public sealed class PulseContentProcessor
 {
     // Regex patterns as static readonly (compiled for performance)
+    // Note: [\w-] matches word characters (a-z, A-Z, 0-9, _) plus hyphen (-)
+    // This aligns with handle validation which allows hyphens
     private static readonly Regex MentionPattern = new(
-        @"@(\w{3,30})",
+        @"@([\w-]{3,30})",
         RegexOptions.Compiled);
 
     private static readonly Regex HashtagPattern = new(
@@ -45,7 +47,7 @@ public sealed class PulseContentProcessor
     /// <returns>List of handles (lowercase, without @ prefix).</returns>
     public List<string> ExtractMentions(string content)
     {
-        // Regex to match @handle (alphanumeric + underscore, 3-30 chars)
+        // Regex to match @handle (alphanumeric + underscore + hyphen, 3-30 chars)
         var matches = MentionPattern.Matches(content);
 
         return matches
