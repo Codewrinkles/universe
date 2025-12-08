@@ -7,6 +7,19 @@ import { ProfileDropdown } from "./ProfileDropdown";
 import { YouTubeButton } from "../../components/ui/YouTubeButton";
 import { useAuth } from "../../hooks/useAuth";
 
+interface CurrentApp {
+  name: string;
+  colorClass: string;
+}
+
+function getCurrentApp(pathname: string): CurrentApp | null {
+  if (pathname.startsWith("/pulse")) return { name: "Pulse", colorClass: "text-sky-400" };
+  if (pathname.startsWith("/nova")) return { name: "Nova", colorClass: "text-violet-400" };
+  if (pathname.startsWith("/settings")) return { name: "Settings", colorClass: "text-amber-400" };
+  if (pathname.startsWith("/admin")) return { name: "Admin", colorClass: "text-emerald-400" };
+  return null;
+}
+
 export interface HeaderProps {
   theme: Theme;
   onThemeToggle: () => void;
@@ -21,6 +34,9 @@ export function Header({ theme, onThemeToggle }: HeaderProps): JSX.Element {
   // Logo destination: /pulse for authenticated, / for unauthenticated
   const logoDestination = isAuthenticated ? "/pulse" : "/";
 
+  // Current app for header display
+  const currentApp = getCurrentApp(location.pathname);
+
   return (
     <header className="sticky top-0 z-50 border-b border-border-deep bg-surface-page/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 gap-3 relative">
@@ -33,8 +49,14 @@ export function Header({ theme, onThemeToggle }: HeaderProps): JSX.Element {
           />
         </Link>
 
-        {/* Center spacer - AppNav hidden for MVP */}
-        <div className="flex-1" />
+        {/* Current app indicator - centered, visible on larger screens for authenticated users */}
+        <div className="flex-1 flex justify-center">
+          {isAuthenticated && currentApp && (
+            <span className={`hidden sm:block text-2xl font-semibold tracking-tight ${currentApp.colorClass}`}>
+              {currentApp.name}
+            </span>
+          )}
+        </div>
 
         {/* Right side */}
         <div className="flex items-center gap-2 relative">
