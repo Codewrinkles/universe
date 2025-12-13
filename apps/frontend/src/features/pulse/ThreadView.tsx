@@ -4,10 +4,8 @@ import { Helmet } from "react-helmet-async";
 import { useThread } from "./hooks/useThread";
 import { PostCard } from "./PostCard";
 import { UnifiedComposer } from "./UnifiedComposer";
-import { PulseNavigation } from "./PulseNavigation";
-import { PulseRightSidebar } from "./PulseRightSidebar";
+import { PulseThreeColumnLayout } from "./PulseThreeColumnLayout";
 import { LoadingCard, Spinner } from "../../components/ui";
-import { useAuth } from "../../hooks/useAuth";
 import {
   truncateText,
   getFullUrl,
@@ -18,7 +16,6 @@ import {
 export function ThreadView(): JSX.Element {
   const { pulseId } = useParams<{ pulseId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const highlightedReplyId = searchParams.get("highlight");
   const [replyingToPulseId, setReplyingToPulseId] = useState<string | null>(null);
@@ -127,18 +124,7 @@ export function ThreadView(): JSX.Element {
         )}
       </Helmet>
 
-      <div className="flex justify-center">
-      {/* Left Navigation - only show if authenticated */}
-      {user && (
-        <aside className="hidden lg:flex w-[320px] flex-shrink-0 justify-end pr-8">
-          <div className="w-[240px]">
-            <PulseNavigation />
-          </div>
-        </aside>
-      )}
-
-      {/* Main Content */}
-      <main className="w-full max-w-[600px] border-x border-border lg:w-[600px]">
+      <PulseThreeColumnLayout>
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center gap-4 border-b border-border bg-surface-page/80 backdrop-blur px-4 py-3">
           <button
@@ -263,23 +249,7 @@ export function ThreadView(): JSX.Element {
             ) : null}
           </>
         ) : null}
-      </main>
-
-      {/* Right Sidebar - only show if authenticated */}
-      {user && (
-        <>
-          {/* Right Sidebar - placeholder for spacing */}
-          <aside className="hidden lg:block w-[320px] flex-shrink-0 pl-8">
-            {/* Empty placeholder */}
-          </aside>
-
-          {/* Right Sidebar - fixed position */}
-          <div className="hidden lg:block fixed top-20 z-10 w-[288px] left-[calc(50%+332px)]">
-            <PulseRightSidebar />
-          </div>
-        </>
-      )}
-      </div>
+      </PulseThreeColumnLayout>
     </>
   );
 }

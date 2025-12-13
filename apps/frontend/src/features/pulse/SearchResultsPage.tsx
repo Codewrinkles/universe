@@ -3,8 +3,7 @@ import { useSearchParams, Link } from "react-router-dom";
 import { searchApi } from "../../services/searchApi";
 import type { SearchProfileResult } from "../../services/searchApi";
 import { FollowButton } from "../social/components/FollowButton";
-import { PulseNavigation } from "./PulseNavigation";
-import { PulseRightSidebar } from "./PulseRightSidebar";
+import { PulseThreeColumnLayout } from "./PulseThreeColumnLayout";
 
 interface UserSearchResultProps {
   user: SearchProfileResult;
@@ -94,90 +93,70 @@ export function SearchResultsPage(): JSX.Element {
   };
 
   return (
-    <div className="flex justify-center">
-      {/* Left Navigation */}
-      <aside className="hidden lg:flex w-[320px] flex-shrink-0 justify-end pr-8">
-        <div className="w-[240px]">
-          <PulseNavigation />
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="w-full max-w-[600px] border-x border-border lg:w-[600px]">
-        {/* Header */}
-        <div className="sticky top-0 z-10 border-b border-border bg-surface-page/80 backdrop-blur px-4 py-3">
-          <h1 className="text-base font-semibold tracking-tight text-text-primary">
-            Search
-          </h1>
-          {query && (
-            <p className="mt-0.5 text-sm text-text-secondary">
-              Results for "{query}"
-            </p>
-          )}
-        </div>
-
-        {/* Empty State - No Query */}
-        {!query && (
-          <div className="p-8 text-center">
-            <p className="text-sm text-text-tertiary">Enter a search query to find users</p>
-            <p className="mt-2 text-xs text-text-tertiary">
-              Search by name or handle in the search box above
-            </p>
-          </div>
+    <PulseThreeColumnLayout>
+      {/* Header */}
+      <div className="sticky top-0 z-10 border-b border-border bg-surface-page/80 backdrop-blur px-4 py-3">
+        <h1 className="text-base font-semibold tracking-tight text-text-primary">
+          Search
+        </h1>
+        {query && (
+          <p className="mt-0.5 text-sm text-text-secondary">
+            Results for "{query}"
+          </p>
         )}
-
-        {/* Loading State */}
-        {query && isLoading && results.length === 0 && (
-          <div className="p-8 text-center">
-            <p className="text-sm text-text-tertiary">Searching...</p>
-          </div>
-        )}
-
-        {/* Error State */}
-        {query && !isLoading && error && (
-          <div className="p-4 border-b border-border bg-red-500/10 text-red-400 text-sm">
-            {error}
-          </div>
-        )}
-
-        {/* Empty Results */}
-        {query && !isLoading && !error && results.length === 0 && (
-          <div className="p-8 text-center">
-            <p className="text-sm text-text-tertiary">No users found for "{query}"</p>
-            <p className="mt-2 text-xs text-text-tertiary">Try searching by name or handle</p>
-          </div>
-        )}
-
-        {/* Results */}
-        {results.length > 0 && (
-          <div>
-            <div className="px-4 py-3 border-b border-border bg-surface-card1/50">
-              <h2 className="text-sm font-semibold tracking-tight text-text-primary">
-                People
-              </h2>
-            </div>
-            <div>
-              {results.map((result) => (
-                <UserSearchResult
-                  key={result.profileId}
-                  user={result}
-                  onFollowChange={refetchResults}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-      </main>
-
-      {/* Right Sidebar - placeholder for spacing */}
-      <aside className="hidden lg:block w-[320px] flex-shrink-0 pl-8">
-        {/* Empty placeholder - actual content is fixed positioned */}
-      </aside>
-
-      {/* Right Sidebar - fixed position */}
-      <div className="hidden lg:block fixed top-20 z-10 w-[288px] left-[calc(50%+332px)]">
-        <PulseRightSidebar />
       </div>
-    </div>
+
+      {/* Empty State - No Query */}
+      {!query && (
+        <div className="p-8 text-center">
+          <p className="text-sm text-text-tertiary">Enter a search query to find users</p>
+          <p className="mt-2 text-xs text-text-tertiary">
+            Search by name or handle in the search box above
+          </p>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {query && isLoading && results.length === 0 && (
+        <div className="p-8 text-center">
+          <p className="text-sm text-text-tertiary">Searching...</p>
+        </div>
+      )}
+
+      {/* Error State */}
+      {query && !isLoading && error && (
+        <div className="p-4 border-b border-border bg-red-500/10 text-red-400 text-sm">
+          {error}
+        </div>
+      )}
+
+      {/* Empty Results */}
+      {query && !isLoading && !error && results.length === 0 && (
+        <div className="p-8 text-center">
+          <p className="text-sm text-text-tertiary">No users found for "{query}"</p>
+          <p className="mt-2 text-xs text-text-tertiary">Try searching by name or handle</p>
+        </div>
+      )}
+
+      {/* Results */}
+      {results.length > 0 && (
+        <div>
+          <div className="px-4 py-3 border-b border-border bg-surface-card1/50">
+            <h2 className="text-sm font-semibold tracking-tight text-text-primary">
+              People
+            </h2>
+          </div>
+          <div>
+            {results.map((result) => (
+              <UserSearchResult
+                key={result.profileId}
+                user={result}
+                onFollowChange={refetchResults}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </PulseThreeColumnLayout>
   );
 }

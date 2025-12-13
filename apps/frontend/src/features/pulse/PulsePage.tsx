@@ -2,8 +2,7 @@ import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { UnifiedComposer } from "./UnifiedComposer";
 import { Feed } from "./Feed";
-import { PulseNavigation } from "./PulseNavigation";
-import { PulseRightSidebar } from "./PulseRightSidebar";
+import { PulseThreeColumnLayout } from "./PulseThreeColumnLayout";
 import { FeedFilterControl } from "./FeedFilterControl";
 import { useFeed } from "./hooks/useFeed";
 import { useFeedFilter } from "./hooks/useFeedFilter";
@@ -64,18 +63,7 @@ export function PulsePage(): JSX.Element {
         <link rel="canonical" href={url} />
       </Helmet>
 
-      <div className="flex justify-center">
-      {/* Left Navigation - only show if authenticated */}
-      {user && (
-        <aside className="hidden lg:flex w-[320px] flex-shrink-0 justify-end pr-8">
-          <div className="w-[240px]">
-            <PulseNavigation />
-          </div>
-        </aside>
-      )}
-
-      {/* Main Content */}
-      <main className="w-full max-w-[600px] border-x border-border lg:w-[600px]">
+      <PulseThreeColumnLayout>
         {/* Composer - only show if authenticated */}
         {user && (
           <div className="border-b border-border p-4">
@@ -149,23 +137,7 @@ export function PulsePage(): JSX.Element {
             )}
           </>
         )}
-      </main>
-
-      {/* Right Sidebar - only show if authenticated */}
-      {user && (
-        <>
-          {/* Right Sidebar - placeholder for spacing, matches left width */}
-          <aside className="hidden lg:block w-[320px] flex-shrink-0 pl-8">
-            {/* Empty placeholder - actual content is fixed positioned */}
-          </aside>
-
-          {/* Right Sidebar - fixed position */}
-          <div className="hidden lg:block fixed top-20 z-10 w-[288px] left-[calc(50%+332px)]">
-            <PulseRightSidebar />
-          </div>
-        </>
-      )}
-      </div>
+      </PulseThreeColumnLayout>
     </>
   );
 }

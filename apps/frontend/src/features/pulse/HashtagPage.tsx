@@ -1,16 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Feed } from "./Feed";
-import { PulseNavigation } from "./PulseNavigation";
-import { PulseRightSidebar } from "./PulseRightSidebar";
+import { PulseThreeColumnLayout } from "./PulseThreeColumnLayout";
 import { LoadingCard, Spinner } from "../../components/ui";
 import { config } from "../../config";
-import { useAuth } from "../../hooks/useAuth";
 import type { Pulse, FeedResponse } from "../../types";
 
 export function HashtagPage(): JSX.Element {
   const { tag } = useParams<{ tag: string }>();
-  const { user } = useAuth();
   const [pulses, setPulses] = useState<Pulse[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,91 +81,64 @@ export function HashtagPage(): JSX.Element {
   };
 
   return (
-    <div className="flex justify-center">
-      {/* Left Navigation - only show if authenticated */}
-      {user && (
-        <aside className="hidden lg:flex w-[320px] flex-shrink-0 justify-end pr-8">
-          <div className="w-[240px]">
-            <PulseNavigation />
-          </div>
-        </aside>
+    <PulseThreeColumnLayout>
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-surface-page border-b border-border p-4">
+        <h1 className="text-xl font-bold text-text-primary">
+          #{tag}
+        </h1>
+        <p className="text-sm text-text-secondary mt-1">
+          Pulses with this hashtag
+        </p>
+      </div>
+
+      {/* Error State */}
+      {error && (
+        <div className="p-4 border-b border-border bg-red-500/10 text-red-400 text-sm">
+          {error}
+        </div>
       )}
 
-      {/* Main Content */}
-      <main className="w-full max-w-[600px] border-x border-border lg:w-[600px]">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-surface-page border-b border-border p-4">
-          <h1 className="text-xl font-bold text-text-primary">
-            #{tag}
-          </h1>
-          <p className="text-sm text-text-secondary mt-1">
-            Pulses with this hashtag
-          </p>
+      {/* Loading State */}
+      {isLoading && pulses.length === 0 ? (
+        <div>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <LoadingCard key={i} />
+          ))}
         </div>
-
-        {/* Error State */}
-        {error && (
-          <div className="p-4 border-b border-border bg-red-500/10 text-red-400 text-sm">
-            {error}
-          </div>
-        )}
-
-        {/* Loading State */}
-        {isLoading && pulses.length === 0 ? (
-          <div>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <LoadingCard key={i} />
-            ))}
-          </div>
-        ) : pulses.length === 0 ? (
-          <div className="p-8 text-center text-text-secondary">
-            No pulses found with this hashtag yet.
-          </div>
-        ) : (
-          <>
-            <div className="divide-y divide-border">
-              <Feed
-                posts={pulses}
-                onFollowChange={() => void fetchPulses()}
-                onReplyClick={handleReplyClick}
-                replyingToPulseId={replyingToPulseId}
-                onReplyCreated={handleReplyCreated}
-                onDelete={handleDelete}
-              />
-            </div>
-
-            {/* Load More Button */}
-            {hasMore && (
-              <div className="p-4 border-t border-border text-center">
-                <button
-                  type="button"
-                  onClick={handleLoadMore}
-                  disabled={isLoading}
-                  className="px-4 py-2 rounded-full bg-surface-card2 hover:bg-surface-card1 text-brand-soft text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2 mx-auto"
-                >
-                  {isLoading && <Spinner size="sm" />}
-                  {isLoading ? "Loading..." : "Load More"}
-                </button>
-              </div>
-            )}
-          </>
-        )}
-      </main>
-
-      {/* Right Sidebar - only show if authenticated */}
-      {user && (
+      ) : pulses.length === 0 ? (
+        <div className="p-8 text-center text-text-secondary">
+          No pulses found with this hashtag yet.
+        </div>
+      ) : (
         <>
-          {/* Right Sidebar - placeholder for spacing */}
-          <aside className="hidden lg:block w-[320px] flex-shrink-0 pl-8">
-            {/* Empty placeholder */}
-          </aside>
-
-          {/* Right Sidebar - fixed position */}
-          <div className="hidden lg:block fixed top-20 z-10 w-[288px] left-[calc(50%+332px)]">
-            <PulseRightSidebar />
+          <div className="divide-y divide-border">
+            <Feed
+              posts={pulses}
+              onFollowChange={() => void fetchPulses()}
+              onReplyClick={handleReplyClick}
+              replyingToPulseId={replyingToPulseId}
+              onReplyCreated={handleReplyCreated}
+              onDelete={handleDelete}
+            />
           </div>
+
+          {/* Load More Button */}
+          {hasMore && (
+            <div className="p-4 border-t border-border text-center">
+              <button
+                type="button"
+                onClick={handleLoadMore}
+                disabled={isLoading}
+                className="px-4 py-2 rounded-full bg-surface-card2 hover:bg-surface-card1 text-brand-soft text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2 mx-auto"
+              >
+                {isLoading && <Spinner size="sm" />}
+                {isLoading ? "Loading..." : "Load More"}
+              </button>
+            </div>
+          )}
         </>
       )}
-    </div>
+    </PulseThreeColumnLayout>
   );
 }

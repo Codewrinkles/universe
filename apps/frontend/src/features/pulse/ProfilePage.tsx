@@ -4,8 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { useAuth } from "../../hooks/useAuth";
 import { config } from "../../config";
 import { buildAvatarUrl } from "../../utils/avatarUtils";
-import { PulseNavigation } from "./PulseNavigation";
-import { PulseRightSidebar } from "./PulseRightSidebar";
+import { PulseThreeColumnLayout } from "./PulseThreeColumnLayout";
 import { PostCard } from "./PostCard";
 import { UnifiedComposer } from "./UnifiedComposer";
 import type { User, Pulse, FollowerDto, FollowingDto } from "../../types";
@@ -336,30 +335,9 @@ export function ProfilePage(): JSX.Element {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center">
-        {/* Left Navigation - only show if authenticated */}
-        {currentUser && (
-          <aside className="hidden lg:flex w-[320px] flex-shrink-0 justify-end pr-8">
-            <div className="w-[240px]">
-              <PulseNavigation />
-            </div>
-          </aside>
-        )}
-
-        {/* Main Content */}
-        <main className="w-full max-w-[600px] border-x border-border lg:w-[600px]">
-          <LoadingProfile />
-        </main>
-
-        {/* Right Sidebar - only show if authenticated */}
-        {currentUser && (
-          <aside className="hidden lg:flex w-[320px] flex-shrink-0 pl-8">
-            <div className="w-[280px]">
-              <PulseRightSidebar />
-            </div>
-          </aside>
-        )}
-      </div>
+      <PulseThreeColumnLayout>
+        <LoadingProfile />
+      </PulseThreeColumnLayout>
     );
   }
 
@@ -417,18 +395,7 @@ export function ProfilePage(): JSX.Element {
         </script>
       </Helmet>
 
-      <div className="flex justify-center">
-      {/* Left Navigation - only show if authenticated */}
-      {currentUser && (
-        <aside className="hidden lg:flex w-[320px] flex-shrink-0 justify-end pr-8">
-          <div className="w-[240px]">
-            <PulseNavigation />
-          </div>
-        </aside>
-      )}
-
-      {/* Main Content */}
-      <main className="w-full max-w-[600px] border-x border-border lg:w-[600px]">
+      <PulseThreeColumnLayout>
         <ProfileHeader
           profile={profile}
           isOwnProfile={isOwnProfile}
@@ -614,17 +581,7 @@ export function ProfilePage(): JSX.Element {
             </div>
           )}
         </div>
-      </main>
-
-      {/* Right Sidebar - only show if authenticated */}
-      {currentUser && (
-        <aside className="hidden lg:flex w-[320px] flex-shrink-0 pl-8">
-          <div className="w-[280px]">
-            <PulseRightSidebar />
-          </div>
-        </aside>
-      )}
-      </div>
+      </PulseThreeColumnLayout>
     </>
   );
 }
