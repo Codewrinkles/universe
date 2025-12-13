@@ -30,15 +30,18 @@ public sealed class RegisterUserCommandHandler
     private readonly IUnitOfWork _unitOfWork;
     private readonly PasswordHasher _passwordHasher;
     private readonly JwtTokenGenerator _jwtTokenGenerator;
+    private readonly IEmailQueue _emailQueue;
 
     public RegisterUserCommandHandler(
         IUnitOfWork unitOfWork,
         PasswordHasher passwordHasher,
-        JwtTokenGenerator jwtTokenGenerator)
+        JwtTokenGenerator jwtTokenGenerator,
+        IEmailQueue emailQueue)
     {
         _unitOfWork = unitOfWork;
         _passwordHasher = passwordHasher;
         _jwtTokenGenerator = jwtTokenGenerator;
+        _emailQueue = emailQueue;
     }
 
     public async Task<RegisterUserResult> HandleAsync(
@@ -114,6 +117,12 @@ public sealed class RegisterUserCommandHandler
             // Record metrics
             AppMetrics.RecordUserRegistered(authMethod: "password");
             activity?.SetSuccess(true);
+
+            // Queue welcome email (non-blocking - sent in background)
+            await _emailQueue.QueueWelcomeEmailAsync(
+                identity.Email,
+                profile.Name,
+                cancellationToken);
 
             // 4. Return result
             return new RegisterUserResult(

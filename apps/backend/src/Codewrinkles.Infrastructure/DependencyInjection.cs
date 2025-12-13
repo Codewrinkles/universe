@@ -3,6 +3,7 @@ using Azure.Storage.Blobs;
 using Codewrinkles.Application.Common.Interfaces;
 using Codewrinkles.Domain.Identity;
 using Codewrinkles.Infrastructure.Configuration;
+using Codewrinkles.Infrastructure.Email;
 using Codewrinkles.Infrastructure.Options;
 using Codewrinkles.Infrastructure.Persistence;
 using Codewrinkles.Infrastructure.Persistence.Repositories;
@@ -13,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Resend;
 
 namespace Codewrinkles.Infrastructure;
 
@@ -113,6 +115,37 @@ public static class DependencyInjection
 
         // HttpClient for OAuthService
         services.AddHttpClient<IOAuthService, OAuthService>();
+
+        // ===== Email Services =====
+
+        // Configuration
+        var emailSection = configuration.GetSection(EmailSettings.SectionName);
+        services.Configure<EmailSettings>(emailSection);
+
+        // Channel (singleton - shared queue)
+        services.AddSingleton<EmailChannel>();
+
+        // Resend client (following official SDK pattern)
+        services.AddOptions();
+        services.AddHttpClient<ResendClient>();
+        services.Configure<ResendClientOptions>(o =>
+        {
+            o.ApiToken = configuration["Email:ApiKey"] ?? string.Empty;
+        });
+        services.AddTransient<IResend, ResendClient>();
+
+        // Email sender (transient - uses IResend)
+        services.AddTransient<ResendEmailSender>();
+
+        // Email queue (singleton - used by handlers to queue emails)
+        services.AddSingleton<IEmailQueue, EmailQueue>();
+
+        // Repository for re-engagement queries
+        services.AddScoped<IReengagementRepository, ReengagementRepository>();
+
+        // Background services
+        services.AddHostedService<EmailSenderBackgroundService>();
+        services.AddHostedService<ReengagementBackgroundService>();
 
         return services;
     }

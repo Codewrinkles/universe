@@ -1,0 +1,238 @@
+# Email Infrastructure
+
+> **Status**: Implemented
+> **Provider**: Resend (3,000 emails/month free tier)
+> **Processing**: Channel<T> + BackgroundService (non-blocking)
+
+---
+
+## Overview
+
+The email system sends three types of emails:
+
+1. **Welcome email** - Queued immediately after registration, sent in background
+2. **Notification reminder email** - For inactive users (24-48h) with unread notifications
+3. **Feed update email** - For inactive users (24-48h) without notifications but with new content from follows
+
+Re-engagement emails are processed daily at **4 AM UTC**.
+
+---
+
+## Architecture
+
+### Flow Diagram
+
+```
+┌─────────────────────┐     ┌──────────────────┐     ┌─────────────────────┐
+│  Command Handlers   │────▶│  EmailChannel    │────▶│  EmailSender        │
+│  (queue emails)     │     │  (Channel<T>)    │     │  BackgroundService  │
+└─────────────────────┘     └──────────────────┘     └─────────────────────┘
+                                   ▲                          │
+┌─────────────────────┐            │                          ▼
+│  Reengagement       │────────────┘                  ┌───────────────┐
+│  BackgroundService  │                               │    Resend     │
+│  (4 AM UTC daily)   │                               │     API       │
+└─────────────────────┘                               └───────────────┘
+```
+
+### Design Principles
+
+1. **Non-blocking**: Emails are queued via Channel<T>, handlers return immediately
+2. **Single sender**: All emails flow through one background service
+3. **Fail-safe**: Email failures are logged but never crash the app
+4. **DateTimeOffset**: All timestamps use `DateTimeOffset.UtcNow`
+
+---
+
+## File Structure
+
+```
+Application/
+└── Common/
+    └── Interfaces/
+        ├── IEmailQueue.cs              # Queue interface (3 methods)
+        └── IReengagementRepository.cs  # Repository + ReengagementCandidate record
+
+Infrastructure/
+├── Configuration/
+│   └── EmailSettings.cs                # Resend configuration
+├── Email/
+│   ├── QueuedEmail.cs                  # Queue message record
+│   ├── EmailChannel.cs                 # Channel<T> wrapper (singleton)
+│   ├── EmailTemplates.cs               # HTML templates with branding
+│   ├── EmailQueue.cs                   # IEmailQueue implementation
+│   ├── ResendEmailSender.cs            # Resend API wrapper
+│   ├── EmailSenderBackgroundService.cs # Processes queue continuously
+│   └── ReengagementBackgroundService.cs# Daily 4 AM job
+└── Persistence/
+    └── Repositories/
+        └── ReengagementRepository.cs   # Inactive user queries
+```
+
+---
+
+## Configuration
+
+### appsettings.json (non-sensitive)
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `Email:FromName` | `"Codewrinkles"` | Display name in From field |
+| `Email:BaseUrl` | `"https://codewrinkles.com"` | Base URL for email links |
+| `Email:ReengagementHourUtc` | `4` | Hour (0-23) when daily job runs |
+| `Email:ReengagementBatchSize` | `100` | Max emails per re-engagement run |
+
+### Environment Variables (Azure App Service)
+
+| Variable | Description |
+|----------|-------------|
+| `Email__ApiKey` | Resend API key |
+| `Email__FromAddress` | Sender email (e.g., `dan@codewrinkles.com`) |
+
+### Local Development (User Secrets)
+
+```bash
+cd apps/backend/src/Codewrinkles.API
+dotnet user-secrets set "Email:ApiKey" "re_xxxxxxxxxxxx"
+dotnet user-secrets set "Email:FromAddress" "dan@codewrinkles.com"
+```
+
+---
+
+## Re-engagement Logic
+
+### The 24-48 Hour Window
+
+Instead of tracking "last email sent", a time window naturally prevents duplicate sends:
+
+```
+Timeline (hours since last login):
+0h ─────── 24h ─────── 48h ─────── 72h
+
+          │ ELIGIBLE │
+          └──────────┘
+          Users in this window get ONE email
+
+Before 24h: Too soon (might just be sleeping/working)
+24h-48h:    Eligible window - send re-engagement email
+After 48h:  Window passed - email was already sent yesterday
+```
+
+### Email Type Decision Tree
+
+```
+User in 24-48h window?
+├── NO → Don't send
+└── YES → Check what to send:
+    ├── Has unread notifications? → NOTIFICATION REMINDER
+    │   Subject: "You have 5 unread notifications on Pulse"
+    │
+    ├── No notifications, has new pulses from follows? → FEED UPDATE
+    │   Subject: "Your feed has 12 new pulses"
+    │
+    └── Neither? → Don't send (nothing valuable to offer)
+```
+
+### Query Filters
+
+Users are included only if they:
+1. Are active (not suspended)
+2. Have logged in at least once (`LastLoginAt` is not null)
+3. Last login is within the 24-48h window
+4. Have unread notifications OR new pulses from people they follow
+
+Results are prioritized by notification count, then by feed activity.
+
+---
+
+## One-Time Win-Back Campaign (Dec 14, 2024)
+
+A special case handles users who became inactive before the email system was deployed.
+
+On **December 14, 2024**, the re-engagement job expands the window to include ALL users inactive for more than 24 hours (no 48-hour upper limit). This catches dormant users from before the system was in place.
+
+After December 14, 2024, normal 24-48 hour window logic resumes automatically.
+
+**Important**: Deploy before 4 AM UTC on December 14 to ensure the win-back campaign runs.
+
+---
+
+## Email Templates
+
+All templates use Codewrinkles branding:
+- Brand teal: `#20C1AC`
+- Brand soft: `#35D6C0`
+- Light theme for email client compatibility
+- Table-based HTML for consistent rendering
+- Mobile-responsive design
+
+### Welcome Email
+- Sent immediately after registration
+- CTA: "Start Exploring" → `/social`
+
+### Notification Reminder Email
+- Sent to users with unread notifications
+- Shows bold notification count
+- CTA: "See What You Missed" → `/social/notifications`
+
+### Feed Update Email
+- Sent to users without notifications but with new feed content
+- Shows bold pulse count
+- CTA: "See Your Feed" → `/social`
+
+---
+
+## Service Lifetimes
+
+| Service | Lifetime | Reason |
+|---------|----------|--------|
+| `EmailChannel` | Singleton | Shared in-memory queue |
+| `EmailQueue` | Singleton | Stateless, uses singleton channel |
+| `ResendEmailSender` | Transient | Uses IResend for HTTP calls |
+| `IResend` | Transient | Managed by HttpClientFactory |
+| `ReengagementRepository` | Scoped | Uses DbContext |
+| `EmailSenderBackgroundService` | Singleton | Hosted service |
+| `ReengagementBackgroundService` | Singleton | Hosted service |
+
+---
+
+## Trade-offs
+
+| Decision | Trade-off | Mitigation |
+|----------|-----------|------------|
+| In-memory queue | Emails lost on app restart | Acceptable at current scale; add persistence if needed |
+| 24-48h window only | No weekly follow-ups for long-inactive users | Can add separate weekly job later |
+| Hardcoded templates | Deployment required to change content | Templates rarely change |
+| No unsubscribe link | Legal requirement before scaling | Add before reaching 100+ re-engagement emails |
+| No email logging | Harder to debug delivery issues | Add EmailLog entity if debugging needed |
+
+---
+
+## Future Extensions
+
+### Unsubscribe Support
+- Add `EmailPreferences` to Profile or separate entity
+- Add signed unsubscribe token to email links
+- Create `/api/email/unsubscribe` endpoint
+- Filter unsubscribed users in re-engagement query
+
+### Email Logging
+- Create `EmailLog` entity (Id, ToEmail, Subject, Template, SentAt, Status, Error)
+- Log all send attempts for debugging
+- Add retry logic for transient failures
+
+### Notification Breakdown
+- Enhance notification reminder with breakdown:
+  - "3 replies to your pulses"
+  - "2 new followers"
+  - "1 mention"
+- Requires grouping by notification type in query
+
+### Weekly Digest
+- Add `LastReengagementEmailSentAt` to Profile
+- Separate job for users inactive > 48 hours
+- Send at most once per 7 days
+
+---
+
+*Last updated: 2025-12-13*
