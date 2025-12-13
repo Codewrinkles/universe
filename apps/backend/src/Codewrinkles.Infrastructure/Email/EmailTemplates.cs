@@ -55,12 +55,15 @@ public static class EmailTemplates
                                         </p>
 
                                         <p style="margin: 0 0 20px 0; font-size: 16px; color: {TextSecondary};">
-                                            Thanks for joining Codewrinkles! We're excited to have you here.
+                                            Thanks for joining Codewrinkles! We're building something different here.
+                                        </p>
+
+                                        <p style="margin: 0 0 20px 0; font-size: 16px; color: {TextSecondary};">
+                                            <strong style="color: {TextPrimary};">Pulse</strong> is a place where your followers actually see your posts. No algorithm deciding who sees what. No engagement tricks. Just a chronological feed and genuine conversations.
                                         </p>
 
                                         <p style="margin: 0 0 30px 0; font-size: 16px; color: {TextSecondary};">
-                                            Codewrinkles is where developers share ideas, learn together, and build their digital presence.
-                                            Jump into <strong style="color: {TextPrimary};">Pulse</strong> to see what the community is talking about.
+                                            We believe content should be discovered by its value, not by virality metrics. Welcome to a community that thinks the same way.
                                         </p>
 
                                         <!-- CTA Button -->
@@ -79,7 +82,7 @@ public static class EmailTemplates
                                         </p>
 
                                         <p style="margin: 0; font-size: 16px; color: {TextSecondary};">
-                                            Happy coding!<br>
+                                            See you on Pulse!<br>
                                             <strong style="color: {TextPrimary};">The Codewrinkles Team</strong>
                                         </p>
                                     </td>
