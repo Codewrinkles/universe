@@ -31,4 +31,20 @@ public interface IHashtagRepository
         DateTimeOffset? beforeCreatedAt,
         Guid? beforeId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets all hashtags associated with a pulse.
+    /// Used for decrementing usage counts when editing a pulse.
+    /// </summary>
+    Task<List<Domain.Pulse.Hashtag>> GetHashtagsForPulseAsync(
+        Guid pulseId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes all pulse-hashtag associations for a pulse.
+    /// Does not save to database - call UnitOfWork.SaveChangesAsync().
+    /// </summary>
+    Task DeletePulseHashtagsForPulseAsync(
+        Guid pulseId,
+        CancellationToken cancellationToken = default);
 }

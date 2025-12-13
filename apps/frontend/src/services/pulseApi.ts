@@ -91,6 +91,24 @@ export const pulseApi = {
   },
 
   /**
+   * Edit a pulse (text only)
+   * ProfileId is extracted from JWT token on the backend
+   * User must be the author of the pulse
+   */
+  editPulse(id: string, content: string): Promise<{ success: boolean; content: string; updatedAt: string }> {
+    return apiRequest<{ success: boolean; content: string; updatedAt: string }>(
+      config.api.endpoints.pulseById(id),
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content }),
+      }
+    );
+  },
+
+  /**
    * Create a repulse (quote/repost with commentary)
    * ProfileId is extracted from JWT token on the backend
    */

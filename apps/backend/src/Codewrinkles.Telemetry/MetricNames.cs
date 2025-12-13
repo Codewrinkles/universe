@@ -14,6 +14,7 @@ public static class MetricNames
         public const string UsersRegistered = "codewrinkles.users.registered";
         public const string UsersLoggedIn = "codewrinkles.users.logged_in";
         public const string PulsesCreated = "codewrinkles.pulses.created";
+        public const string PulsesEdited = "codewrinkles.pulses.edited";
         public const string PulsesDeleted = "codewrinkles.pulses.deleted";
         public const string PulseLikes = "codewrinkles.pulses.likes";
         public const string PulseReplies = "codewrinkles.pulses.replies";

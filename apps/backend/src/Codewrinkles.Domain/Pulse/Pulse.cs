@@ -129,4 +129,23 @@ public sealed class Pulse
         IsDeleted = true;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
+
+    public void UpdateContent(string newContent)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(newContent, nameof(newContent));
+
+        // Normalize newlines (FormData converts \n to \r\n per HTML spec)
+        var normalizedContent = newContent.Replace("\r\n", "\n").Replace("\r", "\n");
+        var trimmedContent = normalizedContent.Trim();
+
+        if (trimmedContent.Length > MaxContentLength)
+        {
+            throw new ArgumentException(
+                $"Pulse content cannot exceed {MaxContentLength} characters. Current length: {trimmedContent.Length}",
+                nameof(newContent));
+        }
+
+        Content = trimmedContent;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
 }

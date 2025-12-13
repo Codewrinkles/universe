@@ -9,10 +9,11 @@ export interface FeedProps {
   replyingToPulseId?: string | null;
   onReplyCreated?: () => void;
   onDelete?: (pulseId: string) => void;
+  onEdit?: (pulseId: string) => void;
   hideReplies?: boolean;
 }
 
-export function Feed({ posts, onFollowChange, onReplyClick, replyingToPulseId, onReplyCreated, onDelete, hideReplies = false }: FeedProps): JSX.Element {
+export function Feed({ posts, onFollowChange, onReplyClick, replyingToPulseId, onReplyCreated, onDelete, onEdit, hideReplies = false }: FeedProps): JSX.Element {
   // Filter posts based on hideReplies preference
   const filteredPosts = hideReplies
     ? posts.filter((post) => post.type !== "reply")
@@ -28,6 +29,7 @@ export function Feed({ posts, onFollowChange, onReplyClick, replyingToPulseId, o
               onFollowChange={onFollowChange}
               onReplyClick={onReplyClick}
               onDelete={onDelete}
+              onEdit={onEdit}
             />
           </div>
           {replyingToPulseId === post.id && (

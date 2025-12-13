@@ -20,6 +20,7 @@ public static class SpanNames
     public static class Pulse
     {
         public const string Create = "Pulse.Create";
+        public const string Edit = "Pulse.Edit";
         public const string Delete = "Pulse.Delete";
         public const string Get = "Pulse.Get";
         public const string GetByAuthor = "Pulse.GetByAuthor";

@@ -202,4 +202,10 @@ public interface IPulseRepository
     /// Get total count of all pulses (excludes deleted).
     /// </summary>
     Task<int> GetTotalCountAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Delete all mentions for a pulse.
+    /// Does not save to database - call UnitOfWork.SaveChangesAsync().
+    /// </summary>
+    Task DeleteMentionsForPulseAsync(Guid pulseId, CancellationToken cancellationToken);
 }

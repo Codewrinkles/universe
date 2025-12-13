@@ -24,6 +24,11 @@ public static class AppMetrics
         unit: "pulses",
         description: "Number of pulses created");
 
+    private static readonly Counter<long> s_pulsesEdited = Meters.Business.CreateCounter<long>(
+        MetricNames.Business.PulsesEdited,
+        unit: "pulses",
+        description: "Number of pulses edited");
+
     private static readonly Counter<long> s_pulsesDeleted = Meters.Business.CreateCounter<long>(
         MetricNames.Business.PulsesDeleted,
         unit: "pulses",
@@ -138,6 +143,11 @@ public static class AppMetrics
         s_pulsesCreated.Add(1,
             new KeyValuePair<string, object?>(TagNames.Pulse.Type, pulseType),
             new KeyValuePair<string, object?>(TagNames.Pulse.HasImage, hasImage));
+    }
+
+    public static void RecordPulseEdited()
+    {
+        s_pulsesEdited.Add(1);
     }
 
     public static void RecordPulseDeleted()

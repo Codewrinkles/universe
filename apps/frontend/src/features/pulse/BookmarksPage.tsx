@@ -28,6 +28,11 @@ export function BookmarksPage(): JSX.Element {
     }
   };
 
+  const handleEdit = (): void => {
+    // Refetch bookmarks to show updated content
+    loadBookmarks();
+  };
+
   return (
     <PulseThreeColumnLayout>
       {/* Header */}
@@ -61,7 +66,7 @@ export function BookmarksPage(): JSX.Element {
       ) : (
         <div>
           {pulses.map((pulse) => (
-            <PostCard key={pulse.id} post={pulse} />
+            <PostCard key={pulse.id} post={pulse} onEdit={handleEdit} />
           ))}
         </div>
       )}

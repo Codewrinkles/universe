@@ -331,6 +331,32 @@ export function ProfilePage(): JSX.Element {
     setTotalPulsesCount((prev) => Math.max(0, prev - 1));
   };
 
+  const handleEdit = (): void => {
+    // Refetch pulses to show updated content
+    if (profile) {
+      const refetchPulses = async (): Promise<void> => {
+        try {
+          const token = localStorage.getItem(config.auth.accessTokenKey);
+          const response = await fetch(`${config.api.baseUrl}/api/pulse/author/${profile.profileId}?limit=20`, {
+            headers: {
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            setPulses(data.pulses || []);
+            setTotalPulsesCount(data.totalCount ?? 0);
+          }
+        } catch (err) {
+          console.error("Error fetching pulses:", err);
+        }
+      };
+
+      refetchPulses();
+    }
+  };
+
   const isOwnProfile = currentUser?.profileId === profile?.profileId;
 
   if (isLoading) {
@@ -463,6 +489,7 @@ export function ProfilePage(): JSX.Element {
                         post={pulse}
                         onReplyClick={handleReplyClick}
                         onDelete={handleDelete}
+                        onEdit={handleEdit}
                       />
                     </div>
                     {replyingToPulseId === pulse.id && (

@@ -56,6 +56,11 @@ export function ThreadView(): JSX.Element {
     }
   };
 
+  const handleEdit = (): void => {
+    // Refetch to show updated content
+    refetch();
+  };
+
   // Auto-scroll to highlighted reply when it renders
   useEffect(() => {
     if (highlightedReplyId && highlightedReplyRef.current && !isLoading) {
@@ -166,6 +171,7 @@ export function ThreadView(): JSX.Element {
                 post={parentPulse}
                 onReplyClick={handleReplyClick}
                 onDelete={handleDelete}
+                onEdit={handleEdit}
               />
             </div>
 
@@ -208,6 +214,7 @@ export function ThreadView(): JSX.Element {
                           post={reply}
                           onReplyClick={handleReplyClick}
                           onDelete={handleDelete}
+                          onEdit={handleEdit}
                         />
                         {/* Inline Reply Composer for this Reply */}
                         {replyingToPulseId === reply.id && (

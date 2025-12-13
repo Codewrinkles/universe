@@ -37,6 +37,11 @@ export function PulsePage(): JSX.Element {
     refetch();
   };
 
+  const handleEdit = (): void => {
+    // Refetch feed to show updated pulse
+    refetch();
+  };
+
   return (
     <>
       <Helmet>
@@ -117,6 +122,7 @@ export function PulsePage(): JSX.Element {
                 replyingToPulseId={replyingToPulseId}
                 onReplyCreated={handleReplyCreated}
                 onDelete={handleDelete}
+                onEdit={handleEdit}
                 hideReplies={hideReplies}
               />
             </div>

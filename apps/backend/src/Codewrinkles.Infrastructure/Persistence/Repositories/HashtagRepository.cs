@@ -102,4 +102,27 @@ public sealed class HashtagRepository : IHashtagRepository
 
         return pulses;
     }
+
+    public async Task<List<Hashtag>> GetHashtagsForPulseAsync(
+        Guid pulseId,
+        CancellationToken cancellationToken = default)
+    {
+        // Get hashtags with tracking enabled so we can decrement usage
+        return await _pulseHashtags
+            .Where(ph => ph.PulseId == pulseId)
+            .Include(ph => ph.Hashtag)
+            .Select(ph => ph.Hashtag)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task DeletePulseHashtagsForPulseAsync(
+        Guid pulseId,
+        CancellationToken cancellationToken = default)
+    {
+        var pulseHashtags = await _pulseHashtags
+            .Where(ph => ph.PulseId == pulseId)
+            .ToListAsync(cancellationToken);
+
+        _pulseHashtags.RemoveRange(pulseHashtags);
+    }
 }

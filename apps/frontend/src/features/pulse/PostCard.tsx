@@ -5,6 +5,7 @@ import { PostLinkPreview } from "./PostLinkPreview";
 import { PostRepost } from "./PostRepost";
 import { RepulseModal } from "./RepulseModal";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
+import { EditPulseModal } from "./EditPulseModal";
 import { ImageGalleryOverlay } from "../../components/ui";
 import { formatTimeAgo } from "../../utils/timeUtils";
 import { config } from "../../config";
@@ -19,6 +20,7 @@ export interface PostCardProps {
   onReplyClick?: (pulseId: string) => void;
   onFollowChange?: () => void;
   onDelete?: (pulseId: string) => void;
+  onEdit?: (pulseId: string) => void;
 }
 
 function formatCount(count: number): string {
@@ -112,7 +114,7 @@ function LikeButton({ pulseId, initialIsLiked, initialLikeCount }: LikeButtonPro
   );
 }
 
-export function PostCard({ post, onReplyClick, onFollowChange, onDelete }: PostCardProps): JSX.Element {
+export function PostCard({ post, onReplyClick, onFollowChange, onDelete, onEdit }: PostCardProps): JSX.Element {
   const { author } = post;
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -120,6 +122,7 @@ export function PostCard({ post, onReplyClick, onFollowChange, onDelete }: PostC
   const [showRepulseModal, setShowRepulseModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(post.isBookmarkedByCurrentUser);
   const [showImageOverlay, setShowImageOverlay] = useState(false);
@@ -188,6 +191,16 @@ export function PostCard({ post, onReplyClick, onFollowChange, onDelete }: PostC
       ? (post.threadRootId || post.parentPulseId || post.id)
       : post.id;
     navigate(`/pulse/${targetPulseId}`);
+  };
+
+  const handleEditClick = (): void => {
+    setShowMenu(false);
+    setShowEditModal(true);
+  };
+
+  const handleEditSave = (): void => {
+    setShowEditModal(false);
+    onEdit?.(post.id);
   };
 
   const handleDeleteClick = (): void => {
@@ -297,14 +310,25 @@ export function PostCard({ post, onReplyClick, onFollowChange, onDelete }: PostC
                   </button>
                   {/* Dropdown menu */}
                   {showMenu && (
-                    <div className="absolute right-0 top-full mt-1 w-48 rounded-xl border border-border bg-surface-card1 shadow-lg z-10">
+                    <div className="absolute right-0 top-full mt-1 w-48 rounded-xl border border-border bg-surface-card1 shadow-lg z-10 overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditClick();
+                        }}
+                        className="flex w-full items-center gap-3 px-4 py-3 text-sm text-text-primary hover:bg-surface-card2 transition-colors"
+                      >
+                        <span>✏️</span>
+                        <span>Edit</span>
+                      </button>
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteClick();
                         }}
-                        className="flex w-full items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors rounded-xl"
+                        className="flex w-full items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors"
                       >
                         <span>🗑️</span>
                         <span>Delete</span>
@@ -461,6 +485,15 @@ export function PostCard({ post, onReplyClick, onFollowChange, onDelete }: PostC
         onConfirm={handleDeleteConfirm}
         onCancel={() => setShowDeleteDialog(false)}
         isDeleting={isDeleting}
+      />
+    )}
+
+    {/* Edit Pulse Modal */}
+    {showEditModal && (
+      <EditPulseModal
+        post={post}
+        onSave={handleEditSave}
+        onCancel={() => setShowEditModal(false)}
       />
     )}
 

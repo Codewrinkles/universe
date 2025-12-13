@@ -31,6 +31,10 @@ public static class PulseEndpoints
             .WithName("DeletePulse")
             .RequireAuthorization();
 
+        group.MapPut("{id:guid}", EditPulse)
+            .WithName("EditPulse")
+            .RequireAuthorization();
+
         group.MapPost("{id:guid}/like", LikePulse)
             .WithName("LikePulse")
             .RequireAuthorization();
@@ -447,6 +451,32 @@ public static class PulseEndpoints
         return Results.Ok(new { success = result.Success });
     }
 
+    private static async Task<IResult> EditPulse(
+        HttpContext httpContext,
+        Guid id,
+        [FromBody] EditPulseRequest request,
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        // Extract ProfileId from JWT claims (user can only edit their own pulses)
+        var profileId = httpContext.GetCurrentProfileId();
+
+        var command = new EditPulseCommand(
+            PulseId: id,
+            ProfileId: profileId,
+            NewContent: request.Content
+        );
+
+        var result = await mediator.SendAsync(command, cancellationToken);
+
+        return Results.Ok(new
+        {
+            success = result.Success,
+            content = result.Content,
+            updatedAt = result.UpdatedAt
+        });
+    }
+
     private static async Task<IResult> GetTrendingHashtags(
         [FromQuery] int limit,
         [FromServices] IMediator mediator,
@@ -509,3 +539,8 @@ public static class PulseEndpoints
         }
     }
 }
+
+/// <summary>
+/// Request body for editing a pulse.
+/// </summary>
+public sealed record EditPulseRequest(string Content);

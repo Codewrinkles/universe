@@ -518,4 +518,13 @@ public sealed class PulseRepository : IPulseRepository
             .Where(p => !p.IsDeleted)
             .CountAsync(cancellationToken);
     }
+
+    public async Task DeleteMentionsForPulseAsync(Guid pulseId, CancellationToken cancellationToken)
+    {
+        var mentions = await _mentions
+            .Where(m => m.PulseId == pulseId)
+            .ToListAsync(cancellationToken);
+
+        _mentions.RemoveRange(mentions);
+    }
 }
