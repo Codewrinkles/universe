@@ -38,10 +38,10 @@ public static class EmailTemplates
                         <td style="padding: 40px 20px;">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: 0 auto; max-width: 600px;">
 
-                                <!-- Header with gradient -->
+                                <!-- Header with solid background (gradient fallback) -->
                                 <tr>
-                                    <td style="background: linear-gradient(135deg, {BrandColor} 0%, {BrandColorSoft} 100%); padding: 40px 30px; border-radius: 16px 16px 0 0; text-align: center;">
-                                        <h1 style="margin: 0; color: white; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
+                                    <td style="background-color: {BrandColor}; padding: 40px 30px; border-radius: 16px 16px 0 0; text-align: center;">
+                                        <h1 style="margin: 0; color: #FFFFFF; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
                                             Welcome to Codewrinkles!
                                         </h1>
                                     </td>
@@ -69,8 +69,8 @@ public static class EmailTemplates
                                         <!-- CTA Button -->
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto 30px auto;">
                                             <tr>
-                                                <td style="border-radius: 10px; background: linear-gradient(135deg, {BrandColor} 0%, {BrandColorSoft} 100%);">
-                                                    <a href="{baseUrl}/social" target="_blank" style="display: inline-block; padding: 16px 36px; font-size: 16px; font-weight: 600; color: white; text-decoration: none; border-radius: 10px;">
+                                                <td style="border-radius: 10px; background-color: {BrandColor};">
+                                                    <a href="{baseUrl}/pulse" target="_blank" style="display: inline-block; padding: 16px 36px; font-size: 16px; font-weight: 600; color: #FFFFFF; text-decoration: none; border-radius: 10px;">
                                                         Start Exploring
                                                     </a>
                                                 </td>
@@ -125,11 +125,11 @@ public static class EmailTemplates
                         <td style="padding: 40px 20px;">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: 0 auto; max-width: 600px;">
 
-                                <!-- Header with gradient -->
+                                <!-- Header with solid background (gradient fallback) -->
                                 <tr>
-                                    <td style="background: linear-gradient(135deg, {BrandColor} 0%, {BrandColorSoft} 100%); padding: 40px 30px; border-radius: 16px 16px 0 0; text-align: center;">
-                                        <h1 style="margin: 0; color: white; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">
-                                            You've got {notificationWord}!
+                                    <td style="background-color: {BrandColor}; padding: 40px 30px; border-radius: 16px 16px 0 0; text-align: center;">
+                                        <h1 style="margin: 0; color: #FFFFFF; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">
+                                            You've got notifications!
                                         </h1>
                                     </td>
                                 </tr>
@@ -166,8 +166,8 @@ public static class EmailTemplates
                                         <!-- CTA Button -->
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto 30px auto;">
                                             <tr>
-                                                <td style="border-radius: 10px; background: linear-gradient(135deg, {BrandColor} 0%, {BrandColorSoft} 100%);">
-                                                    <a href="{baseUrl}/social/notifications" target="_blank" style="display: inline-block; padding: 16px 36px; font-size: 16px; font-weight: 600; color: white; text-decoration: none; border-radius: 10px;">
+                                                <td style="border-radius: 10px; background-color: {BrandColor};">
+                                                    <a href="{baseUrl}/pulse/notifications" target="_blank" style="display: inline-block; padding: 16px 36px; font-size: 16px; font-weight: 600; color: #FFFFFF; text-decoration: none; border-radius: 10px;">
                                                         See What You Missed
                                                     </a>
                                                 </td>
@@ -221,10 +221,10 @@ public static class EmailTemplates
                         <td style="padding: 40px 20px;">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: 0 auto; max-width: 600px;">
 
-                                <!-- Header with gradient -->
+                                <!-- Header with solid background (gradient fallback) -->
                                 <tr>
-                                    <td style="background: linear-gradient(135deg, {BrandColor} 0%, {BrandColorSoft} 100%); padding: 40px 30px; border-radius: 16px 16px 0 0; text-align: center;">
-                                        <h1 style="margin: 0; color: white; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">
+                                    <td style="background-color: {BrandColor}; padding: 40px 30px; border-radius: 16px 16px 0 0; text-align: center;">
+                                        <h1 style="margin: 0; color: #FFFFFF; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">
                                             Your feed is waiting!
                                         </h1>
                                     </td>
@@ -262,8 +262,8 @@ public static class EmailTemplates
                                         <!-- CTA Button -->
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto 30px auto;">
                                             <tr>
-                                                <td style="border-radius: 10px; background: linear-gradient(135deg, {BrandColor} 0%, {BrandColorSoft} 100%);">
-                                                    <a href="{baseUrl}/social" target="_blank" style="display: inline-block; padding: 16px 36px; font-size: 16px; font-weight: 600; color: white; text-decoration: none; border-radius: 10px;">
+                                                <td style="border-radius: 10px; background-color: {BrandColor};">
+                                                    <a href="{baseUrl}/pulse" target="_blank" style="display: inline-block; padding: 16px 36px; font-size: 16px; font-weight: 600; color: #FFFFFF; text-decoration: none; border-radius: 10px;">
                                                         See Your Feed
                                                     </a>
                                                 </td>
