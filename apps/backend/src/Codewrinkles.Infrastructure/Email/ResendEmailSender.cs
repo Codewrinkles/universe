@@ -5,14 +5,14 @@ using Resend;
 
 namespace Codewrinkles.Infrastructure.Email;
 
-public sealed class ResendEmailSender
+public sealed class ResendEmailSender : IEmailSender
 {
-    private readonly IResend _resend;
+    private readonly ResendClient _resend;
     private readonly EmailSettings _settings;
     private readonly ILogger<ResendEmailSender> _logger;
 
     public ResendEmailSender(
-        IResend resend,
+        ResendClient resend,
         IOptions<EmailSettings> settings,
         ILogger<ResendEmailSender> logger)
     {

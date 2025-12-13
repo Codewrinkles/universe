@@ -10,6 +10,15 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// CRITICAL: Enable DI validation in ALL environments (not just Development)
+// This ensures scope violations and missing registrations fail at startup locally,
+// not at runtime in production. Same behavior everywhere = no production surprises.
+builder.Host.UseDefaultServiceProvider(options =>
+{
+    options.ValidateScopes = true;
+    options.ValidateOnBuild = true;
+});
+
 // Layer registration
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);

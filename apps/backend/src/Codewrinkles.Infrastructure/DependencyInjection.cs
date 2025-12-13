@@ -117,33 +117,43 @@ public static class DependencyInjection
         services.AddHttpClient<IOAuthService, OAuthService>();
 
         // ===== Email Services =====
+        //
+        // Architecture: Channel (singleton queue) -> BackgroundService (singleton processor)
+        //                                              -> creates scope per email
+        //                                                  -> resolves IEmailSender (scoped)
+        //                                                      -> uses ResendClient (via HttpClientFactory)
+        //
+        // IMPORTANT: Do NOT register IResend separately - AddHttpClient<ResendClient>() handles it.
+        // Adding a separate registration causes conflicts and production failures.
 
-        // Configuration
+        // 1. Configuration (singleton)
         var emailSection = configuration.GetSection(EmailSettings.SectionName);
         services.Configure<EmailSettings>(emailSection);
 
-        // Channel (singleton - shared queue)
+        // 2. Channel - singleton, thread-safe queue for background processing
         services.AddSingleton<EmailChannel>();
 
-        // Resend client (following official SDK pattern)
+        // 3. Resend SDK - typed HttpClient registration
+        //    This registers ResendClient with IHttpClientFactory management.
+        //    ResendClient constructor takes: IOptionsSnapshot<ResendClientOptions>, HttpClient
         services.AddOptions();
         services.AddHttpClient<ResendClient>();
         services.Configure<ResendClientOptions>(o =>
         {
             o.ApiToken = configuration["Email:ApiKey"] ?? string.Empty;
         });
-        services.AddTransient<IResend, ResendClient>();
 
-        // Email sender (transient - uses IResend)
-        services.AddTransient<ResendEmailSender>();
+        // 4. Email sender - SCOPED (resolved inside scope created by background service)
+        //    This ensures proper lifetime management with HttpClient and IOptionsSnapshot
+        services.AddScoped<IEmailSender, ResendEmailSender>();
 
-        // Email queue (singleton - used by handlers to queue emails)
+        // 5. Email queue interface - singleton, wraps the channel for handlers to enqueue
         services.AddSingleton<IEmailQueue, EmailQueue>();
 
-        // Repository for re-engagement queries
+        // 6. Repository for re-engagement queries
         services.AddScoped<IReengagementRepository, ReengagementRepository>();
 
-        // Background services
+        // 7. Background services - singletons that use IServiceScopeFactory
         services.AddHostedService<EmailSenderBackgroundService>();
         services.AddHostedService<ReengagementBackgroundService>();
 
