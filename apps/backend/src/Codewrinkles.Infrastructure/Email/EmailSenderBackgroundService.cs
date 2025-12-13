@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -6,21 +5,20 @@ namespace Codewrinkles.Infrastructure.Email;
 
 /// <summary>
 /// Background service that processes the email queue and sends via Resend.
-/// Uses IServiceScopeFactory to properly resolve scoped dependencies (HttpClient-based services).
 /// </summary>
 public sealed class EmailSenderBackgroundService : BackgroundService
 {
     private readonly EmailChannel _channel;
-    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ResendEmailSender _sender;
     private readonly ILogger<EmailSenderBackgroundService> _logger;
 
     public EmailSenderBackgroundService(
         EmailChannel channel,
-        IServiceScopeFactory scopeFactory,
+        ResendEmailSender sender,
         ILogger<EmailSenderBackgroundService> logger)
     {
         _channel = channel;
-        _scopeFactory = scopeFactory;
+        _sender = sender;
         _logger = logger;
     }
 
@@ -32,9 +30,7 @@ public sealed class EmailSenderBackgroundService : BackgroundService
         {
             try
             {
-                using var scope = _scopeFactory.CreateScope();
-                var sender = scope.ServiceProvider.GetRequiredService<ResendEmailSender>();
-                await sender.SendAsync(message, stoppingToken);
+                await _sender.SendAsync(message, stoppingToken);
             }
             catch (Exception ex)
             {
