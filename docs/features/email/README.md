@@ -120,8 +120,8 @@ Infrastructure/
 
 ```bash
 cd apps/backend/src/Codewrinkles.API
-dotnet user-secrets set "Email:ApiKey" "re_xxxxxxxxxxxx"
-dotnet user-secrets set "Email:FromAddress" "dan@codewrinkles.com"
+dotnet user-secrets set "Email:ApiKey" "<your-resend-api-key>"
+dotnet user-secrets set "Email:FromAddress" "<your-verified-sender-email>"
 ```
 
 ---
