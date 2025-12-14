@@ -89,22 +89,24 @@ public sealed class ReengagementBackgroundService : BackgroundService
             var now = DateTimeOffset.UtcNow;
             var windowEnd = now.AddHours(-24);    // Inactive for at least 24 hours
 
-            // One-time win-back: On Dec 14, 2024, catch ALL dormant users (not just 24-48h window)
-            // This runs once to re-engage users who joined before the email system was in place.
-            // After this date, normal 24-48h window resumes.
+            // Determine the window start based on whether win-back campaign is enabled.
+            // Win-back mode: Catch ALL users inactive for more than 24 hours (no upper limit).
+            // Normal mode: Only catch users in the 24-48 hour window.
             DateTimeOffset windowStart;
-            var isWinbackDay = now.Year == 2024 && now.Month == 12 && now.Day == 14;
 
-            if (isWinbackDay)
+            if (_settings.WinbackCampaignEnabled)
             {
-                // Include all users inactive for more than 24 hours (no upper bound)
+                // Win-back campaign: Include all users inactive for more than 24 hours (no upper bound)
                 windowStart = DateTimeOffset.MinValue;
-                _logger.LogInformation("Running one-time win-back campaign for all dormant users");
+                _logger.LogInformation(
+                    "Win-back campaign ENABLED - targeting ALL users inactive for more than 24 hours");
             }
             else
             {
                 // Normal operation: 24-48 hour window
                 windowStart = now.AddHours(-48);
+                _logger.LogInformation(
+                    "Normal mode - targeting users in 24-48 hour inactivity window");
             }
 
             var candidates = await repository.GetCandidatesAsync(

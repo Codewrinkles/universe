@@ -145,15 +145,25 @@ Results are prioritized by notification count, then by feed activity.
 
 ---
 
-## One-Time Win-Back Campaign (Dec 14, 2024)
+## Win-Back Campaign Mode
 
-A special case handles users who became inactive before the email system was deployed.
+When first deploying the email system, there may be dormant users who became inactive before the system existed. The normal 24-48 hour window won't catch them.
 
-On **December 14, 2024**, the re-engagement job expands the window to include ALL users inactive for more than 24 hours (no 48-hour upper limit). This catches dormant users from before the system was in place.
+**Configuration flag:** `Email:WinbackCampaignEnabled`
 
-After December 14, 2024, normal 24-48 hour window logic resumes automatically.
+| Value | Behavior |
+|-------|----------|
+| `true` (default) | Send emails to ALL users inactive >24 hours (no upper limit) |
+| `false` | Normal 24-48 hour window |
 
-**Important**: Deploy before 4 AM UTC on December 14 to ensure the win-back campaign runs.
+**Deployment process:**
+1. Deploy with `WinbackCampaignEnabled = true` (the default)
+2. Service runs at scheduled hour, sends win-back emails to all dormant users
+3. Verify emails were sent (check logs, Resend dashboard)
+4. Set `Email__WinbackCampaignEnabled = false` in Azure App Configuration
+5. Normal 24-48 hour window logic resumes
+
+**Re-running:** If you need to run another win-back campaign (e.g., after a long period without the service), set the flag back to `true`.
 
 ---
 
@@ -235,4 +245,4 @@ All templates use Codewrinkles branding:
 
 ---
 
-*Last updated: 2025-12-13*
+*Last updated: 2025-12-14*
