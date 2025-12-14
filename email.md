@@ -245,4 +245,14 @@ All templates use Codewrinkles branding:
 
 ---
 
+## Rate Limiting
+
+Resend has a rate limit of **2 requests per second** on the free tier. The `EmailSenderBackgroundService` adds a 600ms delay between emails to stay safely under this limit.
+
+For batch operations (like win-back campaigns with many emails), this means:
+- 10 emails ≈ 6 seconds
+- 100 emails ≈ 60 seconds
+
+---
+
 *Last updated: 2025-12-14*
