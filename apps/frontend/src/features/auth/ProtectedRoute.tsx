@@ -9,13 +9,15 @@ import { useAuth } from "../../hooks/useAuth";
 
 export interface ProtectedRouteProps {
   children: ReactNode;
+  /** Where to redirect unauthenticated users. Defaults to "/login" */
+  redirectTo?: string;
 }
 
 /**
  * Wraps routes that require authentication
- * Shows loading state while checking auth, redirects to login if not authenticated
+ * Shows loading state while checking auth, redirects if not authenticated
  */
-export function ProtectedRoute({ children }: ProtectedRouteProps): JSX.Element {
+export function ProtectedRoute({ children, redirectTo = "/login" }: ProtectedRouteProps): JSX.Element {
   const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
@@ -29,10 +31,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps): JSX.Element {
     );
   }
 
-  // Redirect to login if not authenticated
-  // Preserve the intended destination for redirect after login
+  // Redirect if not authenticated
+  // Preserve the intended destination for redirect after login (only for /login redirect)
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    const state = redirectTo === "/login" ? { from: location.pathname } : undefined;
+    return <Navigate to={redirectTo} state={state} replace />;
   }
 
   return <>{children}</>;

@@ -26,6 +26,7 @@ import { AdminRoute } from "./features/auth/AdminRoute";
 import { AdminPage } from "./features/admin/AdminPage";
 import { DashboardPage } from "./features/admin/DashboardPage";
 import { TermsPage, PrivacyPage } from "./features/legal";
+import { NovaLayout, NovaChatPage } from "./features/nova";
 
 /**
  * Main application component that manages:
@@ -68,7 +69,23 @@ export function App(): JSX.Element {
         </Route>
       </Route>
 
-      {/* Protected routes - require authentication */}
+      {/* Nova - protected, redirects to home if unauthenticated (hidden from app switcher until public launch) */}
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute redirectTo="/">
+            <ShellLayout theme={theme} onThemeToggle={toggleTheme} />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="nova" element={<NovaLayout />}>
+          <Route index element={<Navigate to="/nova/c/new" replace />} />
+          <Route path="c/new" element={<NovaChatPage />} />
+          <Route path="c/:conversationId" element={<NovaChatPage />} />
+        </Route>
+      </Route>
+
+      {/* Protected routes - require authentication, redirects to login */}
       <Route
         path="/"
         element={

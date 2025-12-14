@@ -38,43 +38,80 @@ Codewrinkles is a unified ecosystem of interconnected applications designed to r
 
 ### 2. Nova - The Learning Revolution
 
-**Core Concept**: Reinvent learning by combining conversational AI, RAG, knowledge graphs, and agentic course generation.
+**Core Concept**: The go-to AI coach for technical learning. Nova becomes the ChatGPT for software development, architecture, and technical decision-making.
 
 **The Problem It Solves**:
-- People no longer learn by watching videos or searching YouTube
-- They learn by chatting with ChatGPT or Claude
+- People no longer learn by watching videos or searching Google
+- Studies show Google searches have drastically shrunk - people now chat with ChatGPT
 - Valuable educational content exists but is hard to discover (buried in long videos, scattered across platforms)
 - Traditional learning platforms (Pluralsight, Udemy) use outdated course-based models
+- ChatGPT is general-purpose; there's no specialized, authoritative AI for technical learning
+
+**Nova's Vision**:
+- **Chat-first learning**: Users start a conversation, not a search
+- **Multi-source knowledge**: YouTube transcripts, Substack articles, Pulses (by hashtag), public domain books, official documentation, and future sources
+- **AI coaching**: Not just answers, but guidance, explanations, and personalized learning paths
+- **On-the-fly roadmaps**: Learning paths generated dynamically from conversation analysis
+- **Language/framework agnostic**: All technical topics - software development, architecture, technical decision-making
+
+**Target Use Cases**:
+- "How do I implement Clean Architecture in .NET?"
+- "Explain the difference between microservices and modular monoliths"
+- "I'm building a SaaS app - what architectural decisions should I consider?"
+- "Create a learning path for me to become a better software architect"
+- "What does Dan from Codewrinkles think about vertical slice architecture?"
 
 **Nova's Approach**:
 
-#### Phase 1: Single Creator (Codewrinkles Content)
-- Index all Codewrinkles content (YouTube, LinkedIn, Substack, articles)
-- Chunk content into byte-sized insights
-- Store in vector database with semantic embeddings
-- Users chat with "Codewrinkles AI" to learn
-- AI provides responses with source attribution (links to original content)
-- Agentic features: dynamically create learning paths based on user interaction
+#### Phase 1: MVP - Chat with RAG
+- Working AI coach with coaching personality (system prompt engineering)
+- Index content from multiple sources (YouTube, Substack, Pulses, manual uploads)
+- RAG-based responses using Azure AI Search for vector retrieval
+- Source attribution with links to original content
+- OpenAI for LLM (model flexibility: gpt-4o-mini → GPT-4/5 → embeddings)
 
-#### Phase 2: Multi-Creator Knowledge Graph
+#### Phase 2: Learning Roadmaps (Differentiator)
+- Analyze conversation to detect knowledge gaps
+- Generate personalized learning paths on-the-fly
+- Track progress through roadmap steps
+- Proactive suggestions for next topics based on interaction patterns
+- Memory of what users already know
+
+#### Phase 3: Multi-Creator Knowledge Graph
 - Multiple creators can index their content
 - Build knowledge graphs around different topics
 - AI can compare ideas, show opposing viewpoints, present different approaches
 - Responses mention creators whose insights were used
 - Direct attribution links drive traffic back to original content
 
+**Content Sources (Priority Order)**:
+1. YouTube transcripts (Codewrinkles videos first)
+2. Substack articles
+3. Pulses by hashtag (community knowledge from Pulse)
+4. Public domain technical books
+5. Official documentation (Microsoft Learn, etc.)
+6. Future: Multi-creator content
+
+**Authority System**:
+Not all content is equal. Nova uses authority weighting:
+1. Official documentation (highest)
+2. Recent creator content (< 6 months)
+3. Established books/courses
+4. Community content (Pulses)
+5. Older content (lower weight)
+
 **How Quality Content Surfaces** (Self-Regulating Quality):
 - Everything is vectorized (semantic similarity)
-- Content surfaces based on relevance + knowledge graph coherence
+- Content surfaces based on relevance + authority weighting + recency
 - If one creator states something clearly wrong, it will have many opposing insights in the graph
 - Low-quality content gets naturally down-weighted, even if it tries to use FOMO or emotional triggers
 - **Information Darwinism**: Quality content survives because it's more useful, not because it's more viral
 
 **Key Technical Concepts**:
 - **RAG (Retrieval-Augmented Generation)**: Look up relevant insights, generate responses
-- **Vector similarity**: Semantic search for relevant content
-- **Knowledge graphs**: Map relationships, oppositions, and connections between insights
-- **Chunking strategy**: Critical for quality - balance granularity vs. context
+- **Vector similarity**: Azure AI Search for semantic search
+- **Chunking strategy**: Content-type specific (paragraphs for articles, semantic for transcripts)
+- **Authority hierarchy**: Weighted retrieval based on source trustworthiness
 - **Agentic course generation**: AI proactively structures learning paths based on:
   - Conversation history and patterns
   - Memory of what users already know
@@ -82,18 +119,20 @@ Codewrinkles is a unified ecosystem of interconnected applications designed to r
   - Logical concept sequencing
   - Dynamic branching vs. linear progression
 
-**Creator Value Proposition**:
+**Creator Value Proposition** (Future):
 - Get credit even if users never watch full content
 - Increase reach through attribution (surface hidden gems from long videos)
 - Clear monetization model (revenue share based on insight usage)
 - Analytics showing how insights are being used
 
 **Moat**:
-- Cross-creator knowledge graphs (no single creator has complete picture)
-- Quality content surfaces naturally through vector similarity + graph coherence
+- Specialized for technical learning (not general-purpose like ChatGPT)
+- Multi-source knowledge with authority weighting
+- Learning roadmap generation (not just Q&A)
+- Cross-creator knowledge graphs (future)
 - Attribution model benefits creators instead of cannibalizing their content
 
-**Vision**: Replace traditional learning platforms (Pluralsight, Udemy) with a conversational, multi-perspective, agentic learning experience.
+**Vision**: Become THE go-to AI for technical learning. Replace traditional learning platforms (Pluralsight, Udemy) and specialized Google searches with a conversational, personalized, agentic learning experience.
 
 ---
 
@@ -161,36 +200,61 @@ Purpose unclear. To be defined.
 
 ---
 
-### Phase 4: Nova MVP - Single Creator
-**Content Ingestion**
-- Upload/index Codewrinkles content (YouTube, articles, Substack)
-- Chunk content into insights
-- Build vector database
+### Phase 4: Nova MVP - Chat Foundation
+**Core Chat Experience**
+- ConversationSession and Message domain entities
+- OpenAI integration with model flexibility (gpt-4o-mini, GPT-4/5, embeddings)
+- Nova system prompt (coaching personality, guidelines, authority rules)
+- Basic chat endpoint and frontend wiring
 
-**Chat Interface**
-- Chat UI in Nova
-- RAG-based responses using Codewrinkles content
-- Source attribution with links
+**Basic RAG Pipeline**
+- Azure AI Search setup with vector index
+- Embedding service (OpenAI text-embedding-3-small)
+- Retrieval integration into chat flow
+- Source attribution in responses
 
-**Why Fourth**: Launch to existing Pulse audience. Prove concept with own content.
+**Why Fourth**: Get a working AI coach shipped. RAG can be minimal initially.
 
 ---
 
-### Phase 5: Nova Agentic Features
+### Phase 5: Nova Content Sources
+**Ingestion Pipeline**
+- Content source abstraction (IContentSource interface)
+- Chunking strategy abstraction (content-type specific)
+- Unified ingestion pipeline (source → chunk → embed → index)
+
+**First Content Sources**
+- Manual text upload (simplest, for testing)
+- YouTube transcripts (Codewrinkles videos)
+- Substack articles
+- Pulses by hashtag (leverage existing Pulse data)
+
+**Authority System**
+- Authority level per content source
+- Authority-weighted retrieval
+- Recency boosting
+
+**Why Fifth**: Build the content foundation. Multiple sources prove the abstraction works.
+
+---
+
+### Phase 6: Nova Learning Roadmaps (Differentiator)
+**Conversation Intelligence**
+- Conversation memory and summarization
+- Knowledge gap detection from chat patterns
+- User profile/preferences storage
+
 **Dynamic Learning Paths**
-- AI generates learning plans from chat history
-- Conversation memory (track what user learned)
-- Suggest next topics (detect knowledge gaps)
+- LearningPath and LearningStep entities
+- Roadmap generation from conversation analysis
+- Progress tracking through roadmap steps
+- Proactive next-topic suggestions
 
-**Knowledge Graph V1**
-- Visualize concept relationships
-- Show how insights connect
-
-**Why Fifth**: This is the differentiator beyond basic RAG chat.
+**Why Sixth**: This is the differentiator. ChatGPT answers questions; Nova coaches you.
 
 ---
 
-### Phase 6: Integration & Cross-App Value
+### Phase 7: Integration & Cross-App Value
 **Pulse ↔ Nova Integration**
 - Share Nova insights to Pulse
 - Discover Nova topics from Pulse conversations
@@ -200,11 +264,11 @@ Purpose unclear. To be defined.
 - Show how insights are being used
 - Attribution metrics (views, engagement from links)
 
-**Why Sixth**: Make ecosystem feel unified.
+**Why Seventh**: Make ecosystem feel unified.
 
 ---
 
-### Phase 7: Multi-Creator Nova
+### Phase 8: Multi-Creator Nova
 **Creator Onboarding**
 - Invite system for other creators
 - Creator dashboard (upload content, analytics)
@@ -216,7 +280,7 @@ Purpose unclear. To be defined.
 - Opposing viewpoints visualization
 - Compare different approaches to same topic
 
-**Why Seventh**: Scale after proving concept. Invite other creators using attribution metrics as pitch.
+**Why Eighth**: Scale after proving concept. Invite other creators using attribution metrics as pitch.
 
 ---
 
