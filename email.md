@@ -1,8 +1,8 @@
 # Email Infrastructure
 
 > **Status**: Implemented
-> **Provider**: Resend (3,000 emails/month free tier)
-> **Processing**: Channel<T> + BackgroundService (non-blocking)
+> **Provider**: Resend (3,000 emails/month free tier, 2 req/sec rate limit)
+> **Processing**: Channel<T> + BackgroundService (non-blocking, rate-limited)
 
 ---
 
@@ -14,7 +14,7 @@ The email system sends three types of emails:
 2. **Notification reminder email** - For inactive users (24-48h) with unread notifications
 3. **Feed update email** - For inactive users (24-48h) without notifications but with new content from follows
 
-Re-engagement emails are processed daily at **4 AM UTC**.
+Re-engagement emails are processed daily at a configurable hour (default: **4 AM UTC**).
 
 ---
 
@@ -26,21 +26,23 @@ Re-engagement emails are processed daily at **4 AM UTC**.
 ┌─────────────────────┐     ┌──────────────────┐     ┌─────────────────────┐
 │  Command Handlers   │────▶│  EmailChannel    │────▶│  EmailSender        │
 │  (queue emails)     │     │  (Channel<T>)    │     │  BackgroundService  │
-└─────────────────────┘     └──────────────────┘     └─────────────────────┘
-                                   ▲                          │
-┌─────────────────────┐            │                          ▼
-│  Reengagement       │────────────┘                  ┌───────────────┐
-│  BackgroundService  │                               │    Resend     │
-│  (4 AM UTC daily)   │                               │     API       │
-└─────────────────────┘                               └───────────────┘
+└─────────────────────┘     └──────────────────┘     │  (600ms delay)      │
+                                   ▲                 └─────────────────────┘
+┌─────────────────────┐            │                          │
+│  Reengagement       │────────────┘                          ▼
+│  BackgroundService  │                               ┌───────────────┐
+│  (configurable hour)│                               │    Resend     │
+└─────────────────────┘                               │  (2 req/sec)  │
+                                                      └───────────────┘
 ```
 
 ### Design Principles
 
 1. **Non-blocking**: Emails are queued via Channel<T>, handlers return immediately
 2. **Single sender**: All emails flow through one background service
-3. **Fail-safe**: Email failures are logged but never crash the app
-4. **DateTimeOffset**: All timestamps use `DateTimeOffset.UtcNow`
+3. **Rate-limited**: 600ms delay between sends to respect Resend's 2 req/sec limit
+4. **Fail-safe**: Email failures are logged but never crash the app
+5. **DateTimeOffset**: All timestamps use `DateTimeOffset.UtcNow`
 
 ---
 
@@ -73,14 +75,16 @@ Infrastructure/
 
 ## Configuration
 
-### appsettings.json (non-sensitive)
+### appsettings.json (non-sensitive defaults)
 
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `Email:FromName` | `"Codewrinkles"` | Display name in From field |
 | `Email:BaseUrl` | `"https://codewrinkles.com"` | Base URL for email links |
-| `Email:ReengagementHourUtc` | `4` | Hour (0-23) when daily job runs |
+| `Email:ReengagementHourUtc` | `8`* | Hour (0-23) when daily job runs |
 | `Email:ReengagementBatchSize` | `100` | Max emails per re-engagement run |
+
+*Currently set to 8 for testing. Change to 4 for production via Azure config.
 
 ### Environment Variables (Azure App Service)
 
@@ -88,6 +92,8 @@ Infrastructure/
 |----------|-------------|
 | `Email__ApiKey` | Resend API key |
 | `Email__FromAddress` | Sender email (e.g., `dan@codewrinkles.com`) |
+| `Email__WinbackCampaignEnabled` | `true` = all dormant users, `false` = normal 24-48h window |
+| `Email__ReengagementHourUtc` | Override the scheduled hour (e.g., `4` for 4 AM UTC) |
 
 ### Local Development (User Secrets)
 
@@ -252,6 +258,65 @@ Resend has a rate limit of **2 requests per second** on the free tier. The `Emai
 For batch operations (like win-back campaigns with many emails), this means:
 - 10 emails ≈ 6 seconds
 - 100 emails ≈ 60 seconds
+
+---
+
+## Troubleshooting
+
+### Diagnosing email issues via Application Insights
+
+**Find all email-related logs:**
+```kql
+traces
+| where timestamp >= ago(4h)
+| where message has "re-engagement" or message has "email" or message has "Email"
+| order by timestamp desc
+| project timestamp, message, severityLevel
+```
+
+**Find exceptions (including rate limit errors):**
+```kql
+exceptions
+| where timestamp >= ago(4h)
+| order by timestamp desc
+| project timestamp, type, outerMessage, innermostMessage
+```
+
+**Find re-engagement job execution details:**
+```kql
+traces
+| where timestamp >= ago(4h)
+| where message has "candidates" or message has "Queued" or message has "Win-back"
+| order by timestamp asc
+| project timestamp, message
+```
+
+### Common Issues
+
+| Symptom | Cause | Solution |
+|---------|-------|----------|
+| `ResendException: Too many requests` | Sending faster than 2 req/sec | Fixed in code with 600ms delay |
+| No "Found X candidates" log | Logging level too high | Set `Codewrinkles.Infrastructure.Email: Information` |
+| 0 candidates found | No users in time window OR no notifications/feed content | Check with diagnostic SQL query |
+| Emails queued but not sent | Check EmailSenderBackgroundService logs | Look for exceptions in App Insights |
+
+### Diagnostic SQL Query
+
+Find all dormant users and see who would receive emails:
+```sql
+SELECT
+    i.Email, p.Name, i.LastLoginAt,
+    (SELECT COUNT(*) FROM [notification].Notifications n
+     WHERE n.RecipientId = p.Id AND n.IsRead = 0) AS UnreadNotifications,
+    (SELECT COUNT(*) FROM [social].Follows f
+     INNER JOIN [pulse].Pulses pu ON f.FollowingId = pu.AuthorId
+     WHERE f.FollowerId = p.Id AND pu.CreatedAt > i.LastLoginAt) AS NewPulsesFromFollows
+FROM [identity].Identities i
+INNER JOIN [identity].Profiles p ON i.Id = p.IdentityId
+WHERE i.IsActive = 1 AND i.LastLoginAt IS NOT NULL
+  AND i.LastLoginAt < DATEADD(HOUR, -24, SYSDATETIMEOFFSET())
+ORDER BY i.LastLoginAt DESC
+```
 
 ---
 
