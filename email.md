@@ -8,13 +8,15 @@
 
 ## Overview
 
-The email system sends three types of emails:
+The email system sends five types of emails:
 
 1. **Welcome email** - Queued immediately after registration, sent in background
 2. **Notification reminder email** - For inactive users (24-48h) with unread notifications
 3. **Feed update email** - For inactive users (24-48h) without notifications but with new content from follows
+4. **7-day winback email** - For users inactive 6-7 days (pure "we miss you" message)
+5. **30-day winback email** - For users inactive 29-30 days (stronger re-engagement appeal)
 
-Re-engagement emails are processed daily at a configurable hour (default: **4 AM UTC**).
+Re-engagement emails are processed daily starting at a configurable hour (default: **4 AM UTC**), with winback emails staggered 30 minutes apart to avoid rate limiting.
 
 ---
 
@@ -29,11 +31,18 @@ Re-engagement emails are processed daily at a configurable hour (default: **4 AM
 └─────────────────────┘     └──────────────────┘     │  (600ms delay)      │
                                    ▲                 └─────────────────────┘
 ┌─────────────────────┐            │                          │
-│  Reengagement       │────────────┘                          ▼
-│  BackgroundService  │                               ┌───────────────┐
-│  (configurable hour)│                               │    Resend     │
-└─────────────────────┘                               │  (2 req/sec)  │
-                                                      └───────────────┘
+│  Reengagement       │────────────┤                          ▼
+│  BackgroundService  │            │                 ┌───────────────┐
+│  (hour:00)          │            │                 │    Resend     │
+├─────────────────────┤            │                 │  (2 req/sec)  │
+│  SevenDayWinback    │────────────┤                 └───────────────┘
+│  BackgroundService  │            │
+│  (hour:30)          │            │
+├─────────────────────┤            │
+│  ThirtyDayWinback   │────────────┘
+│  BackgroundService  │
+│  (hour+1:00)        │
+└─────────────────────┘
 ```
 
 ### Design Principles
@@ -52,8 +61,8 @@ Re-engagement emails are processed daily at a configurable hour (default: **4 AM
 Application/
 └── Common/
     └── Interfaces/
-        ├── IEmailQueue.cs              # Queue interface (3 methods)
-        └── IReengagementRepository.cs  # Repository + ReengagementCandidate record
+        ├── IEmailQueue.cs              # Queue interface (5 methods)
+        └── IReengagementRepository.cs  # Repository + ReengagementCandidate + WinbackCandidate
 
 Infrastructure/
 ├── Configuration/
@@ -65,7 +74,9 @@ Infrastructure/
 │   ├── EmailQueue.cs                   # IEmailQueue implementation
 │   ├── ResendEmailSender.cs            # Resend API wrapper
 │   ├── EmailSenderBackgroundService.cs # Processes queue continuously
-│   └── ReengagementBackgroundService.cs# Daily 4 AM job
+│   ├── ReengagementBackgroundService.cs# Daily job (hour:00) - 24-48h emails
+│   ├── SevenDayWinbackBackgroundService.cs  # Daily job (hour:30) - 7-day winback
+│   └── ThirtyDayWinbackBackgroundService.cs # Daily job (hour+1:00) - 30-day winback
 └── Persistence/
     └── Repositories/
         └── ReengagementRepository.cs   # Inactive user queries
@@ -173,6 +184,61 @@ When first deploying the email system, there may be dormant users who became ina
 
 ---
 
+## Winback Emails (7-Day and 30-Day)
+
+### Staggered Schedule
+
+To avoid overwhelming Resend's rate limit, the three re-engagement services run 30 minutes apart:
+
+| Service | Schedule | Window | Email Type |
+|---------|----------|--------|------------|
+| `ReengagementBackgroundService` | `ReengagementHourUtc:00` | 24-48 hours inactive | Notification/Feed |
+| `SevenDayWinbackBackgroundService` | `ReengagementHourUtc:30` | 6-7 days inactive | Winback |
+| `ThirtyDayWinbackBackgroundService` | `ReengagementHourUtc+1:00` | 29-30 days inactive | Winback |
+
+Example with default hour (`ReengagementHourUtc = 4`):
+- **4:00 AM UTC** → 24-48h re-engagement emails (notification reminder or feed update)
+- **4:30 AM UTC** → 7-day winback emails
+- **5:00 AM UTC** → 30-day winback emails
+
+### Time Window Approach
+
+Each window is a 24-hour slice that ensures users receive exactly one email per tier:
+
+```
+User becomes inactive:
+
+Day 0     Day 1-2      Day 6-7       Day 29-30
+  │          │            │              │
+  │    24-48h window      │              │
+  │    ┌─────┴─────┐      │              │
+  │    │Notification│     │              │
+  │    │or Feed     │     │              │
+  │    └───────────┘      │              │
+  │                  6-7 day window      │
+  │                  ┌────┴────┐         │
+  │                  │ 7-Day   │         │
+  │                  │ Winback │         │
+  │                  └─────────┘         │
+  │                              29-30 day window
+  │                              ┌───────┴───────┐
+  │                              │   30-Day      │
+  │                              │   Winback     │
+  │                              └───────────────┘
+
+If user logs in at any point, LastLoginAt resets → exits all windows
+```
+
+### Winback vs Re-engagement
+
+| Feature | 24-48h Re-engagement | 7/30-Day Winback |
+|---------|---------------------|------------------|
+| Content filter | Yes (needs notifications OR feed content) | No (sends to ALL users in window) |
+| Email content | Shows counts (notifications/pulses) | Pure "we miss you" messaging |
+| Repository method | `GetCandidatesAsync` | `GetWinbackCandidatesAsync` |
+
+---
+
 ## Email Templates
 
 All templates use Codewrinkles branding:
@@ -196,6 +262,16 @@ All templates use Codewrinkles branding:
 - Shows bold pulse count
 - CTA: "See Your Feed" → `/social`
 
+### 7-Day Winback Email
+- Sent to users inactive 6-7 days
+- Pure "we miss you" messaging (no counts)
+- CTA: "Come Back to Pulse" → `/pulse`
+
+### 30-Day Winback Email
+- Sent to users inactive 29-30 days
+- Stronger re-engagement appeal
+- CTA: "Rejoin the Conversation" → `/pulse`
+
 ---
 
 ## Service Lifetimes
@@ -209,6 +285,8 @@ All templates use Codewrinkles branding:
 | `ReengagementRepository` | Scoped | Uses DbContext |
 | `EmailSenderBackgroundService` | Singleton | Hosted service |
 | `ReengagementBackgroundService` | Singleton | Hosted service |
+| `SevenDayWinbackBackgroundService` | Singleton | Hosted service |
+| `ThirtyDayWinbackBackgroundService` | Singleton | Hosted service |
 
 ---
 
@@ -217,7 +295,7 @@ All templates use Codewrinkles branding:
 | Decision | Trade-off | Mitigation |
 |----------|-----------|------------|
 | In-memory queue | Emails lost on app restart | Acceptable at current scale; add persistence if needed |
-| 24-48h window only | No weekly follow-ups for long-inactive users | Can add separate weekly job later |
+| Time windows only | No emails outside defined windows (e.g., day 8-28) | Windows cover key re-engagement moments; gaps are intentional |
 | Hardcoded templates | Deployment required to change content | Templates rarely change |
 | No unsubscribe link | Legal requirement before scaling | Add before reaching 100+ re-engagement emails |
 | No email logging | Harder to debug delivery issues | Add EmailLog entity if debugging needed |
@@ -243,11 +321,6 @@ All templates use Codewrinkles branding:
   - "2 new followers"
   - "1 mention"
 - Requires grouping by notification type in query
-
-### Weekly Digest
-- Add `LastReengagementEmailSentAt` to Profile
-- Separate job for users inactive > 48 hours
-- Send at most once per 7 days
 
 ---
 
@@ -282,11 +355,11 @@ exceptions
 | project timestamp, type, outerMessage, innermostMessage
 ```
 
-**Find re-engagement job execution details:**
+**Find re-engagement and winback job execution details:**
 ```kql
 traces
 | where timestamp >= ago(4h)
-| where message has "candidates" or message has "Queued" or message has "Win-back"
+| where message has "candidates" or message has "Queued" or message has "Win-back" or message has "winback"
 | order by timestamp asc
 | project timestamp, message
 ```

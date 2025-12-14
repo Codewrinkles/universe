@@ -31,4 +31,22 @@ public interface IEmailQueue
         string userName,
         int newPulsesCount,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Queue a 7-day winback email for an inactive user.
+    /// Non-blocking - returns immediately.
+    /// </summary>
+    ValueTask QueueSevenDayWinbackEmailAsync(
+        string toEmail,
+        string userName,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Queue a 30-day winback email for an inactive user.
+    /// Non-blocking - returns immediately.
+    /// </summary>
+    ValueTask QueueThirtyDayWinbackEmailAsync(
+        string toEmail,
+        string userName,
+        CancellationToken cancellationToken = default);
 }

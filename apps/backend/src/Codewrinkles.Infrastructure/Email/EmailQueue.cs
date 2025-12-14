@@ -58,4 +58,28 @@ public sealed class EmailQueue : IEmailQueue
         var message = new QueuedEmail(toEmail, userName, subject, htmlBody);
         await _channel.WriteAsync(message, cancellationToken);
     }
+
+    public async ValueTask QueueSevenDayWinbackEmailAsync(
+        string toEmail,
+        string userName,
+        CancellationToken cancellationToken = default)
+    {
+        var subject = "We miss you on Pulse!";
+        var htmlBody = EmailTemplates.BuildSevenDayWinbackEmail(userName, _settings.BaseUrl);
+
+        var message = new QueuedEmail(toEmail, userName, subject, htmlBody);
+        await _channel.WriteAsync(message, cancellationToken);
+    }
+
+    public async ValueTask QueueThirtyDayWinbackEmailAsync(
+        string toEmail,
+        string userName,
+        CancellationToken cancellationToken = default)
+    {
+        var subject = "It's been a while...";
+        var htmlBody = EmailTemplates.BuildThirtyDayWinbackEmail(userName, _settings.BaseUrl);
+
+        var message = new QueuedEmail(toEmail, userName, subject, htmlBody);
+        await _channel.WriteAsync(message, cancellationToken);
+    }
 }

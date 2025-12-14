@@ -67,4 +67,31 @@ public sealed class ReengagementRepository : IReengagementRepository
                 x.NewPulsesFromFollowsCount))
             .ToList();
     }
+
+    public async Task<List<WinbackCandidate>> GetWinbackCandidatesAsync(
+        DateTimeOffset windowStart,
+        DateTimeOffset windowEnd,
+        int limit,
+        CancellationToken cancellationToken = default)
+    {
+        // Simpler query for winback emails - no notification/feed counts or filter
+        // Returns ALL users in the time window regardless of content
+        var candidates = await _context.Identities
+            .Where(i => i.IsActive)
+            .Where(i => i.LastLoginAt != null)
+            .Where(i => i.LastLoginAt >= windowStart && i.LastLoginAt < windowEnd)
+            .Join(
+                _context.Profiles,
+                i => i.Id,
+                p => p.IdentityId,
+                (i, p) => new { Identity = i, Profile = p })
+            .Select(x => new WinbackCandidate(
+                x.Profile.Id,
+                x.Identity.Email,
+                x.Profile.Name))
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+
+        return candidates;
+    }
 }

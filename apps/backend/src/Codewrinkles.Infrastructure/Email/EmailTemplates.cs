@@ -297,4 +297,172 @@ public static class EmailTemplates
             </html>
             """;
     }
+
+    public static string BuildSevenDayWinbackEmail(string userName, string baseUrl)
+    {
+        return $"""
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <meta http-equiv="X-UA-Compatible" content="IE=edge">
+                <title>We miss you on Pulse</title>
+            </head>
+            <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; background-color: {SurfacePage};">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: {SurfacePage};">
+                    <tr>
+                        <td style="padding: 40px 20px;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: 0 auto; max-width: 600px;">
+
+                                <!-- Header with solid background (gradient fallback) -->
+                                <tr>
+                                    <td style="background-color: {BrandColor}; padding: 40px 30px; border-radius: 16px 16px 0 0; text-align: center;">
+                                        <h1 style="margin: 0; color: #FFFFFF; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">
+                                            We miss you!
+                                        </h1>
+                                    </td>
+                                </tr>
+
+                                <!-- Body -->
+                                <tr>
+                                    <td style="background-color: {SurfaceCard}; padding: 40px 30px; border-radius: 0 0 16px 16px; border: 1px solid {Border}; border-top: none;">
+                                        <p style="margin: 0 0 20px 0; font-size: 18px; color: {TextPrimary};">
+                                            Hey {userName},
+                                        </p>
+
+                                        <p style="margin: 0 0 20px 0; font-size: 16px; color: {TextSecondary};">
+                                            It's been about a week since we saw you on Pulse, and we wanted to check in.
+                                        </p>
+
+                                        <p style="margin: 0 0 20px 0; font-size: 16px; color: {TextSecondary};">
+                                            The community has been active &mdash; developers sharing ideas, having conversations, and building connections. Your voice matters here.
+                                        </p>
+
+                                        <p style="margin: 0 0 30px 0; font-size: 16px; color: {TextSecondary};">
+                                            Come back and see what you've been missing!
+                                        </p>
+
+                                        <!-- CTA Button -->
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto 30px auto;">
+                                            <tr>
+                                                <td style="border-radius: 10px; background-color: {BrandColor};">
+                                                    <a href="{baseUrl}/pulse" target="_blank" style="display: inline-block; padding: 16px 36px; font-size: 16px; font-weight: 600; color: #FFFFFF; text-decoration: none; border-radius: 10px;">
+                                                        Come Back to Pulse
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <p style="margin: 0; font-size: 16px; color: {TextSecondary};">
+                                            See you soon!<br>
+                                            <strong style="color: {TextPrimary};">The Codewrinkles Team</strong>
+                                        </p>
+                                    </td>
+                                </tr>
+
+                                <!-- Footer -->
+                                <tr>
+                                    <td style="padding: 30px; text-align: center;">
+                                        <p style="margin: 0 0 5px 0; font-size: 12px; color: {TextTertiary};">
+                                            You're receiving this because you haven't visited Pulse in a while.
+                                        </p>
+                                        <p style="margin: 0; font-size: 12px; color: {TextTertiary};">
+                                            &copy; 2025 Codewrinkles. All rights reserved.
+                                        </p>
+                                    </td>
+                                </tr>
+
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </body>
+            </html>
+            """;
+    }
+
+    public static string BuildThirtyDayWinbackEmail(string userName, string baseUrl)
+    {
+        return $"""
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <meta http-equiv="X-UA-Compatible" content="IE=edge">
+                <title>It's been a while</title>
+            </head>
+            <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; background-color: {SurfacePage};">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: {SurfacePage};">
+                    <tr>
+                        <td style="padding: 40px 20px;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: 0 auto; max-width: 600px;">
+
+                                <!-- Header with solid background (gradient fallback) -->
+                                <tr>
+                                    <td style="background-color: {BrandColor}; padding: 40px 30px; border-radius: 16px 16px 0 0; text-align: center;">
+                                        <h1 style="margin: 0; color: #FFFFFF; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">
+                                            It's been a while...
+                                        </h1>
+                                    </td>
+                                </tr>
+
+                                <!-- Body -->
+                                <tr>
+                                    <td style="background-color: {SurfaceCard}; padding: 40px 30px; border-radius: 0 0 16px 16px; border: 1px solid {Border}; border-top: none;">
+                                        <p style="margin: 0 0 20px 0; font-size: 18px; color: {TextPrimary};">
+                                            Hey {userName},
+                                        </p>
+
+                                        <p style="margin: 0 0 20px 0; font-size: 16px; color: {TextSecondary};">
+                                            A month is a long time! We noticed you haven't been around, and we wanted to reach out.
+                                        </p>
+
+                                        <p style="margin: 0 0 20px 0; font-size: 16px; color: {TextSecondary};">
+                                            The Pulse community has been growing &mdash; new conversations, fresh perspectives, and developers helping each other out. It's not the same without you.
+                                        </p>
+
+                                        <p style="margin: 0 0 30px 0; font-size: 16px; color: {TextSecondary};">
+                                            We'd love to have you back.
+                                        </p>
+
+                                        <!-- CTA Button -->
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto 30px auto;">
+                                            <tr>
+                                                <td style="border-radius: 10px; background-color: {BrandColor};">
+                                                    <a href="{baseUrl}/pulse" target="_blank" style="display: inline-block; padding: 16px 36px; font-size: 16px; font-weight: 600; color: #FFFFFF; text-decoration: none; border-radius: 10px;">
+                                                        Rejoin the Conversation
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <p style="margin: 0; font-size: 16px; color: {TextSecondary};">
+                                            Hope to see you soon!<br>
+                                            <strong style="color: {TextPrimary};">The Codewrinkles Team</strong>
+                                        </p>
+                                    </td>
+                                </tr>
+
+                                <!-- Footer -->
+                                <tr>
+                                    <td style="padding: 30px; text-align: center;">
+                                        <p style="margin: 0 0 5px 0; font-size: 12px; color: {TextTertiary};">
+                                            You're receiving this because you haven't visited Pulse in a while.
+                                        </p>
+                                        <p style="margin: 0; font-size: 12px; color: {TextTertiary};">
+                                            &copy; 2025 Codewrinkles. All rights reserved.
+                                        </p>
+                                    </td>
+                                </tr>
+
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </body>
+            </html>
+            """;
+    }
 }
