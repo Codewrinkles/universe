@@ -33,15 +33,18 @@ public sealed class CompleteOAuthCallbackCommandHandler
     private readonly IUnitOfWork _unitOfWork;
     private readonly IOAuthService _oAuthService;
     private readonly JwtTokenGenerator _jwtTokenGenerator;
+    private readonly IEmailQueue _emailQueue;
 
     public CompleteOAuthCallbackCommandHandler(
         IUnitOfWork unitOfWork,
         IOAuthService oAuthService,
-        JwtTokenGenerator jwtTokenGenerator)
+        JwtTokenGenerator jwtTokenGenerator,
+        IEmailQueue emailQueue)
     {
         _unitOfWork = unitOfWork;
         _oAuthService = oAuthService;
         _jwtTokenGenerator = jwtTokenGenerator;
+        _emailQueue = emailQueue;
     }
 
     public async Task<CompleteOAuthCallbackResult> HandleAsync(
@@ -302,6 +305,16 @@ public sealed class CompleteOAuthCallbackCommandHandler
             await transaction.RollbackAsync(cancellationToken);
             throw;
         }
+
+        // Record successful login (registration counts as first login)
+        identity.RecordSuccessfulLogin();
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Queue welcome email (non-blocking - sent in background)
+        await _emailQueue.QueueWelcomeEmailAsync(
+            identity.Email,
+            profile.Name,
+            cancellationToken);
 
         var accessToken = _jwtTokenGenerator.GenerateAccessToken(identity, profile);
 

@@ -1,4 +1,5 @@
 import { Card } from "../../../components/ui/Card";
+import { Button } from "../../../components/ui/Button";
 import { UnifiedComposer } from "../../pulse/UnifiedComposer";
 
 interface FirstPulseProps {
@@ -16,7 +17,7 @@ export function FirstPulse({ onComplete }: FirstPulseProps): JSX.Element {
         Share Your First Pulse
       </h2>
       <p className="text-sm text-text-secondary mb-6">
-        Introduce yourself to the Codewrinkles community
+        Introduce yourself to the Codewrinkles community (you can skip this step)
       </p>
 
       <UnifiedComposer
@@ -26,6 +27,12 @@ export function FirstPulse({ onComplete }: FirstPulseProps): JSX.Element {
         rows={3}
         focusedRows={6}
       />
+
+      <div className="flex justify-end mt-4">
+        <Button variant="secondary" onClick={onComplete}>
+          Skip for Now
+        </Button>
+      </div>
     </Card>
   );
 }

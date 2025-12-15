@@ -90,7 +90,15 @@ export function CompleteProfile({ onComplete }: CompleteProfileProps): JSX.Eleme
           </div>
         )}
 
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-3">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onComplete}
+            disabled={isSubmitting}
+          >
+            Skip for Now
+          </Button>
           <Button
             type="submit"
             variant="primary"
