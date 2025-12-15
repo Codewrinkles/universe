@@ -71,7 +71,7 @@ export function SearchResultsPage(): JSX.Element {
 
       try {
         const response = await searchApi.searchProfiles(query);
-        setResults(response.profiles);
+        setResults(response.handles);
       } catch (err) {
         setError("Failed to search users. Please try again.");
         setResults([]);
@@ -87,7 +87,7 @@ export function SearchResultsPage(): JSX.Element {
     // Re-run search when follow state changes
     if (query.trim()) {
       searchApi.searchProfiles(query)
-        .then(response => setResults(response.profiles))
+        .then(response => setResults(response.handles))
         .catch(() => {});
     }
   };

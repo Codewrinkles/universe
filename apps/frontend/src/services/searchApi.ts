@@ -15,7 +15,7 @@ export interface SearchProfileResult {
 }
 
 export interface SearchProfilesResponse {
-  profiles: SearchProfileResult[];
+  handles: SearchProfileResult[];
 }
 
 export const searchApi = {
