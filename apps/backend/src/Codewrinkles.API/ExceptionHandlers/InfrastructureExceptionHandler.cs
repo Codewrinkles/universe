@@ -62,7 +62,7 @@ public sealed class InfrastructureExceptionHandler : IExceptionHandler
         {
             // Database exceptions - more specific type first (DbUpdateConcurrencyException derives from DbUpdateException)
             DbUpdateConcurrencyException ex => (409, "Concurrency Conflict", $"The resource was modified by another request: {ex.Message}"),
-            DbUpdateException ex => (503, "Database Error", $"A database operation failed: {ex.InnerException?.Message ?? ex.Message}"),
+            DbUpdateException ex => (500, "Database Error", $"A database operation failed: {ex.InnerException?.Message ?? ex.Message}"),
 
             // HTTP client exceptions - return 502 Bad Gateway for external service failures
             HttpRequestException ex => (502, "External Service Error", $"An external service request failed: {ex.Message}"),
