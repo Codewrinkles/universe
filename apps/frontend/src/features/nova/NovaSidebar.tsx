@@ -1,5 +1,7 @@
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useConversations } from "./coach/hooks/useConversations";
+import { useLearnerProfile } from "./hooks/useLearnerProfile";
 
 interface NovaSidebarProps {
   onMobileClose: () => void;
@@ -7,7 +9,28 @@ interface NovaSidebarProps {
 
 export function NovaSidebar({ onMobileClose }: NovaSidebarProps): JSX.Element {
   const location = useLocation();
-  const { conversations, isLoading, error } = useConversations();
+  const navigate = useNavigate();
+  const { conversations, isLoading, error, deleteConversation } = useConversations();
+  const { profile, isLoading: isProfileLoading } = useLearnerProfile();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDelete = async (e: React.MouseEvent, conversationId: string): Promise<void> => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    setDeletingId(conversationId);
+    try {
+      await deleteConversation(conversationId);
+      // If we deleted the active conversation, redirect to new chat
+      if (location.pathname === `/nova/c/${conversationId}`) {
+        navigate("/nova/c/new");
+      }
+    } catch {
+      // Error handling could be improved with a toast
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <nav className="h-full flex flex-col bg-surface-page border-r border-border">
@@ -70,52 +93,97 @@ export function NovaSidebar({ onMobileClose }: NovaSidebarProps): JSX.Element {
           <div className="space-y-1">
             {conversations.map((conversation) => {
               const isActive = location.pathname === `/nova/c/${conversation.id}`;
+              const isDeleting = deletingId === conversation.id;
               return (
-                <NavLink
-                  key={conversation.id}
-                  to={`/nova/c/${conversation.id}`}
-                  onClick={onMobileClose}
-                  className={`
-                    block px-3 py-2 rounded-xl text-sm transition-colors truncate
-                    ${isActive
-                      ? "bg-violet-500/20 border border-violet-500/40 text-text-primary"
-                      : "text-text-secondary hover:bg-surface-card1 hover:text-text-primary"
-                    }
-                  `}
-                >
-                  {conversation.title}
-                </NavLink>
+                <div key={conversation.id} className="group relative">
+                  <NavLink
+                    to={`/nova/c/${conversation.id}`}
+                    onClick={onMobileClose}
+                    className={`
+                      block px-3 py-2 pr-8 rounded-xl text-sm transition-colors truncate
+                      ${isActive
+                        ? "bg-violet-500/20 border border-violet-500/40 text-text-primary"
+                        : "text-text-secondary hover:bg-surface-card1 hover:text-text-primary"
+                      }
+                      ${isDeleting ? "opacity-50" : ""}
+                    `}
+                  >
+                    {conversation.title}
+                  </NavLink>
+                  <button
+                    type="button"
+                    onClick={(e) => handleDelete(e, conversation.id)}
+                    disabled={isDeleting}
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded-lg text-text-tertiary opacity-0 group-hover:opacity-100 hover:text-red-400 hover:bg-red-500/10 transition-all disabled:opacity-50"
+                    aria-label="Delete conversation"
+                  >
+                    {isDeleting ? (
+                      <div className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               );
             })}
           </div>
         )}
       </div>
 
-      {/* Learning Paths Preview (Future - M8) */}
+      {/* Your Learning Profile */}
       <div className="p-3 border-t border-border">
-        <h3 className="px-2 mb-2 text-[11px] font-semibold uppercase tracking-wider text-text-tertiary">
-          Learning Paths
-        </h3>
-        <div className="px-2 py-3 rounded-xl bg-surface-card1 border border-border">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-text-primary">Clean Architecture</span>
-            <span className="text-[10px] text-text-tertiary">65%</span>
-          </div>
-          <div className="h-1.5 bg-surface-card2 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-violet-500 to-violet-400 rounded-full"
-              style={{ width: "65%" }}
-            />
-          </div>
-          <p className="mt-2 text-[11px] text-text-tertiary">4 of 6 topics completed</p>
+        <div className="flex items-center justify-between px-2 mb-2">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-text-tertiary">
+            Your Learning
+          </h3>
+          <Link
+            to="/nova/settings"
+            onClick={onMobileClose}
+            className="p-1 rounded-lg text-text-tertiary hover:text-violet-400 hover:bg-surface-card1 transition-colors"
+            aria-label="Learning settings"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </Link>
         </div>
-        <button
-          type="button"
-          className="mt-2 w-full px-3 py-2 text-xs text-text-secondary hover:text-violet-400 transition-colors text-center"
-          disabled
-        >
-          View all paths (coming soon)
-        </button>
+
+        {isProfileLoading ? (
+          <div className="px-2 py-4 text-center">
+            <div className="inline-block w-4 h-4 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
+          </div>
+        ) : profile?.hasUserData ? (
+          <div className="px-2 py-3 rounded-xl bg-surface-card1 border border-border">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-sm">
+                {profile.currentRole?.toLowerCase().includes("senior") ? "👨‍💻" : "💻"}
+              </span>
+              <span className="text-xs font-medium text-text-primary truncate">
+                {profile.currentRole || "Developer"}
+                {profile.experienceYears ? ` • ${profile.experienceYears} yrs` : ""}
+              </span>
+            </div>
+            {profile.learningGoals && (
+              <p className="text-[11px] text-text-tertiary line-clamp-2">
+                Goal: {profile.learningGoals}
+              </p>
+            )}
+          </div>
+        ) : (
+          <Link
+            to="/nova/settings"
+            onClick={onMobileClose}
+            className="block px-3 py-3 rounded-xl bg-surface-card1 border border-dashed border-violet-500/40 text-center hover:bg-violet-500/10 transition-colors"
+          >
+            <p className="text-xs text-violet-400 font-medium">Set up your profile</p>
+            <p className="text-[11px] text-text-tertiary mt-1">
+              Help Cody personalize your learning
+            </p>
+          </Link>
+        )}
       </div>
     </nav>
   );

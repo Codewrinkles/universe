@@ -24,3 +24,27 @@ export interface ConversationGroup {
   label: string;
   conversations: Conversation[];
 }
+
+/** Learning style preferences */
+export type LearningStyle = "ExamplesFirst" | "TheoryFirst" | "HandsOn";
+
+/** Preferred explanation depth */
+export type PreferredPace = "QuickOverview" | "Balanced" | "DeepDive";
+
+/** Nova-specific learner profile */
+export interface LearnerProfile {
+  id: string;
+  profileId: string;
+  currentRole: string | null;
+  experienceYears: number | null;
+  primaryTechStack: string | null;
+  currentProject: string | null;
+  learningGoals: string | null;
+  learningStyle: LearningStyle | null;
+  preferredPace: PreferredPace | null;
+  identifiedStrengths: string | null;
+  identifiedStruggles: string | null;
+  hasUserData: boolean;
+  createdAt: string;
+  updatedAt: string;
+}

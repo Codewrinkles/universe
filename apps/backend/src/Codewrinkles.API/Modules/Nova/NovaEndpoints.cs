@@ -32,6 +32,13 @@ public static class NovaEndpoints
 
         group.MapDelete("sessions/{sessionId:guid}", DeleteConversation)
             .WithName("NovaDeleteConversation");
+
+        // Learner Profile endpoints
+        group.MapGet("profile", GetLearnerProfile)
+            .WithName("NovaGetLearnerProfile");
+
+        group.MapPut("profile", UpdateLearnerProfile)
+            .WithName("NovaUpdateLearnerProfile");
     }
 
     private static async Task<IResult> SendMessage(
@@ -71,6 +78,11 @@ public static class NovaEndpoints
         var profileId = httpContext.GetCurrentProfileId();
         using var activity = TelemetryExtensions.StartApplicationActivity(SpanNames.Nova.SendMessage);
         activity?.SetProfileId(profileId);
+
+        // Fetch learner profile for personalization
+        var learnerProfile = await unitOfWork.Nova.FindLearnerProfileByProfileIdAsync(
+            profileId,
+            cancellationToken);
 
         // Set SSE headers
         httpContext.Response.ContentType = "text/event-stream";
@@ -122,10 +134,11 @@ public static class NovaEndpoints
             limit: MaxContextMessages,
             cancellationToken: cancellationToken);
 
-        // Build messages for LLM
+        // Build messages for LLM with personalized system prompt
+        var systemPrompt = SystemPrompts.BuildPersonalizedPrompt(learnerProfile);
         var llmMessages = new List<LlmMessage>
         {
-            new(MessageRole.System, SystemPrompts.CodyCoach)
+            new(MessageRole.System, systemPrompt)
         };
 
         foreach (var msg in history)
@@ -350,10 +363,88 @@ public static class NovaEndpoints
 
         return Results.NoContent();
     }
+
+    private static async Task<IResult> GetLearnerProfile(
+        HttpContext httpContext,
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var profileId = httpContext.GetCurrentProfileId();
+
+        var query = new GetLearnerProfileQuery(ProfileId: profileId);
+        var result = await mediator.SendAsync(query, cancellationToken);
+
+        return Results.Ok(new
+        {
+            id = result.Id,
+            profileId = result.ProfileId,
+            currentRole = result.CurrentRole,
+            experienceYears = result.ExperienceYears,
+            primaryTechStack = result.PrimaryTechStack,
+            currentProject = result.CurrentProject,
+            learningGoals = result.LearningGoals,
+            learningStyle = result.LearningStyle,
+            preferredPace = result.PreferredPace,
+            identifiedStrengths = result.IdentifiedStrengths,
+            identifiedStruggles = result.IdentifiedStruggles,
+            hasUserData = result.HasUserData,
+            createdAt = result.CreatedAt,
+            updatedAt = result.UpdatedAt
+        });
+    }
+
+    private static async Task<IResult> UpdateLearnerProfile(
+        HttpContext httpContext,
+        [FromBody] UpdateLearnerProfileRequest request,
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var profileId = httpContext.GetCurrentProfileId();
+
+        var command = new UpdateLearnerProfileCommand(
+            ProfileId: profileId,
+            CurrentRole: request.CurrentRole,
+            ExperienceYears: request.ExperienceYears,
+            PrimaryTechStack: request.PrimaryTechStack,
+            CurrentProject: request.CurrentProject,
+            LearningGoals: request.LearningGoals,
+            LearningStyle: request.LearningStyle,
+            PreferredPace: request.PreferredPace);
+
+        var result = await mediator.SendAsync(command, cancellationToken);
+
+        return Results.Ok(new
+        {
+            id = result.Id,
+            profileId = result.ProfileId,
+            currentRole = result.CurrentRole,
+            experienceYears = result.ExperienceYears,
+            primaryTechStack = result.PrimaryTechStack,
+            currentProject = result.CurrentProject,
+            learningGoals = result.LearningGoals,
+            learningStyle = result.LearningStyle,
+            preferredPace = result.PreferredPace,
+            identifiedStrengths = result.IdentifiedStrengths,
+            identifiedStruggles = result.IdentifiedStruggles,
+            hasUserData = result.HasUserData,
+            createdAt = result.CreatedAt,
+            updatedAt = result.UpdatedAt
+        });
+    }
 }
 
 // Request DTOs
 public sealed record SendMessageRequest(
     string Message,
     Guid? SessionId = null
+);
+
+public sealed record UpdateLearnerProfileRequest(
+    string? CurrentRole,
+    int? ExperienceYears,
+    string? PrimaryTechStack,
+    string? CurrentProject,
+    string? LearningGoals,
+    string? LearningStyle,
+    string? PreferredPace
 );

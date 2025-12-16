@@ -98,5 +98,7 @@ public static class SpanNames
         public const string GetConversations = "Nova.GetConversations";
         public const string GetConversation = "Nova.GetConversation";
         public const string DeleteConversation = "Nova.DeleteConversation";
+        public const string GetLearnerProfile = "Nova.GetLearnerProfile";
+        public const string UpdateLearnerProfile = "Nova.UpdateLearnerProfile";
     }
 }

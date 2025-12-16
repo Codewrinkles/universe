@@ -48,6 +48,11 @@ public sealed class SendMessageCommandHandler
 
         try
         {
+            // Fetch learner profile for personalization
+            var learnerProfile = await _unitOfWork.Nova.FindLearnerProfileByProfileIdAsync(
+                command.ProfileId,
+                cancellationToken);
+
             var isNewSession = false;
             ConversationSession session;
 
@@ -94,7 +99,7 @@ public sealed class SendMessageCommandHandler
                 cancellationToken: cancellationToken);
 
             // Build messages for LLM (system prompt + history + new message)
-            var llmMessages = BuildLlmMessages(history, command.Message);
+            var llmMessages = BuildLlmMessages(history, command.Message, learnerProfile);
 
             // Get AI response
             var llmResponse = await _llmService.GetChatCompletionAsync(llmMessages, cancellationToken);
@@ -144,12 +149,16 @@ public sealed class SendMessageCommandHandler
 
     private static List<LlmMessage> BuildLlmMessages(
         IReadOnlyList<Message> history,
-        string newMessage)
+        string newMessage,
+        LearnerProfile? learnerProfile)
     {
+        // Build personalized system prompt
+        var systemPrompt = SystemPrompts.BuildPersonalizedPrompt(learnerProfile);
+
         var messages = new List<LlmMessage>
         {
-            // System prompt first
-            new(MessageRole.System, SystemPrompts.CodyCoach)
+            // System prompt first (personalized if profile exists)
+            new(MessageRole.System, systemPrompt)
         };
 
         // Add conversation history

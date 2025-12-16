@@ -26,7 +26,7 @@ import { AdminRoute } from "./features/auth/AdminRoute";
 import { AdminPage } from "./features/admin/AdminPage";
 import { DashboardPage } from "./features/admin/DashboardPage";
 import { TermsPage, PrivacyPage } from "./features/legal";
-import { NovaLayout, NovaChatPage } from "./features/nova";
+import { NovaLayout, NovaChatPage, NovaSettingsPage } from "./features/nova";
 
 /**
  * Main application component that manages:
@@ -82,6 +82,7 @@ export function App(): JSX.Element {
           <Route index element={<Navigate to="/nova/c/new" replace />} />
           <Route path="c/new" element={<NovaChatPage />} />
           <Route path="c/:conversationId" element={<NovaChatPage />} />
+          <Route path="settings" element={<NovaSettingsPage />} />
         </Route>
       </Route>
 

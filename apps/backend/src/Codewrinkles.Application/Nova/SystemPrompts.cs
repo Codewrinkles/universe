@@ -1,3 +1,6 @@
+using System.Text;
+using Codewrinkles.Domain.Nova;
+
 namespace Codewrinkles.Application.Nova;
 
 /// <summary>
@@ -6,9 +9,9 @@ namespace Codewrinkles.Application.Nova;
 public static class SystemPrompts
 {
     /// <summary>
-    /// The main system prompt that defines Cody's personality and behavior.
+    /// The base system prompt that defines Cody's personality and behavior.
     /// </summary>
-    public const string CodyCoach = """
+    private const string CodyCoachBase = """
         You are Cody, an AI learning coach created by Dan from Codewrinkles. You help developers grow their technical skills through conversation.
 
         ## Your Voice
@@ -36,4 +39,111 @@ public static class SystemPrompts
         - Ask follow-up questions when the context would change your answer
         - If you don't know, say so
         """;
+
+    /// <summary>
+    /// Builds a personalized system prompt by injecting learner profile data.
+    /// </summary>
+    /// <param name="profile">The learner's profile, or null if no profile exists.</param>
+    /// <returns>The complete system prompt with personalization.</returns>
+    public static string BuildPersonalizedPrompt(LearnerProfile? profile)
+    {
+        if (profile is null || !profile.HasUserData())
+        {
+            return CodyCoachBase;
+        }
+
+        var personalization = new StringBuilder();
+        personalization.AppendLine();
+        personalization.AppendLine("## About This Learner");
+
+        // Professional background
+        if (!string.IsNullOrWhiteSpace(profile.CurrentRole))
+        {
+            personalization.Append($"- Role: {profile.CurrentRole}");
+            if (profile.ExperienceYears.HasValue)
+            {
+                personalization.Append($" ({profile.ExperienceYears} years experience)");
+            }
+            personalization.AppendLine();
+        }
+        else if (profile.ExperienceYears.HasValue)
+        {
+            personalization.AppendLine($"- Experience: {profile.ExperienceYears} years");
+        }
+
+        if (!string.IsNullOrWhiteSpace(profile.PrimaryTechStack))
+        {
+            personalization.AppendLine($"- Tech stack: {profile.PrimaryTechStack}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(profile.CurrentProject))
+        {
+            personalization.AppendLine($"- Working on: {profile.CurrentProject}");
+        }
+
+        // Learning context
+        if (!string.IsNullOrWhiteSpace(profile.LearningGoals))
+        {
+            personalization.AppendLine($"- Learning goals: {profile.LearningGoals}");
+        }
+
+        // Learning preferences
+        if (profile.LearningStyle.HasValue || profile.PreferredPace.HasValue)
+        {
+            personalization.AppendLine();
+            personalization.AppendLine("## Teaching Style Preferences");
+
+            if (profile.LearningStyle.HasValue)
+            {
+                var styleDescription = profile.LearningStyle.Value switch
+                {
+                    LearningStyle.ExamplesFirst => "Show code examples first, then explain the theory behind them",
+                    LearningStyle.TheoryFirst => "Explain concepts and theory first, then show examples",
+                    LearningStyle.HandsOn => "Let them try things and fail, then explain what went wrong",
+                    _ => null
+                };
+
+                if (styleDescription is not null)
+                {
+                    personalization.AppendLine($"- {styleDescription}");
+                }
+            }
+
+            if (profile.PreferredPace.HasValue)
+            {
+                var paceDescription = profile.PreferredPace.Value switch
+                {
+                    PreferredPace.QuickOverview => "Keep explanations concise - just the essentials, get to the point",
+                    PreferredPace.Balanced => "Provide moderate depth with context and examples",
+                    PreferredPace.DeepDive => "Give thorough explanations, cover edge cases and nuances",
+                    _ => null
+                };
+
+                if (paceDescription is not null)
+                {
+                    personalization.AppendLine($"- {paceDescription}");
+                }
+            }
+        }
+
+        // AI-identified insights (if available)
+        if (!string.IsNullOrWhiteSpace(profile.IdentifiedStrengths) ||
+            !string.IsNullOrWhiteSpace(profile.IdentifiedStruggles))
+        {
+            personalization.AppendLine();
+            personalization.AppendLine("## Observed Patterns (from past conversations)");
+
+            if (!string.IsNullOrWhiteSpace(profile.IdentifiedStrengths))
+            {
+                personalization.AppendLine($"- Strengths: {profile.IdentifiedStrengths}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(profile.IdentifiedStruggles))
+            {
+                personalization.AppendLine($"- Areas to focus on: {profile.IdentifiedStruggles}");
+            }
+        }
+
+        return CodyCoachBase + personalization;
+    }
 }

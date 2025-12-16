@@ -40,6 +40,7 @@ public sealed class ApplicationDbContext : DbContext
     // Nova schema
     public DbSet<ConversationSession> ConversationSessions => Set<ConversationSession>();
     public DbSet<Message> NovaMessages => Set<Message>();
+    public DbSet<LearnerProfile> LearnerProfiles => Set<LearnerProfile>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

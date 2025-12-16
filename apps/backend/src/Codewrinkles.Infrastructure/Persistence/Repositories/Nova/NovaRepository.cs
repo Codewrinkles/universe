@@ -9,12 +9,14 @@ public sealed class NovaRepository : INovaRepository
     private readonly ApplicationDbContext _context;
     private readonly DbSet<ConversationSession> _sessions;
     private readonly DbSet<Message> _messages;
+    private readonly DbSet<LearnerProfile> _learnerProfiles;
 
     public NovaRepository(ApplicationDbContext context)
     {
         _context = context;
         _sessions = context.Set<ConversationSession>();
         _messages = context.Set<Message>();
+        _learnerProfiles = context.Set<LearnerProfile>();
     }
 
     public async Task<ConversationSession?> FindSessionByIdAsync(
@@ -118,5 +120,32 @@ public sealed class NovaRepository : INovaRepository
         return await _messages
             .Where(m => m.SessionId == sessionId)
             .CountAsync(cancellationToken);
+    }
+
+    // LearnerProfile operations
+
+    public async Task<LearnerProfile?> FindLearnerProfileByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        return await _learnerProfiles.FindAsync([id], cancellationToken: cancellationToken);
+    }
+
+    public async Task<LearnerProfile?> FindLearnerProfileByProfileIdAsync(
+        Guid profileId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _learnerProfiles
+            .FirstOrDefaultAsync(lp => lp.ProfileId == profileId, cancellationToken);
+    }
+
+    public void CreateLearnerProfile(LearnerProfile learnerProfile)
+    {
+        _learnerProfiles.Add(learnerProfile);
+    }
+
+    public void UpdateLearnerProfile(LearnerProfile learnerProfile)
+    {
+        _learnerProfiles.Update(learnerProfile);
     }
 }

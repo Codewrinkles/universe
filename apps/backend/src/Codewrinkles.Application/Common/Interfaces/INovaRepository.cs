@@ -71,4 +71,30 @@ public interface INovaRepository
     /// Get the count of messages in a conversation session.
     /// </summary>
     Task<int> GetMessageCountBySessionIdAsync(Guid sessionId, CancellationToken cancellationToken = default);
+
+    // LearnerProfile operations
+
+    /// <summary>
+    /// Find learner profile by ID.
+    /// Returns null if not found.
+    /// </summary>
+    Task<LearnerProfile?> FindLearnerProfileByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Find learner profile by the global Profile ID.
+    /// Returns null if not found.
+    /// </summary>
+    Task<LearnerProfile?> FindLearnerProfileByProfileIdAsync(Guid profileId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Create a new learner profile.
+    /// Does not save to database - call UnitOfWork.SaveChangesAsync().
+    /// </summary>
+    void CreateLearnerProfile(LearnerProfile learnerProfile);
+
+    /// <summary>
+    /// Update a learner profile.
+    /// Does not save to database - call UnitOfWork.SaveChangesAsync().
+    /// </summary>
+    void UpdateLearnerProfile(LearnerProfile learnerProfile);
 }

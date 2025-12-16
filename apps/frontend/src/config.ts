@@ -44,6 +44,7 @@ export const config = {
       novaChatStream: `${API_BASE_URL}/api/nova/chat/stream`,
       novaSessions: `${API_BASE_URL}/api/nova/sessions`,
       novaSession: (sessionId: string) => `${API_BASE_URL}/api/nova/sessions/${sessionId}`,
+      novaProfile: `${API_BASE_URL}/api/nova/profile`,
     },
   },
   auth: {
