@@ -92,6 +92,12 @@ public sealed class LinkPreviewService : ILinkPreviewService
             title = WebUtility.HtmlDecode(title);
             description = description is not null ? WebUtility.HtmlDecode(description) : null;
 
+            // Truncate to fit database column limits
+            if (title.Length > 200)
+                title = title[..200];
+            if (description?.Length > 2000)
+                description = description[..2000];
+
             // Only return preview if it's actually useful (not generic)
             // If we don't have good Open Graph data, return null so the URL stays clickable without a preview card
             if (!IsPreviewWorthShowing(ogTitle, description, imageUrl, uri.Host))
