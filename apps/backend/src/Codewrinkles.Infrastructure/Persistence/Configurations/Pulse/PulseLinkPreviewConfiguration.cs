@@ -28,7 +28,7 @@ public sealed class PulseLinkPreviewConfiguration : IEntityTypeConfiguration<Dom
             .IsRequired();
 
         builder.Property(p => p.Description)
-            .HasMaxLength(500)
+            .HasMaxLength(2000)
             .IsRequired(false);
 
         builder.Property(p => p.ImageUrl)
