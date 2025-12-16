@@ -3,13 +3,13 @@
  * Manages authentication state across the application
  */
 
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import type { ReactNode } from "react";
 import type { User, RegisterRequest, LoginRequest, UpdateProfileRequest, ChangePasswordRequest } from "../types";
 import { config } from "../config";
 import { authApi } from "../services/authApi";
 import { profileApi } from "../services/profileApi";
-import { setAuthTokens, clearAuthData, isTokenExpired, refreshAccessToken, getAccessToken, getRefreshToken } from "../utils/api";
+import { setAuthTokens, clearAuthData, isTokenExpired, isTokenExpiringSoon, refreshAccessToken, getAccessToken, getRefreshToken } from "../utils/api";
 import { jwtDecode } from "jwt-decode";
 
 interface JwtPayload {
@@ -187,6 +187,61 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
       window.removeEventListener("auth:session-expired", handleAuthFailure);
     };
   }, [logout]);
+
+  // Background token refresh - proactively refresh tokens before they expire
+  // This prevents 401 errors when user is composing long messages or idle
+  const refreshIntervalRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    // Only run when user is authenticated
+    if (!user) {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+        refreshIntervalRef.current = null;
+      }
+      return;
+    }
+
+    const checkAndRefreshToken = async (): Promise<void> => {
+      const token = getAccessToken();
+      if (!token) return;
+
+      // If token is expiring soon (within 5 minutes), refresh it
+      if (isTokenExpiringSoon(token)) {
+        await refreshAccessToken();
+      }
+    };
+
+    // Check immediately on mount
+    checkAndRefreshToken();
+
+    // Check every 60 seconds
+    refreshIntervalRef.current = window.setInterval(checkAndRefreshToken, 60 * 1000);
+
+    // Pause when tab is hidden, resume when visible
+    const handleVisibilityChange = (): void => {
+      if (document.hidden) {
+        // Tab is hidden - pause the interval
+        if (refreshIntervalRef.current) {
+          clearInterval(refreshIntervalRef.current);
+          refreshIntervalRef.current = null;
+        }
+      } else {
+        // Tab is visible - check immediately and restart interval
+        checkAndRefreshToken();
+        refreshIntervalRef.current = window.setInterval(checkAndRefreshToken, 60 * 1000);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+      }
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [user]);
 
   /**
    * Update user profile

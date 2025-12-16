@@ -14,6 +14,7 @@ public interface IUnitOfWork : IAsyncDisposable
     IBookmarkRepository Bookmarks { get; }
     IHashtagRepository Hashtags { get; }
     INovaRepository Nova { get; }
+    INovaMemoryRepository NovaMemories { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 

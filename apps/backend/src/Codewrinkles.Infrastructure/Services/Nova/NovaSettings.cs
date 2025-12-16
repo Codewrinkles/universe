@@ -19,6 +19,12 @@ public sealed class NovaSettings
     public string ModelId { get; set; } = "gpt-4o-mini";
 
     /// <summary>
+    /// The OpenAI model to use for text embeddings.
+    /// Default: text-embedding-3-small for cost efficiency (1536 dimensions).
+    /// </summary>
+    public string EmbeddingModelId { get; set; } = "text-embedding-3-small";
+
+    /// <summary>
     /// Maximum tokens in the response.
     /// </summary>
     public int MaxTokens { get; set; } = 2048;

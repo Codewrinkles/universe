@@ -54,6 +54,7 @@ public static class DependencyInjection
         services.AddScoped<IBookmarkRepository, BookmarkRepository>();
         services.AddScoped<IHashtagRepository, HashtagRepository>();
         services.AddScoped<INovaRepository, NovaRepository>();
+        services.AddScoped<INovaMemoryRepository, NovaMemoryRepository>();
 
         // Unit of Work
         services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -174,7 +175,7 @@ public static class DependencyInjection
         var novaSection = configuration.GetSection(NovaSettings.SectionName);
         services.Configure<NovaSettings>(novaSection);
 
-        // 2. Semantic Kernel with OpenAI
+        // 2. Semantic Kernel with OpenAI (chat + embeddings)
         services.AddSingleton<Kernel>(sp =>
         {
             var settings = sp.GetRequiredService<IOptions<NovaSettings>>().Value;
@@ -187,15 +188,28 @@ public static class DependencyInjection
             }
 
             var builder = Kernel.CreateBuilder();
+
+            // Chat completion for conversations
             builder.AddOpenAIChatCompletion(
                 modelId: settings.ModelId,
                 apiKey: settings.OpenAIApiKey);
+
+            // Embedding generation for memory semantic search
+            // SKEXP0010: AddOpenAIEmbeddingGenerator is experimental but recommended over deprecated ITextEmbeddingGenerationService
+#pragma warning disable SKEXP0010
+            builder.AddOpenAIEmbeddingGenerator(
+                modelId: settings.EmbeddingModelId,
+                apiKey: settings.OpenAIApiKey);
+#pragma warning restore SKEXP0010
 
             return builder.Build();
         });
 
         // 3. LLM Service
         services.AddScoped<ILlmService, SemanticKernelLlmService>();
+
+        // 4. Embedding Service for memory semantic search
+        services.AddScoped<IEmbeddingService, OpenAIEmbeddingService>();
 
         return services;
     }

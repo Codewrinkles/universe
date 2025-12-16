@@ -24,6 +24,18 @@ public sealed class ConversationSession
     public DateTimeOffset LastMessageAt { get; private set; }
     public bool IsDeleted { get; private set; }
 
+    /// <summary>
+    /// When memory was last extracted from this session.
+    /// Null if never extracted.
+    /// </summary>
+    public DateTimeOffset? LastMemoryExtractionAt { get; private set; }
+
+    /// <summary>
+    /// The ID of the last message that was processed for memory extraction.
+    /// Used to only process new messages on subsequent extractions.
+    /// </summary>
+    public Guid? LastProcessedMessageId { get; private set; }
+
     // Navigation properties
     public Profile Owner { get; private set; }
     public ICollection<Message> Messages { get; private set; }
@@ -75,5 +87,14 @@ public sealed class ConversationSession
     public void MarkAsDeleted()
     {
         IsDeleted = true;
+    }
+
+    /// <summary>
+    /// Marks memory as extracted up to the specified message.
+    /// </summary>
+    public void MarkMemoryExtracted(Guid lastProcessedMessageId)
+    {
+        LastMemoryExtractionAt = DateTimeOffset.UtcNow;
+        LastProcessedMessageId = lastProcessedMessageId;
     }
 }

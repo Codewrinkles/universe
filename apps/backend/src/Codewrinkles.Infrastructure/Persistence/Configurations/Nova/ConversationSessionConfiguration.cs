@@ -36,6 +36,13 @@ public sealed class ConversationSessionConfiguration : IEntityTypeConfiguration<
             .IsRequired()
             .HasDefaultValue(false);
 
+        // Memory extraction tracking
+        builder.Property(c => c.LastMemoryExtractionAt)
+            .IsRequired(false);
+
+        builder.Property(c => c.LastProcessedMessageId)
+            .IsRequired(false);
+
         // Relationships
         builder.HasOne(c => c.Owner)
             .WithMany()
@@ -59,5 +66,9 @@ public sealed class ConversationSessionConfiguration : IEntityTypeConfiguration<
 
         builder.HasIndex(c => c.IsDeleted)
             .HasDatabaseName("IX_ConversationSessions_IsDeleted");
+
+        // Index for finding sessions needing memory extraction
+        builder.HasIndex(c => new { c.ProfileId, c.LastMemoryExtractionAt })
+            .HasDatabaseName("IX_ConversationSessions_ProfileId_LastMemoryExtractionAt");
     }
 }

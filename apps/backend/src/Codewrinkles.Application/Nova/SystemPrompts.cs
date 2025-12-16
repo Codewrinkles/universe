@@ -28,6 +28,7 @@ public static class SystemPrompts
         - No bullet point soup when a few sentences would be clearer
         - No forced summaries or "Let me know if you have questions!"
         - Don't repeat the same opening phrases
+        - Never use em dashes (—) - use commas, parentheses, or separate sentences instead
 
         ## Your Expertise
         Software architecture, .NET/C#, React/TypeScript, databases, system design, and helping developers level up their careers. You've seen patterns succeed and fail in real codebases.
@@ -38,60 +39,140 @@ public static class SystemPrompts
         - When there are multiple valid approaches, explain when you'd pick each one
         - Ask follow-up questions when the context would change your answer
         - If you don't know, say so
+
+        ## Technical Precision
+        - Distinguish related but different concepts explicitly (e.g., Event Sourcing vs Event Driven Architecture, Authentication vs Authorization, Concurrency vs Parallelism)
+        - Don't assume the "conference talk version" is correct - many tutorials conflate concepts for simplicity
+        - If a topic is often confused with another, proactively clarify the distinction
+        - When a user conflates concepts, gently correct them
+        - When YOU get something wrong and get called out, own it directly without being patronizing - no "great point!" or "you're thinking critically!" - just acknowledge the mistake and correct it
         """;
 
     /// <summary>
-    /// Builds a personalized system prompt by injecting learner profile data.
+    /// Builds a personalized system prompt by injecting learner profile data and memories.
     /// </summary>
     /// <param name="profile">The learner's profile, or null if no profile exists.</param>
+    /// <param name="memories">Optional memories from past conversations.</param>
     /// <returns>The complete system prompt with personalization.</returns>
-    public static string BuildPersonalizedPrompt(LearnerProfile? profile)
+    public static string BuildPersonalizedPrompt(
+        LearnerProfile? profile,
+        IReadOnlyList<MemoryDto>? memories = null)
     {
-        if (profile is null || !profile.HasUserData())
+        var hasProfile = profile is not null && profile.HasUserData();
+        var hasMemories = memories is not null && memories.Count > 0;
+
+        if (!hasProfile && !hasMemories)
         {
             return CodyCoachBase;
         }
 
-        var personalization = new StringBuilder();
-        personalization.AppendLine();
-        personalization.AppendLine("## About This Learner");
+        var prompt = new StringBuilder(CodyCoachBase);
+
+        // Add profile personalization
+        if (hasProfile)
+        {
+            AppendProfilePersonalization(prompt, profile!);
+        }
+
+        // Add memory context
+        if (hasMemories)
+        {
+            prompt.Append(BuildMemoryContext(memories!));
+        }
+
+        return prompt.ToString();
+    }
+
+    /// <summary>
+    /// Builds the memory context section for the system prompt.
+    /// </summary>
+    public static string BuildMemoryContext(IReadOnlyList<MemoryDto> memories)
+    {
+        if (memories.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var sb = new StringBuilder();
+        sb.AppendLine();
+        sb.AppendLine("## What I Remember From Our Past Conversations");
+
+        // Group memories by category
+        var topics = memories.Where(m => m.Category == nameof(MemoryCategory.TopicDiscussed)).ToList();
+        var concepts = memories.Where(m => m.Category == nameof(MemoryCategory.ConceptExplained)).ToList();
+        var struggles = memories.Where(m => m.Category == nameof(MemoryCategory.StruggleIdentified)).ToList();
+        var strengths = memories.Where(m => m.Category == nameof(MemoryCategory.StrengthDemonstrated)).ToList();
+        var focus = memories.FirstOrDefault(m => m.Category == nameof(MemoryCategory.CurrentFocus));
+
+        if (focus is not null)
+        {
+            sb.AppendLine($"- Current focus: {focus.Content}");
+        }
+
+        if (topics.Count > 0)
+        {
+            sb.AppendLine($"- Topics we've discussed: {string.Join(", ", topics.Select(t => t.Content))}");
+        }
+
+        if (concepts.Count > 0)
+        {
+            sb.AppendLine($"- Concepts I've explained: {string.Join(", ", concepts.Select(c => c.Content))}");
+        }
+
+        if (strengths.Count > 0)
+        {
+            sb.AppendLine($"- Your strengths I've observed: {string.Join(", ", strengths.Select(s => s.Content))}");
+        }
+
+        if (struggles.Count > 0)
+        {
+            sb.AppendLine($"- Areas to reinforce: {string.Join(", ", struggles.Select(s => s.Content))}");
+        }
+
+        return sb.ToString();
+    }
+
+    private static void AppendProfilePersonalization(StringBuilder prompt, LearnerProfile profile)
+    {
+        prompt.AppendLine();
+        prompt.AppendLine("## About This Learner");
 
         // Professional background
         if (!string.IsNullOrWhiteSpace(profile.CurrentRole))
         {
-            personalization.Append($"- Role: {profile.CurrentRole}");
+            prompt.Append($"- Role: {profile.CurrentRole}");
             if (profile.ExperienceYears.HasValue)
             {
-                personalization.Append($" ({profile.ExperienceYears} years experience)");
+                prompt.Append($" ({profile.ExperienceYears} years experience)");
             }
-            personalization.AppendLine();
+            prompt.AppendLine();
         }
         else if (profile.ExperienceYears.HasValue)
         {
-            personalization.AppendLine($"- Experience: {profile.ExperienceYears} years");
+            prompt.AppendLine($"- Experience: {profile.ExperienceYears} years");
         }
 
         if (!string.IsNullOrWhiteSpace(profile.PrimaryTechStack))
         {
-            personalization.AppendLine($"- Tech stack: {profile.PrimaryTechStack}");
+            prompt.AppendLine($"- Tech stack: {profile.PrimaryTechStack}");
         }
 
         if (!string.IsNullOrWhiteSpace(profile.CurrentProject))
         {
-            personalization.AppendLine($"- Working on: {profile.CurrentProject}");
+            prompt.AppendLine($"- Working on: {profile.CurrentProject}");
         }
 
         // Learning context
         if (!string.IsNullOrWhiteSpace(profile.LearningGoals))
         {
-            personalization.AppendLine($"- Learning goals: {profile.LearningGoals}");
+            prompt.AppendLine($"- Learning goals: {profile.LearningGoals}");
         }
 
         // Learning preferences
         if (profile.LearningStyle.HasValue || profile.PreferredPace.HasValue)
         {
-            personalization.AppendLine();
-            personalization.AppendLine("## Teaching Style Preferences");
+            prompt.AppendLine();
+            prompt.AppendLine("## Teaching Style Preferences");
 
             if (profile.LearningStyle.HasValue)
             {
@@ -105,7 +186,7 @@ public static class SystemPrompts
 
                 if (styleDescription is not null)
                 {
-                    personalization.AppendLine($"- {styleDescription}");
+                    prompt.AppendLine($"- {styleDescription}");
                 }
             }
 
@@ -121,7 +202,7 @@ public static class SystemPrompts
 
                 if (paceDescription is not null)
                 {
-                    personalization.AppendLine($"- {paceDescription}");
+                    prompt.AppendLine($"- {paceDescription}");
                 }
             }
         }
@@ -130,20 +211,18 @@ public static class SystemPrompts
         if (!string.IsNullOrWhiteSpace(profile.IdentifiedStrengths) ||
             !string.IsNullOrWhiteSpace(profile.IdentifiedStruggles))
         {
-            personalization.AppendLine();
-            personalization.AppendLine("## Observed Patterns (from past conversations)");
+            prompt.AppendLine();
+            prompt.AppendLine("## Observed Patterns (from past conversations)");
 
             if (!string.IsNullOrWhiteSpace(profile.IdentifiedStrengths))
             {
-                personalization.AppendLine($"- Strengths: {profile.IdentifiedStrengths}");
+                prompt.AppendLine($"- Strengths: {profile.IdentifiedStrengths}");
             }
 
             if (!string.IsNullOrWhiteSpace(profile.IdentifiedStruggles))
             {
-                personalization.AppendLine($"- Areas to focus on: {profile.IdentifiedStruggles}");
+                prompt.AppendLine($"- Areas to focus on: {profile.IdentifiedStruggles}");
             }
         }
-
-        return CodyCoachBase + personalization;
     }
 }

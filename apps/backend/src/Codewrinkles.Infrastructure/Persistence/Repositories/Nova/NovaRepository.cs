@@ -73,6 +73,55 @@ public sealed class NovaRepository : INovaRepository
         _sessions.Update(session);
     }
 
+    public async Task<IReadOnlyList<ConversationSession>> GetSessionsNeedingMemoryExtractionAsync(
+        Guid profileId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _sessions
+            .AsNoTracking()
+            .Where(s => s.ProfileId == profileId
+                && !s.IsDeleted
+                && (s.LastMemoryExtractionAt == null
+                    || s.LastMessageAt > s.LastMemoryExtractionAt))
+            .OrderByDescending(s => s.LastMessageAt)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Message>> GetMessagesAfterAsync(
+        Guid sessionId,
+        Guid? afterMessageId,
+        CancellationToken cancellationToken = default)
+    {
+        if (afterMessageId is null)
+        {
+            // Return all messages for the session in chronological order
+            return await _messages
+                .AsNoTracking()
+                .Where(m => m.SessionId == sessionId)
+                .OrderBy(m => m.CreatedAt)
+                .ToListAsync(cancellationToken);
+        }
+
+        // Get the CreatedAt of the after message to use for filtering
+        var afterMessage = await _messages
+            .AsNoTracking()
+            .Where(m => m.Id == afterMessageId.Value)
+            .Select(m => new { m.CreatedAt })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (afterMessage is null)
+        {
+            return [];
+        }
+
+        // Return messages created after the specified message
+        return await _messages
+            .AsNoTracking()
+            .Where(m => m.SessionId == sessionId && m.CreatedAt > afterMessage.CreatedAt)
+            .OrderBy(m => m.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<Message?> FindMessageByIdAsync(
         Guid id,
         CancellationToken cancellationToken = default)

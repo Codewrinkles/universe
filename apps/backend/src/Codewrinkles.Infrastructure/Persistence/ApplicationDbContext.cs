@@ -41,6 +41,7 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<ConversationSession> ConversationSessions => Set<ConversationSession>();
     public DbSet<Message> NovaMessages => Set<Message>();
     public DbSet<LearnerProfile> LearnerProfiles => Set<LearnerProfile>();
+    public DbSet<Memory> Memories => Set<Memory>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

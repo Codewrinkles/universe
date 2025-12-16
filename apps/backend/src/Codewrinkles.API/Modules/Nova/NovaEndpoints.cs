@@ -39,6 +39,10 @@ public static class NovaEndpoints
 
         group.MapPut("profile", UpdateLearnerProfile)
             .WithName("NovaUpdateLearnerProfile");
+
+        // Memory extraction endpoint (for testing/manual trigger)
+        group.MapPost("memories/extract", TriggerMemoryExtraction)
+            .WithName("NovaTriggerMemoryExtraction");
     }
 
     private static async Task<IResult> SendMessage(
@@ -71,6 +75,8 @@ public static class NovaEndpoints
         [FromBody] SendMessageRequest request,
         [FromServices] IUnitOfWork unitOfWork,
         [FromServices] ILlmService llmService,
+        [FromServices] IEmbeddingService embeddingService,
+        [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
         const int MaxContextMessages = 20;
@@ -84,11 +90,6 @@ public static class NovaEndpoints
             profileId,
             cancellationToken);
 
-        // Set SSE headers
-        httpContext.Response.ContentType = "text/event-stream";
-        httpContext.Response.Headers.CacheControl = "no-cache";
-        httpContext.Response.Headers.Connection = "keep-alive";
-
         var isNewSession = false;
         ConversationSession session;
 
@@ -101,12 +102,19 @@ public static class NovaEndpoints
 
             if (existingSession is null || existingSession.IsDeleted)
             {
+                // Set SSE headers before sending error
+                httpContext.Response.ContentType = "text/event-stream";
+                httpContext.Response.Headers.CacheControl = "no-cache";
+                httpContext.Response.Headers.Connection = "keep-alive";
                 await WriteSSEError(httpContext, "Conversation not found");
                 return;
             }
 
             if (existingSession.ProfileId != profileId)
             {
+                httpContext.Response.ContentType = "text/event-stream";
+                httpContext.Response.Headers.CacheControl = "no-cache";
+                httpContext.Response.Headers.Connection = "keep-alive";
                 await WriteSSEError(httpContext, "Access denied");
                 return;
             }
@@ -115,11 +123,30 @@ public static class NovaEndpoints
         }
         else
         {
+            // NEW CONVERSATION: Trigger memory extraction from previous sessions first
+            // This ensures memories from past conversations are available for context
+            await mediator.SendAsync(
+                new TriggerMemoryExtractionCommand(profileId),
+                cancellationToken);
+
             session = ConversationSession.Create(profileId);
             unitOfWork.Nova.CreateSession(session);
             await unitOfWork.SaveChangesAsync(cancellationToken);
             isNewSession = true;
         }
+
+        // Get relevant memories for context (after extraction, so new memories are available)
+        var memories = await GetMemoriesForStreamingContextAsync(
+            unitOfWork,
+            embeddingService,
+            profileId,
+            request.Message,
+            cancellationToken);
+
+        // Set SSE headers
+        httpContext.Response.ContentType = "text/event-stream";
+        httpContext.Response.Headers.CacheControl = "no-cache";
+        httpContext.Response.Headers.Connection = "keep-alive";
 
         activity?.SetEntity("ConversationSession", session.Id);
 
@@ -134,8 +161,8 @@ public static class NovaEndpoints
             limit: MaxContextMessages,
             cancellationToken: cancellationToken);
 
-        // Build messages for LLM with personalized system prompt
-        var systemPrompt = SystemPrompts.BuildPersonalizedPrompt(learnerProfile);
+        // Build messages for LLM with personalized system prompt and memories
+        var systemPrompt = SystemPrompts.BuildPersonalizedPrompt(learnerProfile, memories);
         var llmMessages = new List<LlmMessage>
         {
             new(MessageRole.System, systemPrompt)
@@ -430,6 +457,164 @@ public static class NovaEndpoints
             createdAt = result.CreatedAt,
             updatedAt = result.UpdatedAt
         });
+    }
+
+    private static async Task<IResult> TriggerMemoryExtraction(
+        HttpContext httpContext,
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var profileId = httpContext.GetCurrentProfileId();
+
+        var command = new TriggerMemoryExtractionCommand(ProfileId: profileId);
+        var result = await mediator.SendAsync(command, cancellationToken);
+
+        return Results.Ok(new
+        {
+            sessionsProcessed = result.SessionsProcessed,
+            totalMemoriesCreated = result.TotalMemoriesCreated
+        });
+    }
+
+    // Memory retrieval constants for streaming
+    private const int RecentMemoriesCount = 5;
+    private const int HighImportanceThreshold = 4;
+    private const int HighImportanceLimit = 5;
+    private const int SemanticSearchLimit = 10;
+    private const int MaxTotalMemories = 20;
+    private const float MinSemanticSimilarity = 0.7f;
+
+    private static async Task<IReadOnlyList<MemoryDto>> GetMemoriesForStreamingContextAsync(
+        IUnitOfWork unitOfWork,
+        IEmbeddingService embeddingService,
+        Guid profileId,
+        string currentMessage,
+        CancellationToken cancellationToken)
+    {
+        // Get recent memories
+        var recentMemories = await unitOfWork.NovaMemories.GetRecentAsync(
+            profileId,
+            RecentMemoriesCount,
+            cancellationToken);
+
+        // Get high-importance memories
+        var highImportanceMemories = await unitOfWork.NovaMemories.GetByMinImportanceAsync(
+            profileId,
+            HighImportanceThreshold,
+            HighImportanceLimit,
+            cancellationToken);
+
+        // Get semantically relevant memories
+        var semanticMemories = await GetSemanticallySimilarMemoriesAsync(
+            unitOfWork,
+            embeddingService,
+            profileId,
+            currentMessage,
+            cancellationToken);
+
+        // Merge and deduplicate
+        return MergeAndDeduplicateMemories(
+            recentMemories,
+            highImportanceMemories,
+            semanticMemories);
+    }
+
+    private static async Task<List<(Memory Memory, float Similarity)>> GetSemanticallySimilarMemoriesAsync(
+        IUnitOfWork unitOfWork,
+        IEmbeddingService embeddingService,
+        Guid profileId,
+        string currentMessage,
+        CancellationToken cancellationToken)
+    {
+        // Get all memories with embeddings
+        var memoriesWithEmbeddings = await unitOfWork.NovaMemories.GetWithEmbeddingsAsync(
+            profileId,
+            cancellationToken);
+
+        if (memoriesWithEmbeddings.Count == 0)
+        {
+            return [];
+        }
+
+        // Generate embedding for current message
+        var messageEmbedding = await embeddingService.GetEmbeddingAsync(
+            currentMessage,
+            cancellationToken);
+
+        // Calculate similarity for each memory
+        var scored = new List<(Memory Memory, float Similarity)>();
+
+        foreach (var memory in memoriesWithEmbeddings)
+        {
+            if (memory.Embedding is null)
+            {
+                continue;
+            }
+
+            var memoryEmbedding = embeddingService.DeserializeEmbedding(memory.Embedding);
+            var similarity = embeddingService.CosineSimilarity(messageEmbedding, memoryEmbedding);
+
+            if (similarity >= MinSemanticSimilarity)
+            {
+                scored.Add((memory, similarity));
+            }
+        }
+
+        // Return top N by similarity
+        return scored
+            .OrderByDescending(x => x.Similarity)
+            .Take(SemanticSearchLimit)
+            .ToList();
+    }
+
+    private static IReadOnlyList<MemoryDto> MergeAndDeduplicateMemories(
+        IReadOnlyList<Memory> recentMemories,
+        IReadOnlyList<Memory> highImportanceMemories,
+        List<(Memory Memory, float Similarity)> semanticMemories)
+    {
+        var seen = new HashSet<Guid>();
+        var result = new List<(Memory Memory, float Score)>();
+
+        // Add semantic memories first (highest priority)
+        foreach (var (memory, similarity) in semanticMemories.OrderByDescending(x => x.Similarity))
+        {
+            if (seen.Add(memory.Id))
+            {
+                result.Add((memory, Score: similarity + 1)); // Boost for semantic match
+            }
+        }
+
+        // Add high importance memories
+        foreach (var memory in highImportanceMemories.OrderByDescending(m => m.Importance))
+        {
+            if (seen.Add(memory.Id))
+            {
+                result.Add((memory, Score: memory.Importance / 5.0f));
+            }
+        }
+
+        // Add recent memories
+        for (var i = 0; i < recentMemories.Count; i++)
+        {
+            var memory = recentMemories[i];
+            if (seen.Add(memory.Id))
+            {
+                // Score decreases by position (most recent = highest score)
+                result.Add((memory, Score: (recentMemories.Count - i) / (float)recentMemories.Count * 0.5f));
+            }
+        }
+
+        // Sort by score descending, limit, and convert to DTOs
+        return result
+            .OrderByDescending(m => m.Score)
+            .Take(MaxTotalMemories)
+            .Select(m => new MemoryDto(
+                m.Memory.Id,
+                m.Memory.Category.ToString(),
+                m.Memory.Content,
+                m.Memory.Importance,
+                m.Memory.CreatedAt))
+            .ToList();
     }
 }
 

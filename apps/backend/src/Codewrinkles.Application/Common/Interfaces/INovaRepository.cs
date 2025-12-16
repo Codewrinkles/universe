@@ -44,6 +44,25 @@ public interface INovaRepository
     /// </summary>
     void UpdateSession(ConversationSession session);
 
+    /// <summary>
+    /// Get sessions that need memory extraction for a profile.
+    /// Returns sessions where LastMessageAt > LastMemoryExtractionAt (or never extracted).
+    /// Excludes deleted sessions.
+    /// </summary>
+    Task<IReadOnlyList<ConversationSession>> GetSessionsNeedingMemoryExtractionAsync(
+        Guid profileId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get messages created after a specific message ID.
+    /// Used for incremental memory extraction.
+    /// If afterMessageId is null, returns all messages for the session.
+    /// </summary>
+    Task<IReadOnlyList<Message>> GetMessagesAfterAsync(
+        Guid sessionId,
+        Guid? afterMessageId,
+        CancellationToken cancellationToken = default);
+
     // Message operations
 
     /// <summary>

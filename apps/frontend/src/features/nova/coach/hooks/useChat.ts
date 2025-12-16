@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Message } from "../../types";
 import { config } from "../../../../config";
-import { apiRequest, ApiError, getAccessToken } from "../../../../utils/api";
+import { apiRequest, ApiError, getAccessToken, isTokenExpired, isTokenExpiringSoon, refreshAccessToken } from "../../../../utils/api";
 
 interface GetConversationResponse {
   id: string;
@@ -127,8 +127,21 @@ export function useChat(conversationId?: string): UseChatReturn {
     // Track if we've added the assistant message yet
     let assistantMessageAdded = false;
 
-    try {
-      const token = getAccessToken();
+    // Helper to make the streaming request with token refresh support
+    const makeStreamRequest = async (isRetry = false): Promise<Response> => {
+      let token = getAccessToken();
+
+      // Proactive refresh: if token is expired or expiring soon, refresh first
+      if (token && (isTokenExpired(token) || isTokenExpiringSoon(token))) {
+        const refreshed = await refreshAccessToken();
+        if (refreshed) {
+          token = getAccessToken();
+        } else if (!isRetry) {
+          // Refresh failed - this will likely fail, but let's try
+          // The 401 handler below will take care of it
+        }
+      }
+
       const response = await fetch(config.api.endpoints.novaChatStream, {
         method: "POST",
         headers: {
@@ -140,8 +153,24 @@ export function useChat(conversationId?: string): UseChatReturn {
           message: content,
           sessionId: currentSessionId,
         }),
-        signal: abortControllerRef.current.signal,
+        signal: abortControllerRef.current?.signal,
       });
+
+      // Handle 401: try to refresh and retry once
+      if (response.status === 401 && !isRetry) {
+        const refreshed = await refreshAccessToken();
+        if (refreshed) {
+          return makeStreamRequest(true);
+        }
+        // Refresh failed - dispatch event to logout
+        window.dispatchEvent(new CustomEvent("auth:unauthorized"));
+      }
+
+      return response;
+    };
+
+    try {
+      const response = await makeStreamRequest();
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
