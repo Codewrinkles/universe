@@ -14,7 +14,7 @@ export function NovaChatPage(): JSX.Element {
   const { conversationId } = useParams<{ conversationId: string }>();
   const isNewChat = conversationId === "new" || !conversationId;
 
-  const { messages, isStreaming, sendMessage } = useChat(conversationId);
+  const { messages, isStreaming, error, sendMessage } = useChat(conversationId);
   const [selectedPrompt, setSelectedPrompt] = useState("");
 
   const handleSelectPrompt = (prompt: string): void => {
@@ -40,6 +40,7 @@ export function NovaChatPage(): JSX.Element {
       <ChatArea
         messages={messages}
         isStreaming={isStreaming}
+        error={error}
         onSendMessage={handleSendMessage}
         selectedPrompt={selectedPrompt}
         onSelectPrompt={handleSelectPrompt}

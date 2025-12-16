@@ -91,4 +91,12 @@ public static class SpanNames
     {
         public const string Validate = "Validation.Validate";
     }
+
+    public static class Nova
+    {
+        public const string SendMessage = "Nova.SendMessage";
+        public const string GetConversations = "Nova.GetConversations";
+        public const string GetConversation = "Nova.GetConversation";
+        public const string DeleteConversation = "Nova.DeleteConversation";
+    }
 }

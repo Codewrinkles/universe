@@ -39,6 +39,11 @@ export const config = {
         `${API_BASE_URL}/api/profile/search?q=${encodeURIComponent(query)}&limit=${limit}`,
       bookmarkPulse: (id: string) => `${API_BASE_URL}/api/pulse/${id}/bookmark`,
       bookmarks: `${API_BASE_URL}/api/bookmarks`,
+      // Nova - AI Coach
+      novaChat: `${API_BASE_URL}/api/nova/chat`,
+      novaChatStream: `${API_BASE_URL}/api/nova/chat/stream`,
+      novaSessions: `${API_BASE_URL}/api/nova/sessions`,
+      novaSession: (sessionId: string) => `${API_BASE_URL}/api/nova/sessions/${sessionId}`,
     },
   },
   auth: {

@@ -120,6 +120,21 @@ public static class AppMetrics
         unit: "fetches",
         description: "Number of link preview fetches");
 
+    private static readonly Counter<long> s_novaMessages = Meters.Business.CreateCounter<long>(
+        MetricNames.Business.NovaMessages,
+        unit: "messages",
+        description: "Number of Nova chat messages");
+
+    private static readonly Counter<long> s_novaConversations = Meters.Business.CreateCounter<long>(
+        MetricNames.Business.NovaConversations,
+        unit: "conversations",
+        description: "Number of Nova conversations created");
+
+    private static readonly Counter<long> s_novaTokens = Meters.Business.CreateCounter<long>(
+        MetricNames.Business.NovaTokens,
+        unit: "tokens",
+        description: "Number of tokens used by Nova");
+
     // Business metric recording methods
     public static void RecordUserRegistered(string? authMethod = null)
     {
@@ -203,6 +218,18 @@ public static class AppMetrics
     public static void RecordNotificationCreated(string notificationType)
     {
         s_notificationsCreated.Add(1, new KeyValuePair<string, object?>("notification_type", notificationType));
+    }
+
+    public static void RecordNovaMessage(bool isNewSession, int inputTokens, int outputTokens)
+    {
+        s_novaMessages.Add(1);
+
+        if (isNewSession)
+        {
+            s_novaConversations.Add(1);
+        }
+
+        s_novaTokens.Add(inputTokens + outputTokens);
     }
 
     // Technical metric recording methods

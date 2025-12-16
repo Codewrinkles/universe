@@ -1,41 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { Conversation, ConversationGroup } from "../../types";
+import { config } from "../../../../config";
+import { apiRequest, ApiError } from "../../../../utils/api";
 
-// Mock data for development
-const MOCK_CONVERSATIONS: Conversation[] = [
-  {
-    id: "conv-1",
-    title: "Clean Architecture in .NET",
-    createdAt: new Date().toISOString(),
-    lastMessageAt: new Date().toISOString(),
-    messageCount: 8,
-    topicEmoji: "🏗️",
-  },
-  {
-    id: "conv-2",
-    title: "CQRS vs traditional MVC",
-    createdAt: new Date().toISOString(),
-    lastMessageAt: new Date().toISOString(),
-    messageCount: 5,
-    topicEmoji: "📦",
-  },
-  {
-    id: "conv-3",
-    title: "DDD aggregate design",
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-    lastMessageAt: new Date(Date.now() - 86400000).toISOString(),
-    messageCount: 12,
-    topicEmoji: "🎯",
-  },
-  {
-    id: "conv-4",
-    title: "Microservices communication",
-    createdAt: new Date(Date.now() - 259200000).toISOString(),
-    lastMessageAt: new Date(Date.now() - 259200000).toISOString(),
-    messageCount: 15,
-    topicEmoji: "🔗",
-  },
-];
+interface GetConversationsResponse {
+  sessions: Array<{
+    id: string;
+    title: string | null;
+    createdAt: string;
+    lastMessageAt: string;
+    messageCount: number;
+  }>;
+  hasMore: boolean;
+}
 
 function groupConversationsByDate(conversations: Conversation[]): ConversationGroup[] {
   const now = new Date();
@@ -74,19 +51,81 @@ interface UseConversationsReturn {
   conversations: Conversation[];
   groupedConversations: ConversationGroup[];
   isLoading: boolean;
+  error: string | null;
+  refetch: () => void;
+  deleteConversation: (id: string) => Promise<void>;
 }
 
 /**
  * useConversations - Hook for fetching and managing conversation list
  *
- * For MVP, this returns mock data. Will be replaced with real API calls.
+ * Connects to the Nova API to fetch real conversation history.
  */
 export function useConversations(): UseConversationsReturn {
-  const [isLoading] = useState(false);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchConversations = useCallback(async (): Promise<void> => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await apiRequest<GetConversationsResponse>(
+        config.api.endpoints.novaSessions
+      );
+
+      const mapped: Conversation[] = response.sessions.map((c) => ({
+        id: c.id,
+        title: c.title || "Untitled conversation",
+        createdAt: c.createdAt,
+        lastMessageAt: c.lastMessageAt,
+        messageCount: c.messageCount,
+      }));
+
+      setConversations(mapped);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.statusCode === 401) {
+          // User not authenticated - this is expected for new users
+          setConversations([]);
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError("Failed to load conversations");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const deleteConversation = useCallback(async (id: string): Promise<void> => {
+    try {
+      await apiRequest(config.api.endpoints.novaSession(id), {
+        method: "DELETE",
+      });
+
+      // Remove from local state
+      setConversations((prev) => prev.filter((c) => c.id !== id));
+    } catch (err) {
+      if (err instanceof ApiError) {
+        throw err;
+      }
+      throw new Error("Failed to delete conversation");
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchConversations();
+  }, [fetchConversations]);
 
   return {
-    conversations: MOCK_CONVERSATIONS,
-    groupedConversations: groupConversationsByDate(MOCK_CONVERSATIONS),
+    conversations,
+    groupedConversations: groupConversationsByDate(conversations),
     isLoading,
+    error,
+    refetch: fetchConversations,
+    deleteConversation,
   };
 }

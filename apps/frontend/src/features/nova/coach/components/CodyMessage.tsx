@@ -1,4 +1,5 @@
 import type { Message } from "../../types";
+import { MarkdownContent } from "../../../../components/ui/MarkdownContent";
 
 interface CodyMessageProps {
   message: Message;
@@ -49,9 +50,7 @@ export function CodyMessage({ message }: CodyMessageProps): JSX.Element {
           </span>
         </div>
 
-        <div className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap">
-          {message.content}
-        </div>
+        <MarkdownContent content={message.content} />
 
         {/* Footer with actions */}
         <div className="flex items-center gap-3 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">

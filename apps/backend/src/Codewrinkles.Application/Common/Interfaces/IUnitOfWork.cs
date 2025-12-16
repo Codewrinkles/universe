@@ -13,6 +13,7 @@ public interface IUnitOfWork : IAsyncDisposable
     INotificationRepository Notifications { get; }
     IBookmarkRepository Bookmarks { get; }
     IHashtagRepository Hashtags { get; }
+    INovaRepository Nova { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 

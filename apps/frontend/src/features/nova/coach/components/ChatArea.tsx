@@ -7,6 +7,7 @@ import { StarterCards } from "./StarterCards";
 interface ChatAreaProps {
   messages: Message[];
   isStreaming: boolean;
+  error: string | null;
   onSendMessage: (content: string) => void;
   selectedPrompt: string;
   onSelectPrompt: (prompt: string) => void;
@@ -23,6 +24,7 @@ interface ChatAreaProps {
 export function ChatArea({
   messages,
   isStreaming,
+  error,
   onSendMessage,
   selectedPrompt,
   onSelectPrompt,
@@ -41,6 +43,13 @@ export function ChatArea({
           <div className="mt-6">
             <StarterCards onSelectPrompt={onSelectPrompt} />
           </div>
+        </div>
+      )}
+
+      {/* Error message */}
+      {error && (
+        <div className="px-4 py-2 mx-4 mb-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+          {error}
         </div>
       )}
 

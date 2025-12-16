@@ -39,7 +39,10 @@ export function MessageList({ messages, isStreaming = false }: MessageListProps)
           return null;
         })}
 
-        {isStreaming && <StreamingIndicator />}
+        {/* Only show "Thinking..." when streaming and last message isn't from assistant */}
+        {isStreaming && messages[messages.length - 1]?.role !== "assistant" && (
+          <StreamingIndicator />
+        )}
 
         {/* Scroll anchor */}
         <div ref={bottomRef} />

@@ -3,6 +3,7 @@ using Codewrinkles.Infrastructure;
 using Codewrinkles.API.DependencyInjection;
 using Codewrinkles.API.Modules.Admin;
 using Codewrinkles.API.Modules.Identity;
+using Codewrinkles.API.Modules.Nova;
 using Codewrinkles.API.Modules.Notification;
 using Codewrinkles.API.Modules.Pulse;
 using Codewrinkles.API.Modules.Social;
@@ -62,5 +63,6 @@ app.MapBookmarkEndpoints();
 app.MapSocialEndpoints();
 app.MapNotificationEndpoints();
 app.MapAdminEndpoints();
+app.MapNovaEndpoints();
 
 app.Run();

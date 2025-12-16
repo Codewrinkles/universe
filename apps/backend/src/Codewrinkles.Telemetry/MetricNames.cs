@@ -26,6 +26,9 @@ public static class MetricNames
         public const string ProfileViews = "codewrinkles.profiles.views";
         public const string ProfileSearches = "codewrinkles.profiles.searches";
         public const string NotificationsCreated = "codewrinkles.notifications.created";
+        public const string NovaMessages = "codewrinkles.nova.messages";
+        public const string NovaConversations = "codewrinkles.nova.conversations";
+        public const string NovaTokens = "codewrinkles.nova.tokens";
     }
 
     /// <summary>

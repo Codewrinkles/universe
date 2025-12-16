@@ -1,5 +1,6 @@
 using Codewrinkles.Domain.Identity;
 using Codewrinkles.Domain.Notification;
+using Codewrinkles.Domain.Nova;
 using Codewrinkles.Domain.Pulse;
 using Codewrinkles.Domain.Social;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +36,10 @@ public sealed class ApplicationDbContext : DbContext
 
     // Notification schema
     public DbSet<Notification> Notifications => Set<Notification>();
+
+    // Nova schema
+    public DbSet<ConversationSession> ConversationSessions => Set<ConversationSession>();
+    public DbSet<Message> NovaMessages => Set<Message>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

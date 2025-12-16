@@ -7,7 +7,10 @@ using Codewrinkles.Infrastructure.Email;
 using Codewrinkles.Infrastructure.Options;
 using Codewrinkles.Infrastructure.Persistence;
 using Codewrinkles.Infrastructure.Persistence.Repositories;
+using Codewrinkles.Infrastructure.Persistence.Repositories.Nova;
 using Codewrinkles.Infrastructure.Services;
+using Codewrinkles.Infrastructure.Services.Nova;
+using Microsoft.SemanticKernel;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -50,6 +53,7 @@ public static class DependencyInjection
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<IBookmarkRepository, BookmarkRepository>();
         services.AddScoped<IHashtagRepository, HashtagRepository>();
+        services.AddScoped<INovaRepository, NovaRepository>();
 
         // Unit of Work
         services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -158,6 +162,40 @@ public static class DependencyInjection
         services.AddHostedService<ReengagementBackgroundService>();
         services.AddHostedService<SevenDayWinbackBackgroundService>();
         services.AddHostedService<ThirtyDayWinbackBackgroundService>();
+
+        // ===== Nova AI Services =====
+        //
+        // Architecture: NovaSettings -> Semantic Kernel -> ILlmService
+        //
+        // IMPORTANT: OpenAI API key must be stored in User Secrets for local development.
+        // In production, use Azure Key Vault or environment variables.
+
+        // 1. Configuration
+        var novaSection = configuration.GetSection(NovaSettings.SectionName);
+        services.Configure<NovaSettings>(novaSection);
+
+        // 2. Semantic Kernel with OpenAI
+        services.AddSingleton<Kernel>(sp =>
+        {
+            var settings = sp.GetRequiredService<IOptions<NovaSettings>>().Value;
+
+            if (string.IsNullOrWhiteSpace(settings.OpenAIApiKey))
+            {
+                throw new InvalidOperationException(
+                    "Nova:OpenAIApiKey is required. Store the API key in User Secrets for local development. " +
+                    "Run: dotnet user-secrets set \"Nova:OpenAIApiKey\" \"your-api-key\"");
+            }
+
+            var builder = Kernel.CreateBuilder();
+            builder.AddOpenAIChatCompletion(
+                modelId: settings.ModelId,
+                apiKey: settings.OpenAIApiKey);
+
+            return builder.Build();
+        });
+
+        // 3. LLM Service
+        services.AddScoped<ILlmService, SemanticKernelLlmService>();
 
         return services;
     }

@@ -1,5 +1,6 @@
 using Codewrinkles.Application.Common.Exceptions;
 using Codewrinkles.Application.Users;
+using Codewrinkles.Domain.Nova.Exceptions;
 using Codewrinkles.Domain.Pulse.Exceptions;
 using Codewrinkles.Domain.Social.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
@@ -79,7 +80,11 @@ public sealed class DomainExceptionHandler : IExceptionHandler
             UnauthorizedPulseAccessException ex => (403, "Forbidden", ex.Message),
             UnauthorizedNotificationAccessException ex => (403, "Forbidden", ex.Message),
 
+            // 403 Forbidden - Nova
+            ConversationAccessDeniedException ex => (403, "Forbidden", ex.Message),
+
             // 404 Not Found
+            ConversationNotFoundException ex => (404, "Conversation Not Found", ex.Message),
             PulseNotFoundException ex => (404, "Pulse Not Found", ex.Message),
             ProfileNotFoundException => (404, "Profile Not Found", "The requested profile was not found."),
             ProfileNotFoundByHandleException => (404, "Profile Not Found", "No profile exists with the specified handle."),

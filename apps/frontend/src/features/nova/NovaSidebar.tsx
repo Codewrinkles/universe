@@ -1,50 +1,5 @@
 import { Link, NavLink, useLocation } from "react-router-dom";
-import type { Conversation } from "./types";
-
-// Mock data for development - will be replaced with real API calls
-// Flat list of recent conversations (no time groupings)
-const MOCK_CONVERSATIONS: Conversation[] = [
-  {
-    id: "conv-1",
-    title: "Clean Architecture in .NET",
-    createdAt: new Date().toISOString(),
-    lastMessageAt: new Date().toISOString(),
-    messageCount: 8,
-    topicEmoji: "🏗️",
-  },
-  {
-    id: "conv-2",
-    title: "CQRS vs traditional MVC",
-    createdAt: new Date().toISOString(),
-    lastMessageAt: new Date().toISOString(),
-    messageCount: 5,
-    topicEmoji: "📦",
-  },
-  {
-    id: "conv-3",
-    title: "DDD aggregate design",
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-    lastMessageAt: new Date(Date.now() - 86400000).toISOString(),
-    messageCount: 12,
-    topicEmoji: "🎯",
-  },
-  {
-    id: "conv-4",
-    title: "Microservices communication",
-    createdAt: new Date(Date.now() - 259200000).toISOString(),
-    lastMessageAt: new Date(Date.now() - 259200000).toISOString(),
-    messageCount: 15,
-    topicEmoji: "🔗",
-  },
-  {
-    id: "conv-5",
-    title: "Event sourcing basics",
-    createdAt: new Date(Date.now() - 345600000).toISOString(),
-    lastMessageAt: new Date(Date.now() - 345600000).toISOString(),
-    messageCount: 7,
-    topicEmoji: "📝",
-  },
-];
+import { useConversations } from "./coach/hooks/useConversations";
 
 interface NovaSidebarProps {
   onMobileClose: () => void;
@@ -52,6 +7,7 @@ interface NovaSidebarProps {
 
 export function NovaSidebar({ onMobileClose }: NovaSidebarProps): JSX.Element {
   const location = useLocation();
+  const { conversations, isLoading, error } = useConversations();
 
   return (
     <nav className="h-full flex flex-col bg-surface-page border-r border-border">
@@ -84,32 +40,55 @@ export function NovaSidebar({ onMobileClose }: NovaSidebarProps): JSX.Element {
         </Link>
       </div>
 
-      {/* Conversations List - flat list, no time groupings */}
-      <div className="p-3">
+      {/* Conversations List */}
+      <div className="flex-1 overflow-y-auto p-3">
         <h3 className="px-2 mb-2 text-[11px] font-semibold uppercase tracking-wider text-text-tertiary">
           Recent Chats
         </h3>
-        <div className="space-y-1">
-          {MOCK_CONVERSATIONS.map((conversation) => {
-            const isActive = location.pathname === `/nova/c/${conversation.id}`;
-            return (
-              <NavLink
-                key={conversation.id}
-                to={`/nova/c/${conversation.id}`}
-                onClick={onMobileClose}
-                className={`
-                  block px-3 py-2 rounded-xl text-sm transition-colors truncate
-                  ${isActive
-                    ? "bg-violet-500/20 border border-violet-500/40 text-text-primary"
-                    : "text-text-secondary hover:bg-surface-card1 hover:text-text-primary"
-                  }
-                `}
-              >
-                {conversation.title}
-              </NavLink>
-            );
-          })}
-        </div>
+
+        {isLoading && (
+          <div className="px-3 py-8 text-center">
+            <div className="inline-block w-5 h-5 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
+          </div>
+        )}
+
+        {error && (
+          <div className="px-3 py-4 text-center text-xs text-red-400">
+            {error}
+          </div>
+        )}
+
+        {!isLoading && !error && conversations.length === 0 && (
+          <div className="px-3 py-8 text-center text-xs text-text-tertiary">
+            No conversations yet.
+            <br />
+            Start a new chat!
+          </div>
+        )}
+
+        {!isLoading && !error && conversations.length > 0 && (
+          <div className="space-y-1">
+            {conversations.map((conversation) => {
+              const isActive = location.pathname === `/nova/c/${conversation.id}`;
+              return (
+                <NavLink
+                  key={conversation.id}
+                  to={`/nova/c/${conversation.id}`}
+                  onClick={onMobileClose}
+                  className={`
+                    block px-3 py-2 rounded-xl text-sm transition-colors truncate
+                    ${isActive
+                      ? "bg-violet-500/20 border border-violet-500/40 text-text-primary"
+                      : "text-text-secondary hover:bg-surface-card1 hover:text-text-primary"
+                    }
+                  `}
+                >
+                  {conversation.title}
+                </NavLink>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Learning Paths Preview (Future - M8) */}
