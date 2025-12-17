@@ -27,6 +27,7 @@ import { NovaRoute } from "./features/auth/NovaRoute";
 import { AdminPage } from "./features/admin/AdminPage";
 import { DashboardPage } from "./features/admin/DashboardPage";
 import { AlphaApplicationsPage } from "./features/admin/AlphaApplicationsPage";
+import { UsersPage } from "./features/admin/UsersPage";
 import { TermsPage, PrivacyPage } from "./features/legal";
 import { NovaLayout, NovaChatPage, NovaSettingsPage } from "./features/nova";
 import { AlphaApplyPage, AlphaRedeemPage } from "./features/alpha";
@@ -118,6 +119,7 @@ export function App(): JSX.Element {
         <Route path="admin" element={<AdminPage />}>
           <Route index element={<DashboardPage />} />
           <Route path="alpha" element={<AlphaApplicationsPage />} />
+          <Route path="users" element={<UsersPage />} />
         </Route>
       </Route>
 

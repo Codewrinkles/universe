@@ -70,4 +70,13 @@ public interface IProfileRepository
         string query,
         int limit,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get paginated list of all profiles with their Identity for admin dashboard.
+    /// Returns profiles ordered by creation date (newest first).
+    /// </summary>
+    Task<(IReadOnlyList<Profile> Profiles, int TotalCount)> GetAllForAdminAsync(
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
 }

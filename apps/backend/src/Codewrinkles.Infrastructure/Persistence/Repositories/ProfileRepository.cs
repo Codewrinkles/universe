@@ -152,4 +152,22 @@ public sealed class ProfileRepository : IProfileRepository
 
         return profiles;
     }
+
+    public async Task<(IReadOnlyList<Profile> Profiles, int TotalCount)> GetAllForAdminAsync(
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        var totalCount = await _profiles.CountAsync(cancellationToken);
+
+        var profiles = await _profiles
+            .AsNoTracking()
+            .Include(p => p.Identity)
+            .OrderByDescending(p => p.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return (profiles, totalCount);
+    }
 }

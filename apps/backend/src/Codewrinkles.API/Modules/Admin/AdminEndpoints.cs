@@ -26,6 +26,10 @@ public static class AdminEndpoints
 
         group.MapPost("/alpha/applications/{id:guid}/waitlist", WaitlistAlphaApplication)
             .WithName("WaitlistAlphaApplication");
+
+        // User management
+        group.MapGet("/users", GetAdminUsers)
+            .WithName("GetAdminUsers");
     }
 
     private static async Task<IResult> GetDashboardMetrics(
@@ -126,5 +130,36 @@ public static class AdminEndpoints
         {
             return Results.BadRequest(new { message = "Application is not in pending status" });
         }
+    }
+
+    private static async Task<IResult> GetAdminUsers(
+        [FromServices] IMediator mediator,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
+    {
+        // Clamp page size to reasonable limits
+        pageSize = Math.Clamp(pageSize, 1, 100);
+        page = Math.Max(1, page);
+
+        var query = new GetAdminUsersQuery(page, pageSize);
+        var result = await mediator.SendAsync(query, cancellationToken);
+
+        return Results.Ok(new
+        {
+            users = result.Users.Select(u => new
+            {
+                profileId = u.ProfileId,
+                name = u.Name,
+                handle = u.Handle,
+                avatarUrl = u.AvatarUrl,
+                email = u.Email,
+                createdAt = u.CreatedAt
+            }),
+            totalCount = result.TotalCount,
+            page = result.Page,
+            pageSize = result.PageSize,
+            totalPages = result.TotalPages
+        });
     }
 }
