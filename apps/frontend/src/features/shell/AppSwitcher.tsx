@@ -22,10 +22,12 @@ export function AppSwitcher(): JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
 
-  // Build available apps based on user role
-  // Note: Nova is hidden from the app switcher until public launch
+  // Build available apps based on user role and access
   const availableApps: AppWithPath[] = [
     { id: "pulse", name: "Pulse", accent: "sky", description: "Microblogging platform", path: "/pulse" },
+    ...(user?.hasNovaAccess ? [
+      { id: "nova", name: "Nova", accent: "violet" as const, description: "AI learning coach", path: "/nova" },
+    ] : []),
     ...(user?.role === "Admin" ? [
       { id: "admin", name: "Admin", accent: "emerald" as const, description: "System administration", path: "/admin" },
     ] : []),

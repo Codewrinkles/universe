@@ -107,4 +107,17 @@ public sealed class EmailQueue : IEmailQueue
         var message = new QueuedEmail(toEmail, userName, subject, htmlBody);
         await _channel.WriteAsync(message, cancellationToken);
     }
+
+    public async ValueTask QueuePulseAlphaEarnedEmailAsync(
+        string toEmail,
+        string userName,
+        int pulseCount,
+        CancellationToken cancellationToken = default)
+    {
+        var subject = "You Earned Nova Alpha Access! 🏆";
+        var htmlBody = EmailTemplates.BuildPulseAlphaEarnedEmail(userName, pulseCount, _settings.BaseUrl);
+
+        var message = new QueuedEmail(toEmail, userName, subject, htmlBody);
+        await _channel.WriteAsync(message, cancellationToken);
+    }
 }

@@ -68,4 +68,14 @@ public interface IEmailQueue
         string toEmail,
         string userName,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Queue a congratulations email for users who earned Alpha access through Pulse activity.
+    /// Non-blocking - returns immediately.
+    /// </summary>
+    ValueTask QueuePulseAlphaEarnedEmailAsync(
+        string toEmail,
+        string userName,
+        int pulseCount,
+        CancellationToken cancellationToken = default);
 }

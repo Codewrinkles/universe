@@ -159,11 +159,15 @@ public static class DependencyInjection
         // 6. Repository for re-engagement queries
         services.AddScoped<IReengagementRepository, ReengagementRepository>();
 
-        // 7. Background services - singletons that use IServiceScopeFactory
+        // 7. Repository for Pulse Alpha gamification
+        services.AddScoped<IPulseAlphaGrantRepository, PulseAlphaGrantRepository>();
+
+        // 8. Background services - singletons that use IServiceScopeFactory
         services.AddHostedService<EmailSenderBackgroundService>();
         services.AddHostedService<ReengagementBackgroundService>();
         services.AddHostedService<SevenDayWinbackBackgroundService>();
         services.AddHostedService<ThirtyDayWinbackBackgroundService>();
+        services.AddHostedService<PulseAlphaGrantBackgroundService>();
 
         // ===== Nova AI Services =====
         //

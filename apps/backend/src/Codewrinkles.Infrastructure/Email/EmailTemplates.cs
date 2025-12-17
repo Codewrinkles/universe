@@ -572,6 +572,111 @@ public static class EmailTemplates
             """;
     }
 
+    public static string BuildPulseAlphaEarnedEmail(string userName, int pulseCount, string baseUrl)
+    {
+        return $"""
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <meta http-equiv="X-UA-Compatible" content="IE=edge">
+                <title>You Earned Nova Alpha Access!</title>
+            </head>
+            <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; background-color: {SurfacePage};">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: {SurfacePage};">
+                    <tr>
+                        <td style="padding: 40px 20px;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: 0 auto; max-width: 600px;">
+
+                                <!-- Header with Nova violet -->
+                                <tr>
+                                    <td style="background-color: {NovaColor}; padding: 40px 30px; border-radius: 16px 16px 0 0; text-align: center;">
+                                        <h1 style="margin: 0; color: #FFFFFF; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
+                                            You Earned It! 🏆
+                                        </h1>
+                                        <p style="margin: 10px 0 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                                            Nova Alpha Access Unlocked
+                                        </p>
+                                    </td>
+                                </tr>
+
+                                <!-- Body -->
+                                <tr>
+                                    <td style="background-color: {SurfaceCard}; padding: 40px 30px; border-radius: 0 0 16px 16px; border: 1px solid {Border}; border-top: none;">
+                                        <p style="margin: 0 0 20px 0; font-size: 18px; color: {TextPrimary};">
+                                            Hey {userName},
+                                        </p>
+
+                                        <p style="margin: 0 0 20px 0; font-size: 16px; color: {TextSecondary};">
+                                            Your activity on Codewrinkles Pulse has been noticed!
+                                        </p>
+
+                                        <!-- Stats Card -->
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 25px;">
+                                            <tr>
+                                                <td style="background-color: {SurfacePage}; border: 2px solid {NovaColor}; border-radius: 12px; padding: 24px; text-align: center;">
+                                                    <div style="font-size: 52px; font-weight: 700; color: {NovaColor}; line-height: 1;">
+                                                        {pulseCount}
+                                                    </div>
+                                                    <div style="font-size: 14px; color: {TextSecondary}; margin-top: 8px;">
+                                                        pulses in the last 30 days
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <p style="margin: 0 0 20px 0; font-size: 16px; color: {TextSecondary};">
+                                            That dedication has unlocked <strong style="color: {NovaColor};">Nova Alpha access</strong>! You're now one of only 50 developers shaping the future of AI-powered learning.
+                                        </p>
+
+                                        <p style="margin: 0 0 30px 0; font-size: 16px; color: {TextSecondary};">
+                                            As a founding member, you get free unlimited access during Alpha and a lifetime discount when we launch.
+                                        </p>
+
+                                        <!-- CTA Button -->
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto 30px auto;">
+                                            <tr>
+                                                <td style="border-radius: 10px; background-color: {NovaColor};">
+                                                    <a href="{baseUrl}/nova" target="_blank" style="display: inline-block; padding: 16px 36px; font-size: 16px; font-weight: 600; color: #FFFFFF; text-decoration: none; border-radius: 10px;">
+                                                        Start Using Nova
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <p style="margin: 0 0 20px 0; font-size: 14px; color: {TextTertiary};">
+                                            No invite code needed &mdash; your access is already active. Just log in and go to Nova!
+                                        </p>
+
+                                        <p style="margin: 0; font-size: 16px; color: {TextSecondary};">
+                                            Thanks for being an active part of Codewrinkles!<br>
+                                            <strong style="color: {TextPrimary};">The Codewrinkles Team</strong>
+                                        </p>
+                                    </td>
+                                </tr>
+
+                                <!-- Footer -->
+                                <tr>
+                                    <td style="padding: 30px; text-align: center;">
+                                        <p style="margin: 0 0 5px 0; font-size: 12px; color: {TextTertiary};">
+                                            You're receiving this because you qualified for Nova Alpha through your Pulse activity.
+                                        </p>
+                                        <p style="margin: 0; font-size: 12px; color: {TextTertiary};">
+                                            &copy; 2025 Codewrinkles. All rights reserved.
+                                        </p>
+                                    </td>
+                                </tr>
+
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </body>
+            </html>
+            """;
+    }
+
     public static string BuildAlphaWaitlistEmail(string userName, string baseUrl)
     {
         return $"""
