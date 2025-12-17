@@ -1,20 +1,20 @@
 import type { Message } from "../../types";
 import { MarkdownContent } from "../../../../components/ui/MarkdownContent";
 
-interface CodyMessageProps {
+interface NovaMessageProps {
   message: Message;
 }
 
 /**
- * CodyMessage - Cody's message bubble
+ * NovaMessage - Nova's message bubble
  *
  * Features:
- * - Cody avatar and name
+ * - Nova avatar and name
  * - Message content with markdown support (future)
  * - Copy button
  * - Relative timestamp
  */
-export function CodyMessage({ message }: CodyMessageProps): JSX.Element {
+export function NovaMessage({ message }: NovaMessageProps): JSX.Element {
   const handleCopy = (): void => {
     void navigator.clipboard.writeText(message.content);
   };
@@ -37,7 +37,7 @@ export function CodyMessage({ message }: CodyMessageProps): JSX.Element {
 
   return (
     <div className="flex items-start gap-3 px-4 py-3 group">
-      {/* Cody Avatar */}
+      {/* Nova Avatar */}
       <div className="w-8 h-8 rounded-xl bg-violet-500/20 border border-violet-500/40 flex items-center justify-center flex-shrink-0">
         <span className="text-sm">🤖</span>
       </div>
@@ -46,7 +46,7 @@ export function CodyMessage({ message }: CodyMessageProps): JSX.Element {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-xs font-semibold text-violet-400 uppercase tracking-wide">
-            Cody
+            Nova
           </span>
         </div>
 

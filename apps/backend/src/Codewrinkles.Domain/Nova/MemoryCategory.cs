@@ -12,7 +12,7 @@ public enum MemoryCategory
     TopicDiscussed = 0,
 
     /// <summary>
-    /// Concepts Cody explained to the user. (Multi)
+    /// Concepts Nova explained to the user. (Multi)
     /// </summary>
     ConceptExplained = 1,
 

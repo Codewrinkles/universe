@@ -7,7 +7,7 @@ interface ChatInputProps {
 }
 
 /**
- * ChatInput - Input area for sending messages to Cody
+ * ChatInput - Input area for sending messages to Nova
  *
  * Features:
  * - Auto-expanding textarea
@@ -61,7 +61,7 @@ export function ChatInput({ onSend, disabled = false, initialValue = "" }: ChatI
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask Cody anything..."
+            placeholder="Ask Nova anything..."
             disabled={disabled}
             rows={3}
             className="w-full resize-none rounded-xl border border-border bg-surface-card1 px-4 py-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500/50 disabled:opacity-50 disabled:cursor-not-allowed custom-scrollbar"

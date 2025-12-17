@@ -4,7 +4,7 @@ namespace Codewrinkles.Domain.Nova;
 
 /// <summary>
 /// Represents a memory extracted from a conversation.
-/// Memories help Cody remember context about the learner across conversations.
+/// Memories help Nova remember context about the learner across conversations.
 /// </summary>
 public sealed class Memory
 {

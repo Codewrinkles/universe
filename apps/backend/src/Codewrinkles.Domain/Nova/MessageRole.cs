@@ -11,7 +11,7 @@ public enum MessageRole : byte
     User = 0,
 
     /// <summary>
-    /// Message from the AI assistant (Cody).
+    /// Message from the AI assistant (Nova).
     /// </summary>
     Assistant = 1,
 

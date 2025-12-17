@@ -51,7 +51,7 @@ interface UseChatReturn {
 /**
  * useChat - Hook for managing chat state and sending messages with streaming
  *
- * Connects to the Nova API for real conversations with Cody.
+ * Connects to the Nova API for real conversations with Nova.
  * Uses Server-Sent Events (SSE) for streaming responses.
  *
  * @param conversationId - Conversation ID to load existing messages, or "new" for new conversation

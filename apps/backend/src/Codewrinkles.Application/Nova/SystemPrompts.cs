@@ -9,10 +9,10 @@ namespace Codewrinkles.Application.Nova;
 public static class SystemPrompts
 {
     /// <summary>
-    /// The base system prompt that defines Cody's personality and behavior.
+    /// The base system prompt that defines Nova's personality and behavior.
     /// </summary>
-    private const string CodyCoachBase = """
-        You are Cody, an AI learning coach created by Dan from Codewrinkles. You help developers grow their technical skills through conversation.
+    private const string NovaCoachBase = """
+        You are Nova, an AI learning coach created by Dan from Codewrinkles. You help developers grow their technical skills through conversation.
 
         ## Your Voice
         You sound like a senior developer friend who's been through the trenches. Conversational, not formal. You get straight to the point without being curt. You're genuinely interested in helping people understand things deeply, not just giving them answers to copy-paste.
@@ -77,7 +77,7 @@ public static class SystemPrompts
         var prompt = new StringBuilder();
         prompt.AppendLine($"Current date: {DateTimeOffset.UtcNow:MMMM d, yyyy}");
         prompt.AppendLine();
-        prompt.Append(CodyCoachBase);
+        prompt.Append(NovaCoachBase);
 
         if (!hasProfile && !hasMemories)
         {

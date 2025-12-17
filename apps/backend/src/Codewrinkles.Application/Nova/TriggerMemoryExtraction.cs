@@ -215,7 +215,7 @@ public sealed class TriggerMemoryExtractionCommandHandler
         var sb = new StringBuilder();
         foreach (var msg in messages)
         {
-            var role = msg.Role == MessageRole.User ? "User" : "Cody";
+            var role = msg.Role == MessageRole.User ? "User" : "Nova";
             sb.AppendLine($"{role}: {msg.Content}");
             sb.AppendLine();
         }
@@ -242,7 +242,7 @@ public sealed class TriggerMemoryExtractionCommandHandler
     private static string BuildExtractionPrompt(string transcript)
     {
         return $$"""
-            Analyze this conversation between a learner and an AI coach named Cody.
+            Analyze this conversation between a learner and an AI coach named Nova.
             Extract key memories about the learner that would be useful for future conversations.
 
             Conversation:

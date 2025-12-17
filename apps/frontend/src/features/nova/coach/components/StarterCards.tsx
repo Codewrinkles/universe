@@ -34,7 +34,7 @@ interface StarterCardsProps {
 /**
  * StarterCards - 4 capability showcase cards shown in empty state
  *
- * Helps users understand what Cody can do and provides quick-start prompts.
+ * Helps users understand what Nova can do and provides quick-start prompts.
  * Clicking a card populates the input with the associated prompt.
  */
 export function StarterCards({ onSelectPrompt }: StarterCardsProps): JSX.Element {

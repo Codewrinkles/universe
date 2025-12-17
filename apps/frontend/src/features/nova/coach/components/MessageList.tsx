@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { Message } from "../../types";
-import { CodyMessage } from "./CodyMessage";
+import { NovaMessage } from "./NovaMessage";
 import { UserMessage } from "./UserMessage";
 import { StreamingIndicator } from "./StreamingIndicator";
 
@@ -15,7 +15,7 @@ interface MessageListProps {
  * Features:
  * - Auto-scrolls to bottom on new messages
  * - Renders different bubble types based on role
- * - Shows streaming indicator when Cody is responding
+ * - Shows streaming indicator when Nova is responding
  */
 export function MessageList({ messages, isStreaming = false }: MessageListProps): JSX.Element {
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -30,7 +30,7 @@ export function MessageList({ messages, isStreaming = false }: MessageListProps)
       <div className="py-4">
         {messages.map((message) => {
           if (message.role === "assistant") {
-            return <CodyMessage key={message.id} message={message} />;
+            return <NovaMessage key={message.id} message={message} />;
           }
           if (message.role === "user") {
             return <UserMessage key={message.id} message={message} />;

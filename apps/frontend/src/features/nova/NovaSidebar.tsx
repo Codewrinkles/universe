@@ -180,7 +180,7 @@ export function NovaSidebar({ onMobileClose }: NovaSidebarProps): JSX.Element {
           >
             <p className="text-xs text-violet-400 font-medium">Set up your profile</p>
             <p className="text-[11px] text-text-tertiary mt-1">
-              Help Cody personalize your learning
+              Help Nova personalize your learning
             </p>
           </Link>
         )}

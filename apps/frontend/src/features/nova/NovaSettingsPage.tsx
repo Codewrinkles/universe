@@ -127,7 +127,7 @@ export function NovaSettingsPage(): JSX.Element {
             <div>
               <h1 className="text-lg font-semibold text-text-primary">Your Learning Profile</h1>
               <p className="text-sm text-text-secondary">
-                Help Cody understand your background and how you learn best
+                Help Nova understand your background and how you learn best
               </p>
             </div>
           </div>
