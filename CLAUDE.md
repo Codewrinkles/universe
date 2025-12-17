@@ -1150,6 +1150,117 @@ app.MapPost("/api/users", CreateUser)
 
 ---
 
+## SEO & Meta Tags (Vercel Edge Function)
+
+The frontend is hosted on Vercel and uses a **dual SEO system** to ensure social media crawlers see correct meta tags.
+
+### Why Two Systems?
+
+Social media crawlers (Twitter, Facebook, LinkedIn, etc.) don't execute JavaScript. They only see the initial HTML. Since we use React (client-side rendering), we need server-side meta tag injection for crawlers.
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Request to codewrinkles.com              │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Vercel Edge Function (api/inject-meta.ts)      │
+│  - Detects bots via User-Agent                              │
+│  - Injects meta tags into HTML template                     │
+│  - Returns pre-rendered HTML for crawlers                   │
+└─────────────────────────────────────────────────────────────┘
+                              │
+              ┌───────────────┴───────────────┐
+              ▼                               ▼
+┌──────────────────────┐        ┌──────────────────────┐
+│     Bot/Crawler      │        │    Regular Browser   │
+│  Sees: Server-side   │        │  Sees: React Helmet  │
+│  injected meta tags  │        │  updates meta tags   │
+└──────────────────────┘        └──────────────────────┘
+```
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `apps/frontend/api/inject-meta.ts` | Edge function that injects meta tags for bots |
+| `apps/frontend/api/index.template.ts` | Auto-generated HTML template with placeholders |
+| `apps/frontend/index.html` | Source HTML with `__META_*__` placeholders |
+| `apps/frontend/scripts/bundle-html.js` | Bundles built HTML into template (runs after build) |
+
+### How It Works
+
+1. **Build time**: Vite builds `index.html` → `dist/index.html` (with asset hashes)
+2. **Post-build**: `bundle-html.js` converts `dist/index.html` → `api/index.template.ts`
+3. **Runtime**: Edge function uses template, replaces `__META_*__` placeholders with actual values
+
+### Meta Tag Placeholders
+
+```html
+__META_TITLE__        → Page title
+__META_DESCRIPTION__  → Page description
+__META_KEYWORDS__     → SEO keywords
+__META_AUTHOR__       → Author name
+__META_IMAGE__        → OG image URL
+__META_URL__          → Canonical URL
+__META_OG_TYPE__      → website | article | profile
+__TWITTER_CARD__      → summary | summary_large_image
+__STRUCTURED_DATA__   → JSON-LD structured data
+```
+
+### Static Page Meta Configuration
+
+Static pages (landing, privacy, terms) have their meta defined in `STATIC_PAGE_META` object in `inject-meta.ts`:
+
+```typescript
+const STATIC_PAGE_META = {
+  '/': {
+    title: 'Codewrinkles - Your Personal Path to Technical Excellence',
+    description: 'Codewrinkles Nova is an AI coach...',
+    keywords: 'AI coach, technical excellence...',
+  },
+  '/privacy': { /* ... */ },
+  '/terms': { /* ... */ },
+};
+```
+
+### Dynamic Pages
+
+- `/pulse/{id}` - Fetches pulse data from API, injects author/content
+- `/pulse/u/{handle}` - Fetches profile data from API, injects name/bio
+
+### Twitter Card Types
+
+- **`summary`**: Small square image (use for pages without hero images)
+- **`summary_large_image`**: Large rectangular image (use only when page has actual large image)
+
+Current usage:
+- Landing page: `summary`
+- Pulse feed: `summary`
+- Profile pages: `summary`
+- Individual pulses: `summary_large_image` only if pulse has attached image
+
+### When Updating SEO
+
+**To update landing page SEO:**
+1. Update `STATIC_PAGE_META['/']` in `api/inject-meta.ts` (for crawlers)
+2. Update `<Helmet>` in `LandingPage.tsx` (for browsers)
+3. Both must match!
+
+**To add a new static page:**
+1. Add entry to `STATIC_PAGE_META` in `inject-meta.ts`
+2. Add `<Helmet>` tags in the React component
+
+**After changing `index.html` placeholders:**
+1. Run `npm run build` in `apps/frontend`
+2. Run `node scripts/bundle-html.js` to regenerate template
+3. Or manually update `api/index.template.ts` if only placeholder name changed
+
+---
+
 ## Infrastructure Preferences
 
 ### Database
@@ -1163,4 +1274,4 @@ app.MapPost("/api/users", CreateUser)
 
 ---
 
-**Last Updated**: 2025-12-06 (update this when making significant changes)
+**Last Updated**: 2025-12-17 (update this when making significant changes)
