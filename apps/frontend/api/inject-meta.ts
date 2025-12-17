@@ -240,9 +240,9 @@ const STATIC_PAGE_META: Record<string, {
   keywords: string;
 }> = {
   '/': {
-    title: 'Codewrinkles – Built for value, not engagement',
-    description: 'An ecosystem designed to create genuine connections and meaningful content. Your posts reach your followers. Guaranteed.',
-    keywords: 'social media, microblogging, pulse, content creation, genuine connections',
+    title: 'Codewrinkles - Your Personal Path to Technical Excellence',
+    description: 'Codewrinkles Nova is an AI coach that remembers your background and adapts to your learning journey. Join Alpha or earn access through Codewrinkles Pulse.',
+    keywords: 'AI coach, technical excellence, learning, Codewrinkles Nova, Codewrinkles Pulse, developer growth',
   },
   '/privacy': {
     title: 'Privacy Policy - Codewrinkles',
@@ -448,9 +448,9 @@ export default async function handler(request: Request) {
 
     // Fallback: Inject generic meta tags for any other route
     // This ensures bots never see placeholders
-    const fallbackTitle = 'Codewrinkles – Built for value, not engagement';
-    const fallbackDesc = 'An ecosystem designed to create genuine connections and meaningful content.';
-    const fallbackKeywords = 'social media, microblogging, pulse, content creation, genuine connections';
+    const fallbackTitle = 'Codewrinkles - Your Personal Path to Technical Excellence';
+    const fallbackDesc = 'Codewrinkles Nova is an AI coach that remembers your background and adapts to your learning journey.';
+    const fallbackKeywords = 'AI coach, technical excellence, learning, Codewrinkles Nova, Codewrinkles Pulse, developer growth';
     const structuredData = generateStructuredData('website', {
       title: fallbackTitle,
       description: fallbackDesc,
@@ -471,9 +471,9 @@ export default async function handler(request: Request) {
   } catch (error) {
     console.error('Error injecting meta tags:', error);
     // Even on error, inject basic fallback to avoid showing placeholders
-    const fallbackTitle = 'Codewrinkles – Built for value, not engagement';
-    const fallbackDesc = 'An ecosystem designed to create genuine connections and meaningful content.';
-    const fallbackKeywords = 'social media, microblogging, pulse, content creation, genuine connections';
+    const fallbackTitle = 'Codewrinkles - Your Personal Path to Technical Excellence';
+    const fallbackDesc = 'Codewrinkles Nova is an AI coach that remembers your background and adapts to your learning journey.';
+    const fallbackKeywords = 'AI coach, technical excellence, learning, Codewrinkles Nova, Codewrinkles Pulse, developer growth';
     const structuredData = generateStructuredData('website', {
       title: fallbackTitle,
       description: fallbackDesc,
