@@ -19,6 +19,7 @@ public sealed class UnitOfWork : IUnitOfWork
     private readonly IHashtagRepository _hashtags;
     private readonly INovaRepository _nova;
     private readonly INovaMemoryRepository _novaMemories;
+    private readonly IAlphaApplicationRepository _alphaApplications;
 
     public UnitOfWork(
         ApplicationDbContext context,
@@ -32,7 +33,8 @@ public sealed class UnitOfWork : IUnitOfWork
         IBookmarkRepository bookmarks,
         IHashtagRepository hashtags,
         INovaRepository nova,
-        INovaMemoryRepository novaMemories)
+        INovaMemoryRepository novaMemories,
+        IAlphaApplicationRepository alphaApplications)
     {
         _context = context;
         _identities = identities;
@@ -46,6 +48,7 @@ public sealed class UnitOfWork : IUnitOfWork
         _hashtags = hashtags;
         _nova = nova;
         _novaMemories = novaMemories;
+        _alphaApplications = alphaApplications;
     }
 
     public IIdentityRepository Identities => _identities;
@@ -69,6 +72,8 @@ public sealed class UnitOfWork : IUnitOfWork
     public INovaRepository Nova => _nova;
 
     public INovaMemoryRepository NovaMemories => _novaMemories;
+
+    public IAlphaApplicationRepository AlphaApplications => _alphaApplications;
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

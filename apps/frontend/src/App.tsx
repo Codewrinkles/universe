@@ -28,6 +28,7 @@ import { AdminPage } from "./features/admin/AdminPage";
 import { DashboardPage } from "./features/admin/DashboardPage";
 import { TermsPage, PrivacyPage } from "./features/legal";
 import { NovaLayout, NovaChatPage, NovaSettingsPage } from "./features/nova";
+import { AlphaApplyPage, AlphaRedeemPage } from "./features/alpha";
 
 /**
  * Main application component that manages:
@@ -125,6 +126,8 @@ export function App(): JSX.Element {
       <Route path="/auth/error" element={<OAuthErrorPage />} />
       <Route path="/terms" element={<TermsPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/alpha/apply" element={<AlphaApplyPage />} />
+      <Route path="/nova/redeem" element={<AlphaRedeemPage />} />
 
       {/* Catch-all redirect - auth-aware */}
       <Route path="*" element={<Navigate to={isAuthenticated ? "/pulse" : "/"} replace />} />

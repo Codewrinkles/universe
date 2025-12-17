@@ -103,5 +103,7 @@ public static class SpanNames
         public const string ExtractMemories = "Nova.ExtractMemories";
         public const string GetMemoriesForContext = "Nova.GetMemoriesForContext";
         public const string TriggerMemoryExtraction = "Nova.TriggerMemoryExtraction";
+        public const string ApplyForAlpha = "Nova.ApplyForAlpha";
+        public const string RedeemAlphaCode = "Nova.RedeemAlphaCode";
     }
 }

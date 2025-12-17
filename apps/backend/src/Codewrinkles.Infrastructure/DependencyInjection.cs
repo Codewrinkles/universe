@@ -55,6 +55,7 @@ public static class DependencyInjection
         services.AddScoped<IHashtagRepository, HashtagRepository>();
         services.AddScoped<INovaRepository, NovaRepository>();
         services.AddScoped<INovaMemoryRepository, NovaMemoryRepository>();
+        services.AddScoped<IAlphaApplicationRepository, AlphaApplicationRepository>();
 
         // Unit of Work
         services.AddScoped<IUnitOfWork, UnitOfWork>();

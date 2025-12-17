@@ -33,9 +33,9 @@ export function NovaRoute({ children }: NovaRouteProps): JSX.Element {
     return <Navigate to="/" replace />;
   }
 
-  // Redirect to /pulse if authenticated but no Nova access
+  // Redirect to /nova/redeem if authenticated but no Nova access
   if (!user?.hasNovaAccess) {
-    return <Navigate to="/pulse" replace />;
+    return <Navigate to="/nova/redeem" replace />;
   }
 
   return <>{children}</>;

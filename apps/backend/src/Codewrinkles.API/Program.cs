@@ -64,5 +64,6 @@ app.MapSocialEndpoints();
 app.MapNotificationEndpoints();
 app.MapAdminEndpoints();
 app.MapNovaEndpoints();
+app.MapAlphaEndpoints();
 
 app.Run();
