@@ -58,7 +58,7 @@ export function PulsePage(): JSX.Element {
         <meta property="og:image" content={getPulseFeedOGImage()} />
 
         {/* Twitter */}
-        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:card" content="summary" />
         <meta name="twitter:url" content={url} />
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={description} />

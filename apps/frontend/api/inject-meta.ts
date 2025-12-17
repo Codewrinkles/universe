@@ -217,7 +217,8 @@ function injectMetaTags(
   keywords: string = 'social media, microblogging, pulse, content creation, genuine connections',
   author: string = 'Codewrinkles',
   ogType: 'article' | 'profile' | 'website' = 'website',
-  structuredData: string = ''
+  structuredData: string = '',
+  twitterCard: 'summary' | 'summary_large_image' = 'summary'
 ): string {
   return html
     .replace(/__META_TITLE__/g, escapeHtml(title))
@@ -227,7 +228,8 @@ function injectMetaTags(
     .replace(/__META_IMAGE__/g, escapeHtml(imageUrl))
     .replace(/__META_URL__/g, escapeHtml(url))
     .replace(/__META_OG_TYPE__/g, ogType)
-    .replace(/__STRUCTURED_DATA__/g, structuredData);
+    .replace(/__STRUCTURED_DATA__/g, structuredData)
+    .replace(/__TWITTER_CARD__/g, twitterCard);
 }
 
 /**
@@ -316,6 +318,9 @@ export default async function handler(request: Request) {
           publishedDate: pulse.createdAt,
         });
 
+        // Use summary_large_image only if pulse has an actual image
+        const twitterCard = pulse.imageUrl ? 'summary_large_image' : 'summary';
+
         html = injectMetaTags(
           html,
           title,
@@ -325,7 +330,8 @@ export default async function handler(request: Request) {
           keywords,
           pulse.author.name, // author
           'article',
-          structuredData
+          structuredData,
+          twitterCard
         );
         return new Response(html, {
           status: 200,
