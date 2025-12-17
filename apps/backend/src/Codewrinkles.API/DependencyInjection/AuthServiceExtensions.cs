@@ -44,11 +44,15 @@ public static class AuthServiceExtensions
 
             options.AddPolicy("AdminOnly", policy =>
                 policy.RequireRole("Admin"));
+
+            options.AddPolicy("RequiresNovaAccess", policy =>
+                policy.Requirements.Add(new RequiresNovaAccessRequirement()));
         });
 
         services.AddHttpContextAccessor();
         services.AddSingleton<IAuthorizationHandler, MustBeProfileOwnerHandler>();
         services.AddSingleton<IAuthorizationHandler, MustBePulseOwnerHandler>();
+        services.AddScoped<IAuthorizationHandler, RequiresNovaAccessHandler>();
 
         return services;
     }

@@ -29,6 +29,7 @@ public sealed class JwtTokenGenerator
             new(JwtRegisteredClaimNames.Name, profile.Name),
             new("profileId", profile.Id.ToString()),
             new("role", identity.Role.ToString()),
+            new("hasNovaAccess", profile.HasNovaAccess.ToString().ToLowerInvariant()),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         };
 

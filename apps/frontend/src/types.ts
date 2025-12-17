@@ -181,6 +181,7 @@ export interface RegisterResponse {
   name: string;
   handle: string | null;
   role: string;
+  hasNovaAccess: boolean;
   accessToken: string;
   refreshToken: string;
 }
@@ -201,6 +202,7 @@ export interface LoginResponse {
   location: string | null;
   websiteUrl: string | null;
   role: string;
+  hasNovaAccess: boolean;
   accessToken: string;
   refreshToken: string;
 }
@@ -216,6 +218,7 @@ export interface User {
   location: string | null;
   websiteUrl: string | null;
   role: string;
+  hasNovaAccess: boolean;
 }
 
 // Profile API types

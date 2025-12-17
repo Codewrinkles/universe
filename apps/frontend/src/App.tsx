@@ -23,6 +23,7 @@ import { OAuthErrorPage } from "./features/auth/OAuthErrorPage";
 import { OnboardingFlow } from "./features/onboarding/OnboardingFlow";
 import { ProtectedRoute } from "./features/auth/ProtectedRoute";
 import { AdminRoute } from "./features/auth/AdminRoute";
+import { NovaRoute } from "./features/auth/NovaRoute";
 import { AdminPage } from "./features/admin/AdminPage";
 import { DashboardPage } from "./features/admin/DashboardPage";
 import { TermsPage, PrivacyPage } from "./features/legal";
@@ -69,13 +70,13 @@ export function App(): JSX.Element {
         </Route>
       </Route>
 
-      {/* Nova - protected, redirects to home if unauthenticated (hidden from app switcher until public launch) */}
+      {/* Nova - requires authentication AND Nova access */}
       <Route
         path="/"
         element={
-          <ProtectedRoute redirectTo="/">
+          <NovaRoute>
             <ShellLayout theme={theme} onThemeToggle={toggleTheme} />
-          </ProtectedRoute>
+          </NovaRoute>
         }
       >
         <Route path="nova" element={<NovaLayout />}>

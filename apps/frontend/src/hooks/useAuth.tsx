@@ -20,6 +20,7 @@ interface JwtPayload {
   avatarUrl?: string;
   profileId: string;
   role: string;
+  hasNovaAccess: string;
 }
 
 interface AuthContextType {
@@ -122,6 +123,7 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
       location: null,
       websiteUrl: null,
       role: response.role,
+      hasNovaAccess: response.hasNovaAccess,
     };
 
     // Store user data
@@ -153,6 +155,7 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
       location: response.location,
       websiteUrl: response.websiteUrl,
       role: response.role,
+      hasNovaAccess: response.hasNovaAccess,
     };
 
     // Store user data
@@ -340,6 +343,7 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
         location: null,
         websiteUrl: null,
         role: decoded.role,
+        hasNovaAccess: decoded.hasNovaAccess === "true",
       };
 
       setUser(userData);

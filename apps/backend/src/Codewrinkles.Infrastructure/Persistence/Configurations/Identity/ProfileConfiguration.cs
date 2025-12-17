@@ -55,6 +55,19 @@ public sealed class ProfileConfiguration : IEntityTypeConfiguration<Profile>
             .IsRequired()
             .HasDefaultValueSql("SYSDATETIMEOFFSET()");
 
+        // Nova access
+        builder.Property(p => p.NovaAccess)
+            .IsRequired()
+            .HasDefaultValue(Domain.Nova.NovaAccessLevel.None);
+
+        builder.Property(p => p.IsFoundingMember)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        // Ignore computed properties
+        builder.Ignore(p => p.HasNovaAccess);
+        builder.Ignore(p => p.HasNovaProAccess);
+
         // Indexes
         builder.HasIndex(p => p.IdentityId)
             .IsUnique()

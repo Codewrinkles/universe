@@ -20,6 +20,7 @@ public sealed record RegisterUserResult(
     string Name,
     string? Handle,
     UserRole Role,
+    bool HasNovaAccess,
     string AccessToken,
     string RefreshToken
 );
@@ -132,6 +133,7 @@ public sealed class RegisterUserCommandHandler
                 Name: profile.Name,
                 Handle: profile.Handle,
                 Role: identity.Role,
+                HasNovaAccess: profile.HasNovaAccess,
                 AccessToken: accessToken,
                 RefreshToken: refreshToken
             );

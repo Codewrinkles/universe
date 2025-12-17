@@ -1,3 +1,5 @@
+using Codewrinkles.Domain.Nova;
+
 namespace Codewrinkles.Domain.Identity;
 
 public sealed class Profile
@@ -20,6 +22,14 @@ public sealed class Profile
     public bool OnboardingCompleted { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
+
+    // Nova access
+    public NovaAccessLevel NovaAccess { get; private set; } = NovaAccessLevel.None;
+    public bool IsFoundingMember { get; private set; }
+
+    // Computed properties
+    public bool HasNovaAccess => NovaAccess != NovaAccessLevel.None;
+    public bool HasNovaProAccess => NovaAccess is NovaAccessLevel.Pro or NovaAccessLevel.Lifetime or NovaAccessLevel.Alpha;
 
     // Navigation property
     public Identity Identity { get; private set; }
@@ -89,6 +99,16 @@ public sealed class Profile
     public void CompleteOnboarding()
     {
         OnboardingCompleted = true;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>
+    /// Grants Alpha access to this user and marks them as a founding member.
+    /// </summary>
+    public void GrantAlphaAccess()
+    {
+        NovaAccess = NovaAccessLevel.Alpha;
+        IsFoundingMember = true;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 

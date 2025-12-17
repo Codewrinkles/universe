@@ -16,7 +16,7 @@ public static class NovaEndpoints
     {
         var group = app.MapGroup("/api/nova")
             .WithTags("Nova")
-            .RequireAuthorization(); // All Nova endpoints require authentication
+            .RequireAuthorization("RequiresNovaAccess"); // Requires authentication + Nova access
 
         group.MapPost("chat", SendMessage)
             .WithName("NovaSendMessage");

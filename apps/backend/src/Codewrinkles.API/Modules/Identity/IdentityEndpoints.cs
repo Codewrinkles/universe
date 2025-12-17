@@ -86,6 +86,7 @@ public static class IdentityEndpoints
             name = result.Name,
             handle = result.Handle,
             role = result.Role.ToString(),
+            hasNovaAccess = result.HasNovaAccess,
             accessToken = result.AccessToken,
             refreshToken = result.RefreshToken
         });
@@ -113,6 +114,7 @@ public static class IdentityEndpoints
             bio = result.Bio,
             avatarUrl = result.AvatarUrl,
             role = result.Role.ToString(),
+            hasNovaAccess = result.HasNovaAccess,
             accessToken = result.AccessToken,
             refreshToken = result.RefreshToken
         });
