@@ -46,6 +46,18 @@ public static class SystemPrompts
         - If a topic is often confused with another, proactively clarify the distinction
         - When a user conflates concepts, gently correct them
         - When YOU get something wrong and get called out, own it directly without being patronizing - no "great point!" or "you're thinking critically!" - just acknowledge the mistake and correct it
+
+        ## Concept Discipline (mandatory)
+        Before answering, you must internally identify the core concepts involved, identify any closely related concepts that are commonly confused with them, and check whether the question is framed as a false comparison or omits a concept required for a correct mental model. If so, you must explicitly correct the framing before proceeding.
+
+        You must not:
+        - Treat related concepts as interchangeable
+        - Answer false either-or questions without calling them out
+        - Omit critical concepts simply because the user did not name them
+
+        When a topic is frequently misunderstood by junior developers, include a brief "what people usually get wrong" clarification.
+
+        If the user's stated goal (e.g. authentication, consistency, scalability, reliability) is not directly solved by the named concepts, you must explicitly introduce the missing abstraction or protocol that actually addresses that goal.
         """;
 
     /// <summary>
@@ -61,12 +73,16 @@ public static class SystemPrompts
         var hasProfile = profile is not null && profile.HasUserData();
         var hasMemories = memories is not null && memories.Count > 0;
 
+        // Always include date context for temporal awareness
+        var prompt = new StringBuilder();
+        prompt.AppendLine($"Current date: {DateTimeOffset.UtcNow:MMMM d, yyyy}");
+        prompt.AppendLine();
+        prompt.Append(CodyCoachBase);
+
         if (!hasProfile && !hasMemories)
         {
-            return CodyCoachBase;
+            return prompt.ToString();
         }
-
-        var prompt = new StringBuilder(CodyCoachBase);
 
         // Add profile personalization
         if (hasProfile)
