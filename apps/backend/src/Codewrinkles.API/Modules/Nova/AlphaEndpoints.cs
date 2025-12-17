@@ -73,7 +73,9 @@ public static class AlphaEndpoints
         {
             success = true,
             message = "Welcome to Nova Alpha! You now have full access.",
-            hasNovaAccess = result.HasNovaAccess
+            hasNovaAccess = result.HasNovaAccess,
+            accessToken = result.AccessToken,
+            refreshToken = result.RefreshToken
         });
     }
 }

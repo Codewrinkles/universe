@@ -82,4 +82,29 @@ public sealed class EmailQueue : IEmailQueue
         var message = new QueuedEmail(toEmail, userName, subject, htmlBody);
         await _channel.WriteAsync(message, cancellationToken);
     }
+
+    public async ValueTask QueueAlphaAcceptanceEmailAsync(
+        string toEmail,
+        string userName,
+        string inviteCode,
+        CancellationToken cancellationToken = default)
+    {
+        var subject = "You're In! Welcome to Nova Alpha 🎉";
+        var htmlBody = EmailTemplates.BuildAlphaAcceptanceEmail(userName, inviteCode, _settings.BaseUrl);
+
+        var message = new QueuedEmail(toEmail, userName, subject, htmlBody);
+        await _channel.WriteAsync(message, cancellationToken);
+    }
+
+    public async ValueTask QueueAlphaWaitlistEmailAsync(
+        string toEmail,
+        string userName,
+        CancellationToken cancellationToken = default)
+    {
+        var subject = "You're on the Nova Waitlist";
+        var htmlBody = EmailTemplates.BuildAlphaWaitlistEmail(userName, _settings.BaseUrl);
+
+        var message = new QueuedEmail(toEmail, userName, subject, htmlBody);
+        await _channel.WriteAsync(message, cancellationToken);
+    }
 }

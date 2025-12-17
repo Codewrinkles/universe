@@ -48,6 +48,7 @@ export function AdminNavigation({ onMobileClose }: AdminNavigationProps): JSX.El
 
       <div className="flex flex-col gap-1">
         <NavItem to="/admin" icon="📊" label="Dashboard" onClick={onMobileClose} />
+        <NavItem to="/admin/alpha" icon="🚀" label="Alpha" onClick={onMobileClose} />
         <NavItem to="/admin/users" icon="👥" label="Users" onClick={onMobileClose} />
         <NavItem to="/admin/content" icon="📝" label="Content" onClick={onMobileClose} />
         <NavItem to="/admin/settings" icon="⚙️" label="Settings" onClick={onMobileClose} />

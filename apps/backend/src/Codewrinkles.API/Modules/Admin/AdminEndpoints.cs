@@ -1,4 +1,6 @@
 using Codewrinkles.Application.Admin;
+using Codewrinkles.Application.Nova;
+using Codewrinkles.Domain.Nova;
 using Kommand.Abstractions;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,6 +16,16 @@ public static class AdminEndpoints
 
         group.MapGet("/dashboard/metrics", GetDashboardMetrics)
             .WithName("GetDashboardMetrics");
+
+        // Alpha application management
+        group.MapGet("/alpha/applications", GetAlphaApplications)
+            .WithName("GetAlphaApplications");
+
+        group.MapPost("/alpha/applications/{id:guid}/accept", AcceptAlphaApplication)
+            .WithName("AcceptAlphaApplication");
+
+        group.MapPost("/alpha/applications/{id:guid}/waitlist", WaitlistAlphaApplication)
+            .WithName("WaitlistAlphaApplication");
     }
 
     private static async Task<IResult> GetDashboardMetrics(
@@ -29,5 +41,90 @@ public static class AdminEndpoints
             activeUsers = result.ActiveUsers,
             totalPulses = result.TotalPulses
         });
+    }
+
+    private static async Task<IResult> GetAlphaApplications(
+        [FromServices] IMediator mediator,
+        [FromQuery] string? status,
+        CancellationToken cancellationToken)
+    {
+        AlphaApplicationStatus? statusFilter = status?.ToLowerInvariant() switch
+        {
+            "pending" => AlphaApplicationStatus.Pending,
+            "accepted" => AlphaApplicationStatus.Accepted,
+            "waitlisted" => AlphaApplicationStatus.Waitlisted,
+            _ => null
+        };
+
+        var query = new GetAlphaApplicationsQuery(statusFilter);
+        var result = await mediator.SendAsync(query, cancellationToken);
+
+        return Results.Ok(new
+        {
+            applications = result.Applications.Select(a => new
+            {
+                id = a.Id,
+                email = a.Email,
+                name = a.Name,
+                primaryTechStack = a.PrimaryTechStack,
+                yearsOfExperience = a.YearsOfExperience,
+                goal = a.Goal,
+                status = a.Status.ToString().ToLowerInvariant(),
+                inviteCode = a.InviteCode,
+                inviteCodeRedeemed = a.InviteCodeRedeemed,
+                createdAt = a.CreatedAt
+            })
+        });
+    }
+
+    private static async Task<IResult> AcceptAlphaApplication(
+        [FromServices] IMediator mediator,
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var command = new AcceptAlphaApplicationCommand(id);
+            var result = await mediator.SendAsync(command, cancellationToken);
+
+            return Results.Ok(new
+            {
+                inviteCode = result.InviteCode,
+                message = "Application accepted. Invite code email sent."
+            });
+        }
+        catch (AlphaApplicationNotFoundException)
+        {
+            return Results.NotFound(new { message = "Application not found" });
+        }
+        catch (AlphaApplicationNotPendingException)
+        {
+            return Results.BadRequest(new { message = "Application is not in pending status" });
+        }
+    }
+
+    private static async Task<IResult> WaitlistAlphaApplication(
+        [FromServices] IMediator mediator,
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var command = new WaitlistAlphaApplicationCommand(id);
+            await mediator.SendAsync(command, cancellationToken);
+
+            return Results.Ok(new
+            {
+                message = "Application waitlisted. Notification email sent."
+            });
+        }
+        catch (AlphaApplicationNotFoundException)
+        {
+            return Results.NotFound(new { message = "Application not found" });
+        }
+        catch (AlphaApplicationNotPendingException)
+        {
+            return Results.BadRequest(new { message = "Application is not in pending status" });
+        }
     }
 }

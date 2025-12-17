@@ -181,7 +181,7 @@ export function LoginPage(): JSX.Element {
         </Link>
         <div>
           Don&apos;t have an account?{" "}
-          <Link to="/register" className="text-brand-soft hover:text-brand">
+          <Link to="/register" state={{ from }} className="text-brand-soft hover:text-brand">
             Sign up
           </Link>
         </div>

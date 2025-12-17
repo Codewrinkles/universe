@@ -49,4 +49,23 @@ public interface IEmailQueue
         string toEmail,
         string userName,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Queue an Alpha acceptance email with invite code.
+    /// Non-blocking - returns immediately.
+    /// </summary>
+    ValueTask QueueAlphaAcceptanceEmailAsync(
+        string toEmail,
+        string userName,
+        string inviteCode,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Queue an Alpha waitlist email.
+    /// Non-blocking - returns immediately.
+    /// </summary>
+    ValueTask QueueAlphaWaitlistEmailAsync(
+        string toEmail,
+        string userName,
+        CancellationToken cancellationToken = default);
 }

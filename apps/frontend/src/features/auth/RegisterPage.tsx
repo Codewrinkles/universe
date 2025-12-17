@@ -4,7 +4,7 @@
  */
 
 import { useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate, useLocation } from "react-router-dom";
 import type { FormErrors } from "../../types";
 import { useAuth } from "../../hooks/useAuth";
 import { AuthCard } from "./AuthCard";
@@ -23,7 +23,11 @@ import { ApiError } from "../../utils/api";
 
 export function RegisterPage(): JSX.Element {
   const navigate = useNavigate();
+  const location = useLocation();
   const { register, isAuthenticated, isLoading: authLoading } = useAuth();
+
+  // Get the redirect destination (if coming from a protected route via login)
+  const from = (location.state as { from?: string })?.from;
 
   // Form state
   const [name, setName] = useState("");
@@ -104,8 +108,13 @@ export function RegisterPage(): JSX.Element {
       // Mark that we just registered to bypass auth guard
       setJustRegistered(true);
 
-      // Registration successful - navigate to onboarding
-      navigate("/onboarding", { replace: true });
+      // Registration successful
+      // Skip onboarding if user is signing up for Nova - they have a different flow
+      if (from?.startsWith("/nova")) {
+        navigate(from, { replace: true });
+      } else {
+        navigate("/onboarding", { replace: true, state: from ? { from } : undefined });
+      }
     } catch (error) {
       if (error instanceof ApiError) {
         // Handle validation errors from server
@@ -227,7 +236,7 @@ export function RegisterPage(): JSX.Element {
         </Link>
         <div>
           Already have an account?{" "}
-          <Link to="/login" className="text-brand-soft hover:text-brand">
+          <Link to="/login" state={from ? { from } : undefined} className="text-brand-soft hover:text-brand">
             Log in
           </Link>
         </div>

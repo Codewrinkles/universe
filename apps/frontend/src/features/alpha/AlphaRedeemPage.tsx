@@ -4,7 +4,7 @@
  */
 
 import { useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { AuthCard } from "../auth/AuthCard";
 import { FormField } from "../../components/ui/FormField";
@@ -12,7 +12,8 @@ import { config } from "../../config";
 import { getAccessToken } from "../../utils/api";
 
 export function AlphaRedeemPage(): JSX.Element {
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, completeOAuthLogin } = useAuth();
+  const navigate = useNavigate();
 
   // Form state
   const [code, setCode] = useState("");
@@ -31,9 +32,9 @@ export function AlphaRedeemPage(): JSX.Element {
     );
   }
 
-  // Redirect to login if not authenticated
+  // Redirect to register if not authenticated (Nova users are likely new)
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ returnUrl: "/nova/redeem" }} replace />;
+    return <Navigate to="/register" state={{ from: "/nova/redeem" }} replace />;
   }
 
   // Redirect to Nova if user already has access
@@ -92,10 +93,14 @@ export function AlphaRedeemPage(): JSX.Element {
         return;
       }
 
-      // Success! Update user context and redirect to Nova
-      // The user will need to refresh their token to get hasNovaAccess updated
-      // For now, just redirect and the API will allow access
-      window.location.href = "/nova";
+      // Parse response to get new tokens
+      const data = await response.json();
+
+      // Update auth context with new tokens (which have hasNovaAccess: true)
+      await completeOAuthLogin(data.accessToken, data.refreshToken);
+
+      // Navigate to Nova
+      navigate("/nova", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "An unexpected error occurred");
     } finally {

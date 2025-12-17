@@ -105,5 +105,8 @@ public static class SpanNames
         public const string TriggerMemoryExtraction = "Nova.TriggerMemoryExtraction";
         public const string ApplyForAlpha = "Nova.ApplyForAlpha";
         public const string RedeemAlphaCode = "Nova.RedeemAlphaCode";
+        public const string GetAlphaApplications = "Nova.GetAlphaApplications";
+        public const string AcceptAlphaApplication = "Nova.AcceptAlphaApplication";
+        public const string WaitlistAlphaApplication = "Nova.WaitlistAlphaApplication";
     }
 }

@@ -1,4 +1,5 @@
 using Codewrinkles.Application.Common.Interfaces;
+using Codewrinkles.Domain.Identity;
 using Codewrinkles.Telemetry;
 using Kommand.Abstractions;
 
@@ -10,17 +11,23 @@ public sealed record RedeemAlphaCodeCommand(
 ) : ICommand<RedeemAlphaCodeResult>;
 
 public sealed record RedeemAlphaCodeResult(
-    bool HasNovaAccess
+    bool HasNovaAccess,
+    string AccessToken,
+    string RefreshToken
 );
 
 public sealed class RedeemAlphaCodeCommandHandler
     : ICommandHandler<RedeemAlphaCodeCommand, RedeemAlphaCodeResult>
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly JwtTokenGenerator _jwtTokenGenerator;
 
-    public RedeemAlphaCodeCommandHandler(IUnitOfWork unitOfWork)
+    public RedeemAlphaCodeCommandHandler(
+        IUnitOfWork unitOfWork,
+        JwtTokenGenerator jwtTokenGenerator)
     {
         _unitOfWork = unitOfWork;
+        _jwtTokenGenerator = jwtTokenGenerator;
     }
 
     public async Task<RedeemAlphaCodeResult> HandleAsync(
@@ -61,10 +68,36 @@ public sealed class RedeemAlphaCodeCommandHandler
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+            // Generate new tokens with updated hasNovaAccess claim
+            var identity = await _unitOfWork.Identities.FindByIdAsync(profile.IdentityId, cancellationToken);
+            if (identity is null)
+            {
+                throw new ProfileNotFoundException(command.ProfileId);
+            }
+
+            var accessToken = _jwtTokenGenerator.GenerateAccessToken(identity, profile);
+
+            // Generate refresh token and store in database
+            var (refreshToken, refreshTokenHash) = JwtTokenGenerator.GenerateRefreshToken();
+            var refreshTokenExpiry = DateTimeOffset.UtcNow.AddDays(_jwtTokenGenerator.RefreshTokenExpiryDays);
+
+            var refreshTokenEntity = RefreshToken.Create(
+                refreshTokenHash,
+                identity.Id,
+                refreshTokenExpiry
+            );
+
+            _unitOfWork.RefreshTokens.Add(refreshTokenEntity);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
             activity?.SetSuccess(true);
             activity?.SetTag("code_redeemed", "true");
 
-            return new RedeemAlphaCodeResult(HasNovaAccess: true);
+            return new RedeemAlphaCodeResult(
+                HasNovaAccess: true,
+                AccessToken: accessToken,
+                RefreshToken: refreshToken
+            );
         }
         catch (Exception ex)
         {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { CompleteProfile } from "./steps/CompleteProfile";
 import { FirstPulse } from "./steps/FirstPulse";
 import { SuggestedFollows } from "./steps/SuggestedFollows";
@@ -10,6 +10,11 @@ type OnboardingStep = "profile" | "pulse" | "follows";
 
 export function OnboardingFlow(): JSX.Element {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get the redirect destination (if coming from a protected route via register)
+  const from = (location.state as { from?: string })?.from || "/pulse";
+
   const [status, setStatus] = useState<OnboardingStatus | null>(null);
   const [currentStep, setCurrentStep] = useState<OnboardingStep>("profile");
   const [isLoading, setIsLoading] = useState(true);
@@ -33,7 +38,7 @@ export function OnboardingFlow(): JSX.Element {
 
         // Redirect if already completed
         if (data.isCompleted) {
-          navigate("/pulse");
+          navigate(from);
           return;
         }
 
@@ -53,7 +58,7 @@ export function OnboardingFlow(): JSX.Element {
     }
 
     void fetchStatus();
-  }, [navigate]);
+  }, [navigate, from]);
 
   const handleProfileComplete = (): void => {
     setCurrentStep("pulse");
@@ -72,11 +77,11 @@ export function OnboardingFlow(): JSX.Element {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
-      navigate("/pulse");
+      navigate(from);
     } catch (error) {
       console.error("Failed to complete onboarding:", error);
       // Navigate anyway
-      navigate("/pulse");
+      navigate(from);
     }
   };
 
