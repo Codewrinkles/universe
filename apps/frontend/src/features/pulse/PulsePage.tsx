@@ -7,7 +7,8 @@ import { FeedFilterControl } from "./FeedFilterControl";
 import { useFeed } from "./hooks/useFeed";
 import { useFeedFilter } from "./hooks/useFeedFilter";
 import { useAuth } from "../../hooks/useAuth";
-import { LoadingCard, Spinner } from "../../components/ui";
+import { useInfiniteScroll } from "../../hooks/useInfiniteScroll";
+import { LoadingCard, Spinner, ScrollToTopButton } from "../../components/ui";
 import { getPulseFeedOGImage } from "../../utils/seo";
 
 export function PulsePage(): JSX.Element {
@@ -22,6 +23,13 @@ export function PulsePage(): JSX.Element {
 
   // Feed filter state
   const { hideReplies, toggleHideReplies } = useFeedFilter();
+
+  // Infinite scroll
+  const { sentinelRef } = useInfiniteScroll({
+    hasMore,
+    isLoading,
+    onLoadMore: loadMore,
+  });
 
   const handleReplyClick = (pulseId: string): void => {
     setReplyingToPulseId(pulseId);
@@ -127,23 +135,18 @@ export function PulsePage(): JSX.Element {
               />
             </div>
 
-            {/* Load More Button */}
-            {hasMore && (
-              <div className="p-4 border-t border-border text-center">
-                <button
-                  type="button"
-                  onClick={loadMore}
-                  disabled={isLoading}
-                  className="px-4 py-2 rounded-full bg-surface-card2 hover:bg-surface-card1 text-brand-soft text-sm font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2 mx-auto"
-                >
-                  {isLoading && <Spinner size="sm" />}
-                  {isLoading ? "Loading..." : "Load More"}
-                </button>
+            {/* Infinite scroll sentinel */}
+            <div ref={sentinelRef} className="h-1" />
+            {isLoading && pulses.length > 0 && (
+              <div className="p-4 flex justify-center">
+                <Spinner size="sm" />
               </div>
             )}
           </>
         )}
       </PulseThreeColumnLayout>
+
+      <ScrollToTopButton />
     </>
   );
 }

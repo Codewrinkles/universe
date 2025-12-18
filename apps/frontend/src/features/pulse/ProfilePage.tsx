@@ -2,13 +2,15 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router";
 import { Helmet } from "react-helmet-async";
 import { useAuth } from "../../hooks/useAuth";
+import { useInfiniteScroll } from "../../hooks/useInfiniteScroll";
 import { config } from "../../config";
 import { buildAvatarUrl } from "../../utils/avatarUtils";
 import { PulseThreeColumnLayout } from "./PulseThreeColumnLayout";
 import { PostCard } from "./PostCard";
 import { UnifiedComposer } from "./UnifiedComposer";
-import type { User, Pulse, FollowerDto, FollowingDto } from "../../types";
-import { LoadingProfile, LoadingCard, LoadingUserItem, Skeleton } from "../../components/ui";
+import { useProfilePulses } from "./hooks/useProfilePulses";
+import type { User, FollowerDto, FollowingDto } from "../../types";
+import { LoadingProfile, LoadingCard, LoadingUserItem, Skeleton, Spinner, ScrollToTopButton } from "../../components/ui";
 import {
   generateProfileStructuredData,
   getFullUrl,
@@ -144,18 +146,33 @@ export function ProfilePage(): JSX.Element {
 
   const [activeTab, setActiveTab] = useState<Tab>("pulses");
   const [profile, setProfile] = useState<User | null>(null);
-  const [pulses, setPulses] = useState<Pulse[]>([]);
-  const [totalPulsesCount, setTotalPulsesCount] = useState<number>(0);
   const [followers, setFollowers] = useState<FollowerDto[]>([]);
   const [totalFollowersCount, setTotalFollowersCount] = useState<number>(0);
   const [following, setFollowing] = useState<FollowingDto[]>([]);
   const [totalFollowingCount, setTotalFollowingCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingPulses, setIsLoadingPulses] = useState(false);
   const [isLoadingFollowers, setIsLoadingFollowers] = useState(false);
   const [isLoadingFollowing, setIsLoadingFollowing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [replyingToPulseId, setReplyingToPulseId] = useState<string | null>(null);
+
+  // Fetch pulses with pagination
+  const {
+    pulses,
+    totalCount: totalPulsesCount,
+    isLoading: isLoadingPulses,
+    hasMore: hasMorePulses,
+    loadMore: loadMorePulses,
+    refetch: refetchPulses,
+    removePulse,
+  } = useProfilePulses(profile?.profileId ?? null);
+
+  // Infinite scroll for pulses
+  const { sentinelRef: pulsesSentinelRef } = useInfiniteScroll({
+    hasMore: hasMorePulses,
+    isLoading: isLoadingPulses,
+    onLoadMore: loadMorePulses,
+  });
 
   // Fetch profile by handle
   useEffect(() => {
@@ -200,31 +217,10 @@ export function ProfilePage(): JSX.Element {
     fetchProfile();
   }, [handle]);
 
-  // Fetch all profile data in parallel when profile is loaded
+  // Fetch followers and following when profile is loaded
+  // (Pulses are fetched via useProfilePulses hook)
   useEffect(() => {
     if (!profile) return;
-
-    const fetchPulses = async (): Promise<void> => {
-      setIsLoadingPulses(true);
-      try {
-        const token = localStorage.getItem(config.auth.accessTokenKey);
-        const response = await fetch(`${config.api.baseUrl}/api/pulse/author/${profile.profileId}?limit=20`, {
-          headers: {
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setPulses(data.pulses || []);
-          setTotalPulsesCount(data.totalCount ?? 0);
-        }
-      } catch (err) {
-        console.error("Error fetching pulses:", err);
-      } finally {
-        setIsLoadingPulses(false);
-      }
-    };
 
     const fetchFollowers = async (): Promise<void> => {
       setIsLoadingFollowers(true);
@@ -286,9 +282,8 @@ export function ProfilePage(): JSX.Element {
       }
     };
 
-    // Execute all fetches in parallel
+    // Execute fetches in parallel
     Promise.all([
-      fetchPulses(),
       fetchFollowers(),
       fetchFollowing()
     ]);
@@ -301,60 +296,17 @@ export function ProfilePage(): JSX.Element {
   const handleReplyCreated = (): void => {
     setReplyingToPulseId(null);
     // Refetch pulses to update reply counts
-    if (profile) {
-      const fetchPulses = async (): Promise<void> => {
-        try {
-          const token = localStorage.getItem(config.auth.accessTokenKey);
-          const response = await fetch(`${config.api.baseUrl}/api/pulse/author/${profile.profileId}?limit=20`, {
-            headers: {
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            setPulses(data.pulses || []);
-            setTotalPulsesCount(data.totalCount ?? 0);
-          }
-        } catch (err) {
-          console.error("Error fetching pulses:", err);
-        }
-      };
-
-      fetchPulses();
-    }
+    refetchPulses();
   };
 
   const handleDelete = (pulseId: string): void => {
-    // Remove the pulse from the local state and decrement count
-    setPulses((prevPulses) => prevPulses.filter((p) => p.id !== pulseId));
-    setTotalPulsesCount((prev) => Math.max(0, prev - 1));
+    // Remove the pulse from the local state
+    removePulse(pulseId);
   };
 
   const handleEdit = (): void => {
     // Refetch pulses to show updated content
-    if (profile) {
-      const refetchPulses = async (): Promise<void> => {
-        try {
-          const token = localStorage.getItem(config.auth.accessTokenKey);
-          const response = await fetch(`${config.api.baseUrl}/api/pulse/author/${profile.profileId}?limit=20`, {
-            headers: {
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            setPulses(data.pulses || []);
-            setTotalPulsesCount(data.totalCount ?? 0);
-          }
-        } catch (err) {
-          console.error("Error fetching pulses:", err);
-        }
-      };
-
-      refetchPulses();
-    }
+    refetchPulses();
   };
 
   const isOwnProfile = currentUser?.profileId === profile?.profileId;
@@ -482,30 +434,39 @@ export function ProfilePage(): JSX.Element {
                   No pulses yet
                 </div>
               ) : (
-                pulses.map((pulse) => (
-                  <div key={pulse.id}>
-                    <div className="border-b border-border">
-                      <PostCard
-                        post={pulse}
-                        onReplyClick={handleReplyClick}
-                        onDelete={handleDelete}
-                        onEdit={handleEdit}
-                      />
-                    </div>
-                    {replyingToPulseId === pulse.id && (
-                      <div className="border-b border-border bg-surface-card1/30 px-4 py-3">
-                        <UnifiedComposer
-                          mode="reply"
-                          parentPulseId={pulse.id}
-                          onSuccess={handleReplyCreated}
-                          placeholder="Post your reply"
-                          rows={2}
-                          focusedRows={4}
+                <>
+                  {pulses.map((pulse) => (
+                    <div key={pulse.id}>
+                      <div className="border-b border-border">
+                        <PostCard
+                          post={pulse}
+                          onReplyClick={handleReplyClick}
+                          onDelete={handleDelete}
+                          onEdit={handleEdit}
                         />
                       </div>
-                    )}
-                  </div>
-                ))
+                      {replyingToPulseId === pulse.id && (
+                        <div className="border-b border-border bg-surface-card1/30 px-4 py-3">
+                          <UnifiedComposer
+                            mode="reply"
+                            parentPulseId={pulse.id}
+                            onSuccess={handleReplyCreated}
+                            placeholder="Post your reply"
+                            rows={2}
+                            focusedRows={4}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {/* Infinite scroll sentinel */}
+                  <div ref={pulsesSentinelRef} className="h-1" />
+                  {isLoadingPulses && pulses.length > 0 && (
+                    <div className="p-4 flex justify-center">
+                      <Spinner size="sm" />
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -609,6 +570,8 @@ export function ProfilePage(): JSX.Element {
           )}
         </div>
       </PulseThreeColumnLayout>
+
+      <ScrollToTopButton />
     </>
   );
 }

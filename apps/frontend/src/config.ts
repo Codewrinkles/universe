@@ -30,6 +30,7 @@ export const config = {
       notificationDelete: (id: string) => `${API_BASE_URL}/api/notifications/${id}`,
       notificationsClearAll: `${API_BASE_URL}/api/notifications/all`,
       pulseThread: (id: string) => `${API_BASE_URL}/api/pulse/${id}/thread`,
+      pulsesByAuthor: (profileId: string) => `${API_BASE_URL}/api/pulse/author/${profileId}`,
       socialFollow: (profileId: string) => `${API_BASE_URL}/api/social/${profileId}/follow`,
       socialFollowers: (profileId: string) => `${API_BASE_URL}/api/social/${profileId}/followers`,
       socialFollowing: (profileId: string) => `${API_BASE_URL}/api/social/${profileId}/following`,

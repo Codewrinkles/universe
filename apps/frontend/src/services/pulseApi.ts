@@ -3,7 +3,7 @@
  * Handles pulse-related API calls (create, fetch feed, fetch single)
  */
 
-import type { CreatePulseResponse, FeedResponse, Pulse, ThreadResponse } from "../types";
+import type { CreatePulseResponse, FeedResponse, AuthorPulsesResponse, Pulse, ThreadResponse } from "../types";
 import { config } from "../config";
 import { apiRequest } from "../utils/api";
 
@@ -43,6 +43,25 @@ export const pulseApi = {
     }
 
     return apiRequest<FeedResponse>(url.toString(), {
+      method: "GET",
+    });
+  },
+
+  /**
+   * Get paginated pulses by author
+   * CurrentUserId is extracted from JWT token on the backend (if authenticated)
+   */
+  getAuthorPulses(profileId: string, params?: { cursor?: string; limit?: number }): Promise<AuthorPulsesResponse> {
+    const url = new URL(config.api.endpoints.pulsesByAuthor(profileId));
+
+    if (params?.cursor) {
+      url.searchParams.set("cursor", params.cursor);
+    }
+    if (params?.limit) {
+      url.searchParams.set("limit", params.limit.toString());
+    }
+
+    return apiRequest<AuthorPulsesResponse>(url.toString(), {
       method: "GET",
     });
   },

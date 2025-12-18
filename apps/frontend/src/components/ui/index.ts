@@ -4,6 +4,7 @@ export { Card } from "./Card";
 export { Tag } from "./Tag";
 export { Toggle } from "./Toggle";
 export { ImageGalleryOverlay } from "./ImageGalleryOverlay";
+export { ScrollToTopButton } from "./ScrollToTopButton";
 
 // Loading components
 export { Spinner } from "./Spinner";

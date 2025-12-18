@@ -102,6 +102,13 @@ export interface FeedResponse {
   hasMore: boolean;
 }
 
+export interface AuthorPulsesResponse {
+  pulses: Pulse[];
+  totalCount: number;
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
 export interface ThreadResponse {
   parentPulse: Pulse;
   replies: Pulse[];
