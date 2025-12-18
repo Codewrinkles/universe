@@ -1,4 +1,5 @@
 using Azure.Monitor.OpenTelemetry.AspNetCore;
+using Codewrinkles.API.Telemetry;
 using Codewrinkles.Telemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -38,7 +39,18 @@ public static class TelemetryServiceExtensions
     private static void ConfigureTracing(TracerProviderBuilder tracing, IHostEnvironment environment)
     {
         tracing
-            .AddAspNetCoreInstrumentation()
+            .AddAspNetCoreInstrumentation(options =>
+            {
+                // Enrich HTTP requests with user identity from JWT claims
+                // This populates user.profile_id and user.identity_id in Application Insights
+                options.EnrichWithHttpRequest = (activity, request) =>
+                {
+                    if (request.HttpContext is not null)
+                    {
+                        UserIdentityEnricher.EnrichWithUserIdentity(activity, request.HttpContext);
+                    }
+                };
+            })
             .AddHttpClientInstrumentation()
             .AddEntityFrameworkCoreInstrumentation();
 
