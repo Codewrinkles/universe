@@ -41,14 +41,12 @@ public static class TelemetryServiceExtensions
         tracing
             .AddAspNetCoreInstrumentation(options =>
             {
-                // Enrich HTTP requests with user identity from JWT claims
-                // This populates user.profile_id and user.identity_id in Application Insights
-                options.EnrichWithHttpRequest = (activity, request) =>
+                // Enrich HTTP responses with user identity from JWT claims
+                // Must use EnrichWithHttpResponse (not Request) because authentication
+                // middleware hasn't populated HttpContext.User at request time
+                options.EnrichWithHttpResponse = (activity, response) =>
                 {
-                    if (request.HttpContext is not null)
-                    {
-                        UserIdentityEnricher.EnrichWithUserIdentity(activity, request.HttpContext);
-                    }
+                    UserIdentityEnricher.EnrichWithUserIdentity(activity, response.HttpContext);
                 };
             })
             .AddHttpClientInstrumentation()
