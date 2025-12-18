@@ -1,6 +1,7 @@
 using Codewrinkles.Application;
 using Codewrinkles.Infrastructure;
 using Codewrinkles.API.DependencyInjection;
+using Codewrinkles.API.Middleware;
 using Codewrinkles.API.Modules.Admin;
 using Codewrinkles.API.Modules.Identity;
 using Codewrinkles.API.Modules.Nova;
@@ -53,6 +54,7 @@ if (app.Environment.IsDevelopment())
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<UserTelemetryMiddleware>();
 app.UseStaticFiles();
 
 // Endpoints
