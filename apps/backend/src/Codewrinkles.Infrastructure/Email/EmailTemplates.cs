@@ -59,12 +59,59 @@ public static class EmailTemplates
                                         </p>
 
                                         <p style="margin: 0 0 20px 0; font-size: 16px; color: {TextSecondary};">
-                                            Thanks for joining Codewrinkles! We're building something different here.
+                                            Thanks for joining! Codewrinkles is an ecosystem built to help developers grow. Here's what you now have access to:
                                         </p>
 
-                                        <p style="margin: 0 0 20px 0; font-size: 16px; color: {TextSecondary};">
-                                            <strong style="color: {TextPrimary};">Pulse</strong> is a place where your followers actually see your posts. No algorithm deciding who sees what. No engagement tricks. Just a chronological feed and genuine conversations.
-                                        </p>
+                                        <!-- Nova Card -->
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 16px;">
+                                            <tr>
+                                                <td style="background-color: {SurfacePage}; border: 1px solid {Border}; border-left: 4px solid {NovaColor}; border-radius: 8px; padding: 16px 20px;">
+                                                    <p style="margin: 0 0 6px 0; font-size: 16px; font-weight: 600; color: {NovaColor};">
+                                                        Nova &mdash; AI Learning Coach
+                                                    </p>
+                                                    <p style="margin: 0 0 10px 0; font-size: 14px; color: {TextSecondary};">
+                                                        An AI coach that remembers your background, tracks your growth, and adapts every conversation to where you are in your journey.
+                                                    </p>
+                                                    <a href="{baseUrl}/nova" target="_blank" style="font-size: 14px; font-weight: 500; color: {NovaColor}; text-decoration: none;">
+                                                        Try Nova &rarr;
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <!-- Pulse Card -->
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 16px;">
+                                            <tr>
+                                                <td style="background-color: {SurfacePage}; border: 1px solid {Border}; border-left: 4px solid {BrandColor}; border-radius: 8px; padding: 16px 20px;">
+                                                    <p style="margin: 0 0 6px 0; font-size: 16px; font-weight: 600; color: {BrandColor};">
+                                                        Pulse &mdash; Developer Community
+                                                    </p>
+                                                    <p style="margin: 0 0 10px 0; font-size: 14px; color: {TextSecondary};">
+                                                        A place where your followers actually see your posts. No algorithm, no engagement tricks &mdash; just a chronological feed and genuine conversations.
+                                                    </p>
+                                                    <a href="{baseUrl}/pulse" target="_blank" style="font-size: 14px; font-weight: 500; color: {BrandColor}; text-decoration: none;">
+                                                        Explore Pulse &rarr;
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <!-- YouTube Card -->
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 25px;">
+                                            <tr>
+                                                <td style="background-color: {SurfacePage}; border: 1px solid {Border}; border-left: 4px solid #EF4444; border-radius: 8px; padding: 16px 20px;">
+                                                    <p style="margin: 0 0 6px 0; font-size: 16px; font-weight: 600; color: #EF4444;">
+                                                        YouTube &mdash; Deep Dives
+                                                    </p>
+                                                    <p style="margin: 0 0 10px 0; font-size: 14px; color: {TextSecondary};">
+                                                        Long-form content on architecture, patterns, and real-world .NET development. The content that started it all.
+                                                    </p>
+                                                    <a href="https://www.youtube.com/@Codewrinkles" target="_blank" style="font-size: 14px; font-weight: 500; color: #EF4444; text-decoration: none;">
+                                                        Watch on YouTube &rarr;
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </table>
 
                                         <p style="margin: 0 0 30px 0; font-size: 16px; color: {TextSecondary};">
                                             We believe content should be discovered by its value, not by virality metrics. Welcome to a community that thinks the same way.
@@ -86,8 +133,8 @@ public static class EmailTemplates
                                         </p>
 
                                         <p style="margin: 0; font-size: 16px; color: {TextSecondary};">
-                                            See you on Pulse!<br>
-                                            <strong style="color: {TextPrimary};">The Codewrinkles Team</strong>
+                                            See you around!<br>
+                                            <strong style="color: {TextPrimary};">Dan &amp; the Codewrinkles Team</strong>
                                         </p>
                                     </td>
                                 </tr>
