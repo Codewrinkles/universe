@@ -1,7 +1,7 @@
 using Codewrinkles.Application;
 using Codewrinkles.Infrastructure;
 using Codewrinkles.API.DependencyInjection;
-using Codewrinkles.API.Middleware;
+using Codewrinkles.API.Telemetry;
 using Codewrinkles.API.Modules.Admin;
 using Codewrinkles.API.Modules.Identity;
 using Codewrinkles.API.Modules.Nova;
@@ -33,6 +33,10 @@ builder.Services.AddAuthServices(builder.Configuration);
 builder.Services.AddExceptionHandling();
 builder.Services.AddCompressionServices();
 builder.Services.AddCorsServices(builder.Configuration);
+
+// Telemetry with user identity enrichment
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<UserTelemetryProcessor>();
 builder.Services.AddTelemetryServices(builder.Environment);
 
 // OpenAPI
@@ -54,7 +58,6 @@ if (app.Environment.IsDevelopment())
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseMiddleware<UserTelemetryMiddleware>();
 app.UseStaticFiles();
 
 // Endpoints

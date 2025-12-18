@@ -1,4 +1,5 @@
 using Azure.Monitor.OpenTelemetry.AspNetCore;
+using Codewrinkles.API.Telemetry;
 using Codewrinkles.Telemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -37,10 +38,8 @@ public static class TelemetryServiceExtensions
 
     private static void ConfigureTracing(TracerProviderBuilder tracing, IHostEnvironment environment)
     {
-        // Note: UseAzureMonitor() adds its own ASP.NET Core instrumentation in production.
-        // We add it here for development mode only. User identity enrichment is handled
-        // by UserTelemetryMiddleware which adds tags to Activity.Current after authentication.
         tracing
+            .AddAspNetCoreInstrumentation()
             .AddHttpClientInstrumentation()
             .AddEntityFrameworkCoreInstrumentation();
 
@@ -50,9 +49,11 @@ public static class TelemetryServiceExtensions
             tracing.AddSource(sourceName);
         }
 
+        // Add processor to enrich spans with authenticated user info
+        tracing.AddProcessor<UserTelemetryProcessor>();
+
         if (environment.IsDevelopment())
         {
-            tracing.AddAspNetCoreInstrumentation();
             tracing.AddConsoleExporter();
         }
     }
