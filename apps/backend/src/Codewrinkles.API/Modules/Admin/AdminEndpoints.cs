@@ -27,6 +27,10 @@ public static class AdminEndpoints
         group.MapPost("/alpha/applications/{id:guid}/waitlist", WaitlistAlphaApplication)
             .WithName("WaitlistAlphaApplication");
 
+        // Nova metrics
+        group.MapGet("/nova/metrics", GetNovaAlphaMetrics)
+            .WithName("GetNovaAlphaMetrics");
+
         // User management
         group.MapGet("/users", GetAdminUsers)
             .WithName("GetAdminUsers");
@@ -130,6 +134,39 @@ public static class AdminEndpoints
         {
             return Results.BadRequest(new { message = "Application is not in pending status" });
         }
+    }
+
+    private static async Task<IResult> GetNovaAlphaMetrics(
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetNovaAlphaMetricsQuery();
+        var result = await mediator.QueryAsync(query, cancellationToken);
+
+        return Results.Ok(new
+        {
+            // Application funnel
+            totalApplications = result.TotalApplications,
+            pendingApplications = result.PendingApplications,
+            acceptedApplications = result.AcceptedApplications,
+            waitlistedApplications = result.WaitlistedApplications,
+            redeemedCodes = result.RedeemedCodes,
+
+            // User metrics
+            novaUsers = result.NovaUsers,
+            activatedUsers = result.ActivatedUsers,
+            activationRate = result.ActivationRate,
+
+            // Engagement metrics
+            activeLast7Days = result.ActiveLast7Days,
+            activeRate = result.ActiveRate,
+
+            // Usage metrics
+            totalSessions = result.TotalSessions,
+            totalMessages = result.TotalMessages,
+            avgSessionsPerUser = result.AvgSessionsPerUser,
+            avgMessagesPerSession = result.AvgMessagesPerSession
+        });
     }
 
     private static async Task<IResult> GetAdminUsers(

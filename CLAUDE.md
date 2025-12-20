@@ -1274,4 +1274,60 @@ Current usage:
 
 ---
 
-**Last Updated**: 2025-12-17 (update this when making significant changes)
+## Strategic Decisions Log
+
+> **Purpose**: Record key product/GTM decisions with reasoning so future Claude sessions maintain consistency.
+
+### Nova Alpha Strategy (December 2025)
+
+| Decision | Choice | Reasoning |
+|----------|--------|-----------|
+| Application form with friction | Yes | Filter for committed testers, quality over quantity |
+| Personal emails to accepted users | Yes | Founder-led approach builds loyalty |
+| Tagline | "Your Personal Path to Technical Excellence" | Professional, no ceiling, implies personalization |
+| Two paths to Alpha | Apply OR earn via Pulse (15 posts/30 days) | Gamification drives Pulse engagement |
+| Alpha access = Founding Member | Yes | `IsFoundingMember` persists for future perks |
+
+### Nova Pricing (Planned, Not Yet Implemented)
+
+| Tier | Price | Features | Reasoning |
+|------|-------|----------|-----------|
+| Free | $0 | 10 msgs/day, 7-day history | Acquisition funnel, lets users hit "A-ha" |
+| Pro | $12/month | Unlimited, full memory, skill tracking | Covers AI costs + margin, affordable for individuals |
+| Lifetime | $199 | Pro forever + Founding badge | ~17 months breakeven, upfront cash |
+| Founding Members | $8/month locked | Lifetime discount for Alpha/early Beta | Rewards early adopters |
+
+### Current Status (Update This)
+
+- **Alpha launched**: December 2025
+- **YouTube announced**: Not yet
+- **Applications**: 18
+- **Channels reached**: LinkedIn, X, Pulse (NOT YouTube, NOT Substack yet)
+
+### GTM Approach
+
+- YouTube is the primary audience (31k .NET developers)
+- Education-first content, not sales pitches
+- Founder-led personal outreach for early users
+- Pulse is the owned community layer
+
+---
+
+## Instructions for Claude Sessions
+
+1. **Read this file AND `docs/alpha-to-launch-roadmap.md`** at session start
+2. **Do proper research before recommending anything as "good"**
+   - If you haven't researched it, say so
+   - Use WebSearch to validate GTM/pricing/strategy assumptions
+   - Present confidence levels honestly ("I researched this" vs "this is my intuition")
+3. **Don't flip-flop between sessions**
+   - If something was recommended before, assume there was reasoning behind it
+   - If you think it needs to change, explain what NEW information justifies the change
+4. **Ask clarifying questions** before making assumptions
+   - Example: "Have you announced on YouTube yet?" before analyzing conversion rates
+5. **Update this log** when new strategic decisions are made
+6. **Role**: Coach and mentor. Be thorough. Do the research. Don't guess.
+
+---
+
+**Last Updated**: 2025-12-20 (update this when making significant changes)

@@ -81,6 +81,7 @@ public static class SpanNames
     {
         public const string GetDashboardMetrics = "Admin.GetDashboardMetrics";
         public const string GetAdminUsers = "Admin.GetAdminUsers";
+        public const string GetNovaAlphaMetrics = "Admin.GetNovaAlphaMetrics";
     }
 
     public static class External
