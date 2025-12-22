@@ -1,3 +1,5 @@
+using Codewrinkles.Domain.Nova;
+
 namespace Codewrinkles.Application.Common.Interfaces;
 
 /// <summary>
@@ -10,6 +12,11 @@ public interface INovaMetricsRepository
     /// Get all Alpha metrics in a single repository call.
     /// </summary>
     Task<NovaAlphaMetricsData> GetAlphaMetricsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get per-user usage metrics for all Nova users.
+    /// </summary>
+    Task<IReadOnlyList<UserNovaUsageData>> GetUserUsageAsync(CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -37,4 +44,34 @@ public sealed record NovaAlphaMetricsData(
     int TotalMessages,
     decimal AvgSessionsPerUser,
     decimal AvgMessagesPerSession
+);
+
+/// <summary>
+/// Per-user Nova usage metrics.
+/// </summary>
+public sealed record UserNovaUsageData(
+    // User info
+    Guid ProfileId,
+    string Name,
+    string? Handle,
+    string? AvatarUrl,
+    NovaAccessLevel AccessLevel,
+
+    // Session counts by time period
+    int SessionsLast24Hours,
+    int SessionsLast3Days,
+    int SessionsLast7Days,
+    int SessionsLast30Days,
+
+    // Message metrics
+    int TotalMessages,
+    decimal AvgMessagesPerSession,
+
+    // Engagement context
+    DateTimeOffset? LastActiveAt,
+    DateTimeOffset? FirstSessionAt,
+
+    // Trend (comparing last 7d vs previous 7d)
+    int SessionsPrevious7Days,
+    decimal TrendPercentage
 );

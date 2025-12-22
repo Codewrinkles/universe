@@ -31,6 +31,9 @@ public static class AdminEndpoints
         group.MapGet("/nova/metrics", GetNovaAlphaMetrics)
             .WithName("GetNovaAlphaMetrics");
 
+        group.MapGet("/nova/metrics/users", GetNovaUserUsage)
+            .WithName("GetNovaUserUsage");
+
         // User management
         group.MapGet("/users", GetAdminUsers)
             .WithName("GetAdminUsers");
@@ -197,6 +200,37 @@ public static class AdminEndpoints
             page = result.Page,
             pageSize = result.PageSize,
             totalPages = result.TotalPages
+        });
+    }
+
+    private static async Task<IResult> GetNovaUserUsage(
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetNovaUserUsageQuery();
+        var result = await mediator.QueryAsync(query, cancellationToken);
+
+        return Results.Ok(new
+        {
+            users = result.Users.Select(u => new
+            {
+                profileId = u.ProfileId,
+                name = u.Name,
+                handle = u.Handle,
+                avatarUrl = u.AvatarUrl,
+                accessLevel = (int)u.AccessLevel,
+                accessLevelName = u.AccessLevel.ToString(),
+                sessionsLast24Hours = u.SessionsLast24Hours,
+                sessionsLast3Days = u.SessionsLast3Days,
+                sessionsLast7Days = u.SessionsLast7Days,
+                sessionsLast30Days = u.SessionsLast30Days,
+                totalMessages = u.TotalMessages,
+                avgMessagesPerSession = u.AvgMessagesPerSession,
+                lastActiveAt = u.LastActiveAt,
+                firstSessionAt = u.FirstSessionAt,
+                sessionsPrevious7Days = u.SessionsPrevious7Days,
+                trendPercentage = u.TrendPercentage
+            })
         });
     }
 }

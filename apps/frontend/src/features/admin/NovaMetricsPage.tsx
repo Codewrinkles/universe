@@ -18,6 +18,28 @@ interface NovaAlphaMetrics {
   avgMessagesPerSession: number;
 }
 
+interface UserNovaUsage {
+  profileId: string;
+  name: string;
+  handle: string | null;
+  avatarUrl: string | null;
+  accessLevel: number;
+  accessLevelName: string;
+  sessionsLast24Hours: number;
+  sessionsLast3Days: number;
+  sessionsLast7Days: number;
+  sessionsLast30Days: number;
+  totalMessages: number;
+  avgMessagesPerSession: number;
+  lastActiveAt: string | null;
+  firstSessionAt: string | null;
+  sessionsPrevious7Days: number;
+  trendPercentage: number;
+}
+
+type SortField = "name" | "sessions7d" | "sessions30d" | "avgMsgs" | "lastActive" | "trend";
+type SortDirection = "asc" | "desc";
+
 // ============================================
 // METRIC CARD COMPONENTS
 // ============================================
@@ -299,6 +321,399 @@ function SectionHeader({ icon, title, subtitle }: SectionHeaderProps): JSX.Eleme
 }
 
 // ============================================
+// USER USAGE COMPONENTS
+// ============================================
+
+function formatRelativeTime(dateString: string | null): string {
+  if (!dateString) return "Never";
+
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+  return `${Math.floor(diffDays / 30)}mo ago`;
+}
+
+function getAccessLevelBadge(levelName: string): { label: string; className: string } {
+  switch (levelName.toLowerCase()) {
+    case "alpha":
+      return { label: "Alpha", className: "bg-violet-500/20 text-violet-400 border-violet-500/30" };
+    case "pro":
+      return { label: "Pro", className: "bg-brand/20 text-brand border-brand/30" };
+    case "lifetime":
+      return { label: "Lifetime", className: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" };
+    case "free":
+      return { label: "Free", className: "bg-blue-500/20 text-blue-400 border-blue-500/30" };
+    default:
+      return { label: levelName, className: "bg-surface-card2 text-text-secondary border-border" };
+  }
+}
+
+interface TrendIndicatorProps {
+  percentage: number;
+  sessions7d: number;
+  sessionsPrev7d: number;
+}
+
+function TrendIndicator({ percentage, sessions7d, sessionsPrev7d }: TrendIndicatorProps): JSX.Element {
+  // New user with activity
+  if (sessionsPrev7d === 0 && sessions7d > 0) {
+    return (
+      <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-blue-500/20 border border-blue-500/30">
+        <span className="text-xs font-medium text-blue-400">New</span>
+      </div>
+    );
+  }
+
+  // No activity
+  if (sessions7d === 0 && sessionsPrev7d === 0) {
+    return (
+      <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-surface-card2 border border-border">
+        <span className="text-xs text-text-tertiary">—</span>
+      </div>
+    );
+  }
+
+  // Increasing (>10%)
+  if (percentage >= 10) {
+    return (
+      <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30">
+        <span className="text-emerald-400">↑</span>
+        <span className="text-xs font-medium text-emerald-400">+{Math.round(percentage)}%</span>
+      </div>
+    );
+  }
+
+  // Decreasing (<-10%)
+  if (percentage <= -10) {
+    return (
+      <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-red-500/20 border border-red-500/30">
+        <span className="text-red-400">↓</span>
+        <span className="text-xs font-medium text-red-400">{Math.round(percentage)}%</span>
+      </div>
+    );
+  }
+
+  // Stable (-10% to +10%)
+  return (
+    <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/20 border border-amber-500/30">
+      <span className="text-amber-400">→</span>
+      <span className="text-xs font-medium text-amber-400">Stable</span>
+    </div>
+  );
+}
+
+interface UserRowProps {
+  user: UserNovaUsage;
+}
+
+function UserRow({ user }: UserRowProps): JSX.Element {
+  const badge = getAccessLevelBadge(user.accessLevelName);
+
+  return (
+    <div className="flex items-center p-3 hover:bg-surface-card1/60 transition-colors">
+      {/* Avatar + User info - fixed width */}
+      <div className="flex items-center gap-3 w-56 flex-shrink-0">
+        {user.avatarUrl ? (
+          <img
+            src={user.avatarUrl}
+            alt={user.name}
+            className="w-8 h-8 rounded-full object-cover ring-1 ring-border/50"
+          />
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-surface-card2 flex items-center justify-center ring-1 ring-border/50">
+            <span className="text-xs font-medium text-text-tertiary">
+              {user.name.charAt(0).toUpperCase()}
+            </span>
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-medium text-text-primary truncate">{user.name}</p>
+            <span className={`text-[9px] px-1 py-0.5 rounded border flex-shrink-0 ${badge.className}`}>
+              {badge.label}
+            </span>
+          </div>
+          <p className="text-[10px] text-text-tertiary truncate">
+            {user.handle ? `@${user.handle}` : ""} · {formatRelativeTime(user.lastActiveAt)}
+          </p>
+        </div>
+      </div>
+
+      {/* Session counts - fixed widths */}
+      <div className="hidden md:flex items-center">
+        <div className="w-12 text-center">
+          <p className="text-sm font-semibold text-text-primary">{user.sessionsLast24Hours}</p>
+        </div>
+        <div className="w-12 text-center">
+          <p className="text-sm font-semibold text-text-primary">{user.sessionsLast3Days}</p>
+        </div>
+        <div className="w-12 text-center">
+          <p className="text-sm font-semibold text-brand">{user.sessionsLast7Days}</p>
+        </div>
+        <div className="w-12 text-center">
+          <p className="text-sm font-semibold text-text-primary">{user.sessionsLast30Days}</p>
+        </div>
+      </div>
+
+      {/* Avg messages - fixed width */}
+      <div className="hidden sm:block w-16 text-center">
+        <p className="text-sm font-semibold text-violet-400">{user.avgMessagesPerSession}</p>
+      </div>
+
+      {/* Trend - fixed width */}
+      <div className="w-20 flex justify-center">
+        <TrendIndicator
+          percentage={user.trendPercentage}
+          sessions7d={user.sessionsLast7Days}
+          sessionsPrev7d={user.sessionsPrevious7Days}
+        />
+      </div>
+    </div>
+  );
+}
+
+interface SortableHeaderProps {
+  label: string;
+  field: SortField;
+  currentSort: SortField;
+  currentDirection: SortDirection;
+  onSort: (field: SortField) => void;
+  className?: string;
+}
+
+function SortableHeader({
+  label,
+  field,
+  currentSort,
+  currentDirection,
+  onSort,
+  className = "",
+}: SortableHeaderProps): JSX.Element {
+  const isActive = currentSort === field;
+
+  return (
+    <button
+      onClick={() => onSort(field)}
+      className={`inline-flex items-center justify-center gap-0.5 text-[10px] uppercase tracking-wide font-medium transition-colors ${
+        isActive ? "text-brand" : "text-text-tertiary hover:text-text-secondary"
+      } ${className}`}
+    >
+      {label}
+      <span className={`w-2 ${isActive ? "text-brand" : "invisible"}`}>
+        {currentDirection === "asc" ? "↑" : "↓"}
+      </span>
+    </button>
+  );
+}
+
+interface UserUsageSectionProps {
+  users: UserNovaUsage[];
+  isLoading: boolean;
+  error: string | null;
+}
+
+function UserUsageSection({ users, isLoading, error }: UserUsageSectionProps): JSX.Element {
+  const [sortField, setSortField] = useState<SortField>("sessions7d");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [showAll, setShowAll] = useState(false);
+
+  const handleSort = (field: SortField): void => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("desc");
+    }
+  };
+
+  const sortedUsers = [...users].sort((a, b) => {
+    let comparison = 0;
+
+    switch (sortField) {
+      case "name":
+        comparison = a.name.localeCompare(b.name);
+        break;
+      case "sessions7d":
+        comparison = a.sessionsLast7Days - b.sessionsLast7Days;
+        break;
+      case "sessions30d":
+        comparison = a.sessionsLast30Days - b.sessionsLast30Days;
+        break;
+      case "avgMsgs":
+        comparison = a.avgMessagesPerSession - b.avgMessagesPerSession;
+        break;
+      case "lastActive":
+        const aTime = a.lastActiveAt ? new Date(a.lastActiveAt).getTime() : 0;
+        const bTime = b.lastActiveAt ? new Date(b.lastActiveAt).getTime() : 0;
+        comparison = aTime - bTime;
+        break;
+      case "trend":
+        comparison = a.trendPercentage - b.trendPercentage;
+        break;
+    }
+
+    return sortDirection === "asc" ? comparison : -comparison;
+  });
+
+  // Limit to top 10 unless "Show all" is clicked
+  const displayedUsers = showAll ? sortedUsers : sortedUsers.slice(0, 10);
+  const hasMoreUsers = users.length > 10;
+
+  // Calculate summary stats
+  const totalSessions7d = users.reduce((sum, u) => sum + u.sessionsLast7Days, 0);
+  const activeThisWeek = users.filter(u => u.sessionsLast7Days > 0).length;
+  const avgMsgsOverall = users.length > 0
+    ? (users.reduce((sum, u) => sum + u.avgMessagesPerSession, 0) / users.length).toFixed(1)
+    : "0";
+
+  if (isLoading) {
+    return (
+      <div className="rounded-xl border border-border/50 bg-surface-card1/50 p-6">
+        <div className="flex items-center gap-3 text-text-secondary">
+          <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+          <span className="text-sm">Loading user metrics...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4">
+        <p className="text-sm text-red-400">{error}</p>
+      </div>
+    );
+  }
+
+  if (users.length === 0) {
+    return (
+      <div className="rounded-xl border border-border/50 bg-surface-card1/50 p-6 text-center">
+        <p className="text-sm text-text-secondary">No Nova users found</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-border/50 bg-surface-card1/50 overflow-hidden w-fit">
+      {/* Header with sort controls - matching UserRow widths */}
+      <div className="px-3 py-2 border-b border-border/30 bg-surface-card2/30">
+        <div className="flex items-center">
+          {/* User column - w-56 */}
+          <div className="w-56 flex-shrink-0">
+            <SortableHeader
+              label="User"
+              field="name"
+              currentSort={sortField}
+              currentDirection={sortDirection}
+              onSort={handleSort}
+            />
+          </div>
+
+          {/* Session columns - 4x w-12 */}
+          <div className="hidden md:flex items-center">
+            <div className="w-12 text-center">
+              <span className="text-[10px] text-text-tertiary uppercase tracking-wide">24h</span>
+            </div>
+            <div className="w-12 text-center">
+              <span className="text-[10px] text-text-tertiary uppercase tracking-wide">3d</span>
+            </div>
+            <div className="w-12 text-center">
+              <SortableHeader
+                label="7d"
+                field="sessions7d"
+                currentSort={sortField}
+                currentDirection={sortDirection}
+                onSort={handleSort}
+              />
+            </div>
+            <div className="w-12 text-center">
+              <SortableHeader
+                label="30d"
+                field="sessions30d"
+                currentSort={sortField}
+                currentDirection={sortDirection}
+                onSort={handleSort}
+              />
+            </div>
+          </div>
+
+          {/* Msgs column - w-16 */}
+          <div className="hidden sm:block w-16 text-center">
+            <SortableHeader
+              label="Msgs"
+              field="avgMsgs"
+              currentSort={sortField}
+              currentDirection={sortDirection}
+              onSort={handleSort}
+            />
+          </div>
+
+          {/* Trend column - w-20 */}
+          <div className="w-20 text-center">
+            <SortableHeader
+              label="Trend"
+              field="trend"
+              currentSort={sortField}
+              currentDirection={sortDirection}
+              onSort={handleSort}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* User rows */}
+      <div className="divide-y divide-border/20">
+        {displayedUsers.map((user) => (
+          <UserRow key={user.profileId} user={user} />
+        ))}
+      </div>
+
+      {/* Show more button */}
+      {hasMoreUsers && (
+        <div className="px-4 py-2 border-t border-border/20">
+          <button
+            onClick={() => setShowAll(!showAll)}
+            className="w-full text-xs text-text-secondary hover:text-brand transition-colors"
+          >
+            {showAll ? `Show top 10 only` : `Show all ${users.length} users`}
+          </button>
+        </div>
+      )}
+
+      {/* Summary footer */}
+      <div className="px-4 py-2 border-t border-border/30 bg-surface-card2/30">
+        <div className="flex items-center justify-center gap-4 text-xs text-text-secondary">
+          <span>
+            <span className="font-medium text-text-primary">{users.length}</span> users
+          </span>
+          <span className="text-border">•</span>
+          <span>
+            <span className="font-medium text-brand">{activeThisWeek}</span> active (7d)
+          </span>
+          <span className="text-border">•</span>
+          <span>
+            <span className="font-medium text-violet-400">{avgMsgsOverall}</span> msgs/ses
+          </span>
+          <span className="text-border">•</span>
+          <span>
+            <span className="font-medium text-text-primary">{totalSessions7d}</span> sessions (7d)
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
 // MAIN PAGE COMPONENT
 // ============================================
 
@@ -306,6 +721,11 @@ export function NovaMetricsPage(): JSX.Element {
   const [metrics, setMetrics] = useState<NovaAlphaMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // User usage state
+  const [userUsage, setUserUsage] = useState<UserNovaUsage[]>([]);
+  const [userUsageLoading, setUserUsageLoading] = useState(true);
+  const [userUsageError, setUserUsageError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchMetrics = async (): Promise<void> => {
@@ -333,7 +753,33 @@ export function NovaMetricsPage(): JSX.Element {
       }
     };
 
+    const fetchUserUsage = async (): Promise<void> => {
+      try {
+        const token = localStorage.getItem(config.auth.accessTokenKey);
+        const response = await fetch(
+          `${config.api.baseUrl}/api/admin/nova/metrics/users`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch user usage");
+        }
+
+        const data = (await response.json()) as { users: UserNovaUsage[] };
+        setUserUsage(data.users);
+      } catch (err) {
+        setUserUsageError(err instanceof Error ? err.message : "Failed to load user usage");
+      } finally {
+        setUserUsageLoading(false);
+      }
+    };
+
     void fetchMetrics();
+    void fetchUserUsage();
   }, []);
 
   if (isLoading) {
@@ -483,6 +929,20 @@ export function NovaMetricsPage(): JSX.Element {
             accentColor="violet"
           />
         </div>
+      </div>
+
+      {/* User Usage */}
+      <div className="mb-8">
+        <SectionHeader
+          icon="👤"
+          title="Usage by User"
+          subtitle="Individual engagement metrics • Click columns to sort"
+        />
+        <UserUsageSection
+          users={userUsage}
+          isLoading={userUsageLoading}
+          error={userUsageError}
+        />
       </div>
 
       {/* Footer */}
