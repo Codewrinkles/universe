@@ -1,4 +1,5 @@
 using Codewrinkles.Application.Common.Interfaces;
+using Codewrinkles.Application.Nova.Services;
 using Codewrinkles.Domain.Nova;
 using Codewrinkles.Telemetry;
 using Kommand.Abstractions;
@@ -38,15 +39,18 @@ public sealed class SendMessageCommandHandler
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILlmService _llmService;
     private readonly IEmbeddingService _embeddingService;
+    private readonly IReadOnlyList<object> _plugins;
 
     public SendMessageCommandHandler(
         IUnitOfWork unitOfWork,
         ILlmService llmService,
-        IEmbeddingService embeddingService)
+        IEmbeddingService embeddingService,
+        IEnumerable<INovaPlugin> plugins)
     {
         _unitOfWork = unitOfWork;
         _llmService = llmService;
         _embeddingService = embeddingService;
+        _plugins = plugins.Cast<object>().ToList();
     }
 
     public async Task<SendMessageResult> HandleAsync(
@@ -117,8 +121,11 @@ public sealed class SendMessageCommandHandler
             // Build messages for LLM (system prompt + history + new message)
             var llmMessages = BuildLlmMessages(history, command.Message, learnerProfile, memories);
 
-            // Get AI response
-            var llmResponse = await _llmService.GetChatCompletionAsync(llmMessages, cancellationToken);
+            // Get AI response with tool calling enabled for RAG
+            var llmResponse = await _llmService.GetChatCompletionWithToolsAsync(
+                llmMessages,
+                _plugins,
+                cancellationToken);
 
             // Create assistant message
             var assistantMessage = Message.CreateAssistantMessage(

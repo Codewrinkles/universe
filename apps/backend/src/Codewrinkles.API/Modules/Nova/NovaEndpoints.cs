@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using Codewrinkles.Application.Common.Interfaces;
 using Codewrinkles.Application.Nova;
+using Codewrinkles.Application.Nova.Services;
 using Codewrinkles.API.Extensions;
 using Codewrinkles.Domain.Nova;
 using Codewrinkles.Telemetry;
@@ -76,6 +77,7 @@ public static class NovaEndpoints
         [FromServices] IUnitOfWork unitOfWork,
         [FromServices] ILlmService llmService,
         [FromServices] IEmbeddingService embeddingService,
+        [FromServices] IEnumerable<INovaPlugin> novaPlugins,
         [FromServices] IMediator mediator,
         CancellationToken cancellationToken)
     {
@@ -189,9 +191,12 @@ public static class NovaEndpoints
         var outputTokens = 0;
         var modelUsed = string.Empty;
 
+        // Convert plugins to object list for LLM service
+        var plugins = novaPlugins.Cast<object>().ToList();
+
         try
         {
-            await foreach (var chunk in llmService.GetStreamingChatCompletionAsync(llmMessages, cancellationToken))
+            await foreach (var chunk in llmService.GetStreamingChatCompletionWithToolsAsync(llmMessages, plugins, cancellationToken))
             {
                 if (chunk.IsComplete)
                 {

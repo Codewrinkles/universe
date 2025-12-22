@@ -1,5 +1,7 @@
 # Claude Session Guide - Codewrinkles Universe
 
+> **🚨 CRITICAL: NEVER commit or push without explicit user permission. Each push triggers a production deployment and causes downtime. Always wait for the user to say "commit", "push", or explicitly ask for it.**
+
 > **Purpose**: Quick reference for Claude Code sessions working on this codebase. Read this at the start of each session along with `core.md`.
 
 ---

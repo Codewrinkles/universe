@@ -26,6 +26,33 @@ public interface ILlmService
     IAsyncEnumerable<StreamingLlmChunk> GetStreamingChatCompletionAsync(
         IReadOnlyList<LlmMessage> messages,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Generates a chat completion response with tool/function calling support.
+    /// The LLM can invoke the provided plugins to retrieve information.
+    /// </summary>
+    /// <param name="messages">The conversation history.</param>
+    /// <param name="plugins">Plugin instances to make available as tools.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The assistant's response with metadata.</returns>
+    Task<LlmResponse> GetChatCompletionWithToolsAsync(
+        IReadOnlyList<LlmMessage> messages,
+        IReadOnlyList<object> plugins,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Generates a streaming chat completion response with tool/function calling support.
+    /// The LLM can invoke the provided plugins to retrieve information.
+    /// Note: During tool execution, no chunks are streamed until the tool completes.
+    /// </summary>
+    /// <param name="messages">The conversation history.</param>
+    /// <param name="plugins">Plugin instances to make available as tools.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An async enumerable of content chunks and final metadata.</returns>
+    IAsyncEnumerable<StreamingLlmChunk> GetStreamingChatCompletionWithToolsAsync(
+        IReadOnlyList<LlmMessage> messages,
+        IReadOnlyList<object> plugins,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>

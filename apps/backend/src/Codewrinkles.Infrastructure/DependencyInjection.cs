@@ -11,6 +11,7 @@ using Codewrinkles.Infrastructure.Persistence.Repositories;
 using Codewrinkles.Infrastructure.Persistence.Repositories.Nova;
 using Codewrinkles.Infrastructure.Services;
 using Codewrinkles.Infrastructure.Services.Nova;
+using Codewrinkles.Infrastructure.Services.Nova.Plugins;
 using Microsoft.SemanticKernel;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -216,6 +217,11 @@ public static class DependencyInjection
 
         // 4. Embedding Service for memory semantic search
         services.AddScoped<IEmbeddingService, OpenAIEmbeddingService>();
+
+        // 5. Semantic Kernel Plugins for Agentic RAG
+        // Registered as scoped because they depend on scoped services (IContentSearchService)
+        // Using INovaPlugin interface allows clean architecture separation
+        services.AddScoped<INovaPlugin, SearchContentPlugin>();
 
         // ===== Content Ingestion Services (RAG) =====
         //

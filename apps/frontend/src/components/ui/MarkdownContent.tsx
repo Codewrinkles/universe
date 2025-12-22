@@ -1,4 +1,6 @@
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import type { Components } from "react-markdown";
@@ -120,11 +122,51 @@ export function MarkdownContent({ content }: MarkdownContentProps): JSX.Element 
     hr() {
       return <hr className="border-border my-4" />;
     },
+
+    // Tables
+    table({ children }) {
+      return (
+        <div className="my-4 overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            {children}
+          </table>
+        </div>
+      );
+    },
+    thead({ children }) {
+      return <thead className="bg-surface-card2">{children}</thead>;
+    },
+    tbody({ children }) {
+      return <tbody className="divide-y divide-border">{children}</tbody>;
+    },
+    tr({ children }) {
+      return <tr className="border-b border-border">{children}</tr>;
+    },
+    th({ children }) {
+      return (
+        <th className="px-3 py-2 text-left text-xs font-semibold text-text-primary border border-border">
+          {children}
+        </th>
+      );
+    },
+    td({ children }) {
+      return (
+        <td className="px-3 py-2 text-text-secondary border border-border">
+          {children}
+        </td>
+      );
+    },
   };
 
   return (
     <div className="text-sm text-text-primary leading-relaxed prose-invert max-w-none">
-      <ReactMarkdown components={components}>{content}</ReactMarkdown>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw]}
+        components={components}
+      >
+        {content}
+      </ReactMarkdown>
     </div>
   );
 }

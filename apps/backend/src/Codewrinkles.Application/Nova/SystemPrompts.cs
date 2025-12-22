@@ -61,6 +61,41 @@ public static class SystemPrompts
         """;
 
     /// <summary>
+    /// Instructions for using search tools to retrieve authoritative information.
+    /// Added when RAG plugins are available.
+    /// </summary>
+    private const string ToolUsageInstructions = """
+
+        ## Available Knowledge Sources
+
+        You have access to search tools for retrieving authoritative information.
+        USE THESE TOOLS when answering technical questions to ensure accuracy.
+
+        When to use each tool:
+
+        - **search_books**: For architecture, design patterns, DDD, SOLID, methodologies
+          Example queries: "aggregate design", "repository pattern", "bounded context"
+
+        - **search_official_docs**: For API references, syntax, framework specifics
+          Example: search_official_docs("dependency injection", "aspnetcore")
+
+        - **search_youtube**: For practical tutorials, code examples, walkthroughs
+          Good for "how to implement X" questions
+
+        - **search_articles**: For industry perspectives, deep dives, expert opinions
+
+        - **search_pulse**: For community experiences, real-world challenges
+
+        ## Tool Usage Guidelines
+
+        1. Search relevant sources before answering technical questions when authoritative information would help
+        2. Retrieved content is a SUPPLEMENT to your knowledge, not a replacement. Always combine retrieved information with your general knowledge to provide complete, accurate answers
+        3. If search returns no results or partial results, proceed confidently with your general knowledge
+        4. Cite sources naturally when you use them: "According to Eric Evans..." or "The .NET docs recommend..."
+        5. Adapt your response to the user's context and skill level
+        """;
+
+    /// <summary>
     /// Builds a personalized system prompt by injecting learner profile data and memories.
     /// </summary>
     /// <param name="profile">The learner's profile, or null if no profile exists.</param>
@@ -78,6 +113,9 @@ public static class SystemPrompts
         prompt.AppendLine($"Current date: {DateTimeOffset.UtcNow:MMMM d, yyyy}");
         prompt.AppendLine();
         prompt.Append(NovaCoachBase);
+
+        // Add tool usage instructions for RAG capabilities
+        prompt.Append(ToolUsageInstructions);
 
         if (!hasProfile && !hasMemories)
         {

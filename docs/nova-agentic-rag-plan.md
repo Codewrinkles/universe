@@ -1,7 +1,7 @@
 # Nova Agentic RAG: Technical Implementation Plan
 
 > **Purpose**: Detailed week-by-week technical plan for implementing Agentic RAG with Semantic Kernel Plugins.
-> **Last Updated**: December 22, 2025
+> **Last Updated**: December 22, 2025 (Week 2 completed)
 > **Prerequisites**: CLAUDE.md standards, existing Nova implementation
 
 ---
@@ -3340,19 +3340,21 @@ public sealed class IngestYouTubeContentCommandHandler
 
 ---
 
-### Week 2: SK Plugin + Tool Calling
+### Week 2: SK Plugin + Tool Calling ✅ COMPLETED
+
+**Completed:** 2025-12-22
 
 | Day | Task | Details |
 |-----|------|---------|
 | **1** | Create SearchContentPlugin | All 5 search functions with proper descriptions |
-| **1** | Plugin DI registration | Import into Kernel |
-| **2** | Update ILlmService | Add `GetChatCompletionWithToolsAsync` |
+| **1** | Plugin DI registration | Import into Kernel via INovaPlugin interface |
+| **2** | Update ILlmService | Add `GetChatCompletionWithToolsAsync` and streaming variant |
 | **2** | Update SemanticKernelLlmService | Implement tool calling with `ToolCallBehavior.AutoInvokeKernelFunctions` |
-| **3** | Update SendMessage handler | Use new method with plugins |
-| **3** | System prompt update | Add tool usage instructions (see below) |
-| **4** | Token budget enforcement | Limit RAG results to 2000 tokens |
-| **4** | Handle streaming with tools | Ensure streaming works during tool execution |
-| **5** | Unit tests | Test plugin invocation and search service |
+| **3** | Update SendMessage handler | Use new method with plugins via INovaPlugin injection |
+| **3** | System prompt update | Add tool usage instructions to SystemPrompts.cs |
+| **4** | Token budget enforcement | Limit RAG results to 2000 tokens in SearchContentPlugin |
+| **4** | Handle streaming with tools | Updated NovaEndpoints streaming to use tools |
+| **5** | Unit tests | *Deferred to Week 4 testing phase*
 
 **System Prompt Update (Week 2):** Add to `SystemPrompts.cs`:
 
