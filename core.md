@@ -2,21 +2,34 @@
 
 ## Overview
 
-Codewrinkles is a unified ecosystem of interconnected applications designed to reshape how people learn and consume educational content. The core philosophy: **content should be discovered by its value for what a user wants, not by dopamine triggers, FOMO, or virality**.
+**Tagline**: Your Personal Path to Technical Excellence
+
+Codewrinkles is a unified ecosystem designed to reshape how developers learn and grow. The core philosophy: **content should be discovered by its value for what a user wants, not by dopamine triggers, FOMO, or virality**.
+
+**One Ecosystem. Multiple Ways to Grow.**
+- **Learn with AI** → Codewrinkles Nova
+- **Share insights** → Codewrinkles Pulse
+- **Watch deep dives** → YouTube
+- **Practice architecture** → Codewrinkles Gaudi *(future)*
+- **Navigate your career** → Codewrinkles Compass *(future)*
+- **Master business skills** → Codewrinkles Bridge *(future)*
+- **Find a mentor** → Codewrinkles Mentor *(future)*
 
 ---
 
 ## The Apps
 
-### 1. Pulse - Microblogging Platform
+### 1. Codewrinkles Pulse — Community Platform
 
-**Core Concept**: A microblogging platform that respects the follow relationship.
+**Status**: ✅ **LIVE**
+
+**Core Concept**: Share insights, learn from peers. A community built for signal, not noise.
 
 **The Problem It Solves**:
 - Modern social networks surface content based on virality, not relevance
 - Creators with 30k followers often reach only 1-5k people per post
 - Algorithmic feeds have broken the fundamental promise: "following someone should mean seeing their content"
-- Platforms like X and BlueSky promote content based on political alignment and engagement gaming
+- Platforms optimize for engagement, not learning
 
 **Pulse's Approach**:
 - **Guaranteed reach**: Your content is always shown to people who follow you (chronological feed)
@@ -27,39 +40,44 @@ Codewrinkles is a unified ecosystem of interconnected applications designed to r
 - **No algorithmic manipulation**: No engagement-based ranking
 
 **Strategic Role**:
-- Build a high-trust distribution channel for the Codewrinkles ecosystem
-- Gather community before launching Nova
-- Share startup CTO journey and build credibility
-- Create warm audience for future product launches
+- Community layer for the Codewrinkles ecosystem
+- Pathway to Nova Alpha (earn access via engagement)
+- Distribution channel for ecosystem announcements
 
-**Moat**: Not competing with X/BlueSky. This is about building distribution and community on simpler, more honest terms.
+**Moat**: Not competing with X/BlueSky. This is about building a learning-focused community on simpler, more honest terms.
 
 ---
 
-### 2. Nova - The Learning Revolution
+### 2. Codewrinkles Nova — AI Learning Coach
 
-**Core Concept**: The go-to AI coach for technical learning. Nova becomes the ChatGPT for software development, architecture, and technical decision-making.
+**Status**: 🟣 **ALPHA** (accepting applications, hand-picking 50 developers)
+
+**Core Concept**: Your AI learning coach. Personalized guidance that remembers your goals and adapts to your level.
+
+**Tagline**: An AI coach that remembers your background, tracks your growth, and adapts every conversation to where you are in your journey.
 
 **The Problem It Solves**:
 - People no longer learn by watching videos or searching Google
-- Studies show Google searches have drastically shrunk - people now chat with ChatGPT
-- Valuable educational content exists but is hard to discover (buried in long videos, scattered across platforms)
-- Traditional learning platforms (Pluralsight, Udemy) use outdated course-based models
 - ChatGPT is general-purpose; there's no specialized, authoritative AI for technical learning
+- Traditional learning platforms (Pluralsight, Udemy) use outdated course-based models
+- Valuable educational content exists but is hard to discover (buried in long videos, scattered across platforms)
 
 **Nova's Vision**:
+- **Remembers you**: Your background, goals, and what you've already learned
+- **Tracks your growth**: Monitors skill development over time
+- **Adapts to your level**: Every conversation tailored to where you are
 - **Chat-first learning**: Users start a conversation, not a search
-- **Multi-source knowledge**: YouTube transcripts, Substack articles, Pulses (by hashtag), public domain books, official documentation, and future sources
-- **AI coaching**: Not just answers, but guidance, explanations, and personalized learning paths
-- **On-the-fly roadmaps**: Learning paths generated dynamically from conversation analysis
-- **Language/framework agnostic**: All technical topics - software development, architecture, technical decision-making
+- **Multi-source knowledge**: YouTube transcripts, Substack articles, Pulses, documentation
 
 **Target Use Cases**:
 - "How do I implement Clean Architecture in .NET?"
 - "Explain the difference between microservices and modular monoliths"
 - "I'm building a SaaS app - what architectural decisions should I consider?"
 - "Create a learning path for me to become a better software architect"
-- "What does Dan from Codewrinkles think about vertical slice architecture?"
+
+**Two Paths to Alpha Access**:
+1. **Apply**: Tell us about your learning goals (hand-picking 50 developers)
+2. **Earn it**: Post 15+ Pulses in 30 days on Codewrinkles Pulse
 
 **Nova's Approach**:
 
@@ -77,20 +95,12 @@ Codewrinkles is a unified ecosystem of interconnected applications designed to r
 - Proactive suggestions for next topics based on interaction patterns
 - Memory of what users already know
 
-#### Phase 3: Multi-Creator Knowledge Graph
-- Multiple creators can index their content
-- Build knowledge graphs around different topics
-- AI can compare ideas, show opposing viewpoints, present different approaches
-- Responses mention creators whose insights were used
-- Direct attribution links drive traffic back to original content
-
 **Content Sources (Priority Order)**:
 1. YouTube transcripts (Codewrinkles videos first)
 2. Substack articles
 3. Pulses by hashtag (community knowledge from Pulse)
 4. Public domain technical books
 5. Official documentation (Microsoft Learn, etc.)
-6. Future: Multi-creator content
 
 **Authority System**:
 Not all content is equal. Nova uses authority weighting:
@@ -119,44 +129,356 @@ Not all content is equal. Nova uses authority weighting:
   - Logical concept sequencing
   - Dynamic branching vs. linear progression
 
-**Creator Value Proposition** (Future):
-- Get credit even if users never watch full content
-- Increase reach through attribution (surface hidden gems from long videos)
-- Clear monetization model (revenue share based on insight usage)
-- Analytics showing how insights are being used
-
 **Moat**:
 - Specialized for technical learning (not general-purpose like ChatGPT)
 - Multi-source knowledge with authority weighting
 - Learning roadmap generation (not just Q&A)
-- Cross-creator knowledge graphs (future)
-- Attribution model benefits creators instead of cannibalizing their content
+- Remembers user context and adapts over time
 
 **Vision**: Become THE go-to AI for technical learning. Replace traditional learning platforms (Pluralsight, Udemy) and specialized Google searches with a conversational, personalized, agentic learning experience.
 
 ---
 
-### 3. Runwrinkles (Future)
-Running and fitness tracking. Details TBD.
+### 3. YouTube — Long-Form Content
 
-### 4. Legal (Future)
-Purpose unclear. To be defined.
+**Status**: ✅ **LIVE**
+
+**Core Concept**: Deep dives into architecture, patterns, and real-world development.
+
+**Content Focus**:
+- .NET architecture and clean code
+- Software design patterns
+- Agentic AI development
+- Real-world development challenges
+- Startup CTO journey
+
+**Strategic Role**:
+- Primary audience source (~31k .NET developers)
+- Trust and credibility builder
+- Long-form educational content that feeds into Nova's knowledge base
+- Education-first content, not sales pitches
+
+**Integration with Ecosystem**:
+- YouTube transcripts indexed by Nova for RAG
+- Videos referenced in Nova responses with attribution
+- Announcements drive traffic to Pulse and Nova
+
+---
+
+### 4. Codewrinkles Gaudi — Architecture Practice Platform
+
+**Status**: 💡 **CONCEPT** (not yet in development)
+
+**Named after**: Antoni Gaudí, the innovative Catalan architect known for breaking conventions.
+
+**Core Concept**: Hands-on architecture practice for senior developers and aspiring architects. Not interview prep — real-world architectural decision-making.
+
+**The Problem It Solves**:
+- Existing platforms (Codemia, ByteByteGo) focus on interview prep, not practitioner skills
+- Architecture is hard to practice — no "LeetCode for architecture" exists
+- Senior developers (5-10 years) struggle to transition to architect roles
+- Architecture skills are learned slowly through years of trial and error
+
+**Target Audience**:
+- Senior developers wanting to transition to architect
+- Current architects sharpening decision-making skills
+- Tech leads making architectural decisions daily
+- .NET/enterprise developers (Codewrinkles YouTube audience)
+
+**How It Works**:
+
+1. **Structured Challenges**: Each challenge provides:
+   - Scenario description
+   - Weighted quality attributes (scalability, security, maintainability, etc.)
+   - Constraints (team size, budget, timeline, existing tech, regulatory)
+   - Context (startup vs enterprise, greenfield vs legacy)
+
+2. **Mermaid-Based Solutions**: Users submit architecture diagrams as Mermaid code
+   - Renderable in browser
+   - Parseable for automated analysis
+   - Forces clarity (no hand-waving)
+
+3. **Hybrid Scoring Model** (0-100):
+   - **Structural (25)**: Automated — required components, relationships, data flow
+   - **Quality Attributes (25)**: Algo + AI — does design address stated priorities?
+   - **Constraint Adherence (25)**: AI evaluation — respects team size, budget, timeline?
+   - **Community (25)**: Peer votes and reviews from other users
+
+4. **ADR Companion**: Each submission includes a brief Architecture Decision Record explaining key choices
+
+**Challenge Types**:
+- **Beginner**: Clear requirements, few constraints, common patterns
+- **Intermediate**: Trade-offs required, competing constraints
+- **Advanced**: Ambiguous requirements, must ask clarifying questions
+- **Expert**: Architecture review — identify issues in existing designs
+
+**Nova Integration** (the moat):
+- Personalized feedback based on user's history and growth areas
+- Explains scoring: "You scored 15/25 on scalability because..."
+- Suggests which challenges to tackle based on skill gaps
+- Tracks progress over time: "You've improved 40% on security considerations"
+
+**Differentiation from Competitors**:
+| Codemia | Gaudi |
+|---------|-------|
+| Interview prep focus | Practitioner focus |
+| Generic "Design X" | Structured challenges with weighted attributes |
+| Freeform diagrams | Mermaid-only (parseable) |
+| Generic AI feedback | Nova integration (personalized) |
+| Solutions are islands | Community review + featured solutions |
+
+**Why Later**: Nova must prove value first. Gaudi complements Nova for senior engineers but requires significant content creation (challenges, reference solutions, scoring rules).
+
+---
+
+### 5. Codewrinkles Compass — Career Navigation
+
+**Status**: 💡 **CONCEPT** (not yet in development)
+
+**Core Concept**: A self-serve career navigation tool that helps engineers see their options and plan their path. Career coaching for everyone, not just those who can afford $40-500/month.
+
+**The Problem It Solves**:
+- Path from Senior → Staff → Principal is unclear and company-specific
+- Engineers don't know their options beyond the traditional ladder
+- Lateral moves (engineer → PM, architect, DevRel) accelerate careers but are opaque
+- 39% of skills will be obsolete by 2030 — engineers need to pivot but don't know to what
+- Quality career coaching costs $40-500/month (MentorCruise, etc.)
+
+**Target Audience**:
+- Senior developers feeling stuck
+- Engineers considering career transitions
+- Anyone asking "what's next?" in their career
+- Developers wanting to understand their market value
+
+**Feature Set**:
+
+1. **Skill & Role Assessment**
+   - Input current role, years of experience, tech stack
+   - Self-assess skills across categories (technical, architectural, leadership, business)
+   - Optionally import from LinkedIn or manual entry
+
+2. **Career Path Mapping**
+   - Visual map of possible trajectories from current position:
+     - IC track: Senior → Staff → Principal → Distinguished
+     - Management: Tech Lead → EM → Director → VP
+     - Adjacent: PM, DevRel, Solutions Architect, Consultant
+   - Shows what each path requires (skills, experience, typical timeline)
+
+3. **Adjacent Role Discovery**
+   - "With your skills, you could also be a..."
+   - Maps transferable skills to alternative careers
+   - Shows overlap percentages (e.g., "You have 70% of PM skills")
+
+4. **Skill Gap Analysis**
+   - "To become [target role], you need to develop:"
+   - Prioritized list of skills to build
+   - Links to resources (Nova topics, Gaudi challenges)
+
+5. **Personalized Roadmap**
+   - Step-by-step plan to reach career goal
+   - Milestones with suggested checkpoints
+   - "Before pursuing Staff, ensure you can demonstrate X"
+
+6. **Progress Tracking**
+   - Track skill development over time
+   - Update assessments periodically
+   - Celebrate milestones
+
+**Nova Integration** (the moat):
+- Nova acts as career coach throughout
+- "I want to become an architect" → Nova provides personalized guidance
+- Suggests Gaudi challenges for architecture skills
+- Remembers your goals and adapts advice over time
+
+**Differentiation**:
+| Traditional Coaching | Compass |
+|---------------------|---------|
+| $40-500/month | Accessible to all |
+| Depends on coach quality | Consistent AI-powered guidance |
+| Scheduled sessions | Available 24/7 |
+| Generic advice | Personalized to your exact situation |
+
+**Why Later**: Requires robust skill taxonomy and career path data. Nova integration is key differentiator.
+
+---
+
+### 6. Codewrinkles Bridge — Business Skills for Engineers
+
+**Status**: 💡 **CONCEPT** (not yet in development)
+
+**Core Concept**: Practice business communication and stakeholder skills through scenarios designed specifically for engineers.
+
+**The Problem It Solves**:
+- Communication skills appear in 34% of engineering job postings vs 16% for CS skills
+- Engineers can't translate technical work into stakeholder language
+- "As engineers ascend, they use less engineering skills and more business skills" — but no one teaches this
+- Generic communication courses (Toastmasters, etc.) aren't engineer-specific
+- The business skills gap is the #1 barrier to promotion beyond senior level
+
+**Target Audience**:
+- Senior engineers preparing for Staff/Principal roles
+- Engineers transitioning to management
+- Tech leads who need to influence without authority
+- Anyone who struggles to "sell" their ideas to non-technical stakeholders
+
+**Feature Set**:
+
+1. **Scenario-Based Practice**
+   Real-world situations engineers face:
+   - "Explain a technical decision to a non-technical executive"
+   - "Write a proposal for adopting a new technology"
+   - "Handle stakeholder pushback on timeline estimates"
+   - "Present a post-mortem without blaming"
+   - "Negotiate scope with a PM"
+   - "Justify technical debt paydown to leadership"
+
+2. **Writing Exercises**
+   Practice business writing formats:
+   - Architecture Decision Records (ADRs)
+   - Technical proposals / RFCs
+   - Status updates for leadership
+   - Executive summaries
+   - Incident post-mortems
+
+3. **Presentation Practice**
+   - Present technical concepts simply
+   - Explain trade-offs to non-technical audiences
+   - Defend architectural decisions
+
+4. **Stakeholder Role-Play**
+   AI simulates different personas:
+   - Skeptical CTO
+   - Non-technical CEO
+   - Impatient PM
+   - Budget-conscious CFO
+   Practice handling objections, questions, pushback
+
+5. **Feedback & Scoring**
+   - AI evaluates: clarity, persuasiveness, business impact framing
+   - Specific feedback: "You used jargon here — try explaining it differently"
+   - Scoring rubric for each skill area
+
+6. **Progress Tracking**
+   - Track improvement over time
+   - See growth in specific areas (clarity, conciseness, persuasion)
+   - Build portfolio of strong writing samples
+
+**Nova Integration** (the moat):
+- Nova role-plays as stakeholders
+- Provides coaching: "Your explanation was too technical. Here's how to simplify..."
+- Connects to Gaudi: "You made this architecture decision. Now practice explaining it to leadership."
+
+**Differentiation**:
+| Generic Communication Courses | Bridge |
+|------------------------------|--------|
+| Broad audience | Engineer-specific scenarios |
+| Generic examples | ADRs, RFCs, post-mortems, technical proposals |
+| Passive learning | Interactive role-play with AI |
+| No context | Integrated with Gaudi (practice decision → communicate decision) |
+
+**Why Later**: Requires significant scenario content creation. Best positioned after Gaudi proves the "practice with AI feedback" model.
+
+---
+
+### 7. Codewrinkles Mentor — Mentorship Marketplace
+
+**Status**: 💡 **CONCEPT** (not yet in development)
+
+**Core Concept**: Connect experienced engineers willing to mentor with those seeking guidance. Creates structured mentoring engagements with goals, tasks, and progress tracking.
+
+**The Problem It Solves**:
+- Quality mentorship is expensive ($40-500/month on MentorCruise)
+- Free alternatives (ADPList) have inconsistent quality
+- Mentorship is often unstructured — "let's chat" without clear goals
+- Finding the right mentor is hard (skill match, availability, timezone)
+- No integration between mentorship and actual learning tools
+
+**Target Audience**:
+- **Mentors**: Experienced engineers who want to give back
+- **Mentees**: Engineers at any level seeking guidance on career, technical skills, or transitions
+
+**Feature Set**:
+
+1. **Mentor Profiles**
+   Mentors create profiles including:
+   - Experience: Years, companies, roles held
+   - Skills: Languages, frameworks, domains
+   - Specialties: Career growth, architecture, leadership, interviews, job search
+   - Availability: Hours per week/month
+   - Timezone & language
+   - Mentoring style: Hands-on vs advisory
+   - Optional: Rate (free / paid tiers)
+
+2. **Mentor Discovery**
+   Mentees can:
+   - Search by skill, specialty, experience level
+   - Filter by availability, timezone, language
+   - Browse featured/recommended mentors
+   - See mentor ratings and reviews
+
+3. **Mentoring Request**
+   - Mentee submits request to specific mentor
+   - Includes: Goals, background, what they're hoping to learn
+   - Optional: Initial questions or context
+   - Mentor reviews and accepts/declines
+   - Can suggest alternative mentors if declining
+
+4. **Mentoring Engagement**
+   Once accepted, creates a structured engagement:
+   - **Goals**: Define what mentee wants to achieve
+   - **Tasks**: Mentor assigns learning tasks, exercises, readings
+   - **Sessions**: Schedule 1:1 sessions (video, chat, async)
+   - **Notes**: Track discussion points and advice given
+   - **Progress**: Mark goals as in-progress/completed
+   - **Duration**: Time-boxed engagements (e.g., 3 months)
+
+5. **Feedback & Reviews**
+   - Mentees review mentors after engagement ends
+   - Mentors provide final feedback to mentee
+   - Builds reputation system for quality mentors
+
+6. **Community Integration**
+   - Mentors can share insights on Pulse
+   - Top mentors featured in ecosystem
+   - Mentees can share learnings and thank mentors publicly
+
+**Nova Integration** (the moat):
+- Nova suggests mentors based on learning journey:
+  - "You're learning architecture. Here are mentors who specialize in that."
+- Nova helps mentees prepare for sessions:
+  - "Before your session on system design, review these topics..."
+- Nova tracks what you've discussed to provide continuity
+
+**Differentiation**:
+| MentorCruise / ADPList | Codewrinkles Mentor |
+|------------------------|---------------------|
+| Standalone platform | Integrated with learning ecosystem |
+| Find mentor → sessions | Structured engagements with goals/tasks |
+| Generic tech mentorship | Connected to Nova + Gaudi |
+| Paid-only or inconsistent free | Community-driven, mixed free/paid |
+| One-off sessions | Long-term structured growth |
+
+**Why Later**: Requires critical mass of mentors. Best launched when Pulse community is thriving and can seed mentor supply.
 
 ---
 
 ## Unified Identity
 
 **One Profile Across Ecosystem**:
-- Single account for all apps (Pulse, Nova, Runwrinkles, Legal)
+- Single account for all apps (Pulse, Nova, and future apps: Gaudi, Compass, Bridge, Mentor)
 - Unified profile: name, handle, bio, avatar
-- Cross-app interactions (e.g., share Nova insights to Pulse)
+- Cross-app interactions:
+  - Share Nova insights to Pulse
+  - Share Gaudi solutions to Pulse
+  - Mentor profiles linked to Pulse activity
+  - Compass progress visible to mentors
 - Integrated notifications across apps
 
 ---
 
 ## Product Roadmap
 
-### Phase 1: Foundation
+### Phase 1: Foundation ✅ COMPLETE
 **Account & Identity System**
 - User registration/login (email/password, magic link, OAuth)
 - Profile management (shared across all apps)
@@ -164,11 +486,9 @@ Purpose unclear. To be defined.
 - Session management
 - Basic settings (notifications, security)
 
-**Why First**: Everything depends on identity.
-
 ---
 
-### Phase 2: Pulse MVP
+### Phase 2: Pulse MVP ✅ COMPLETE
 **Core Posting & Feed**
 - Create posts (text, character limit)
 - Chronological feed (people you follow)
@@ -185,22 +505,25 @@ Purpose unclear. To be defined.
 - Mentioned notifications
 - "People you might know" (follower overlap)
 
-**Why Second**: Build distribution channel and gather community.
-
 ---
 
-### Phase 3: Pulse Polish
+### Phase 3: Pulse Polish ✅ COMPLETE
 **Missing Core Features**
 - Notifications system (replies, mentions, reposts)
 - Search (users, posts)
 - Post threading (conversations)
 - Media support (images, link previews)
 
-**Why Third**: Make Pulse usable daily, increase retention.
+**Status**: Pulse is LIVE at codewrinkles.com
 
 ---
 
-### Phase 4: Nova MVP - Chat Foundation
+### Phase 4: Nova Alpha 🟣 IN PROGRESS
+**Alpha Launch**
+- Accepting applications (hand-picking 50 developers)
+- Two paths to access: Apply or Earn via Pulse (15+ posts in 30 days)
+- Founding members get locked-in benefits
+
 **Core Chat Experience**
 - ConversationSession and Message domain entities
 - OpenAI integration with model flexibility (gpt-4o-mini, GPT-4/5, embeddings)
@@ -213,7 +536,7 @@ Purpose unclear. To be defined.
 - Retrieval integration into chat flow
 - Source attribution in responses
 
-**Why Fourth**: Get a working AI coach shipped. RAG can be minimal initially.
+**Why Now**: Get a working AI coach to real users. Iterate based on Alpha feedback.
 
 ---
 
@@ -268,25 +591,7 @@ Purpose unclear. To be defined.
 
 ---
 
-### Phase 8: Multi-Creator Nova
-**Creator Onboarding**
-- Invite system for other creators
-- Creator dashboard (upload content, analytics)
-- Revenue sharing model
-
-**Enhanced RAG**
-- Multi-source responses (combine multiple creators)
-- Cross-creator knowledge graph
-- Opposing viewpoints visualization
-- Compare different approaches to same topic
-
-**Why Eighth**: Scale after proving concept. Invite other creators using attribution metrics as pitch.
-
----
-
 ## Deprioritized Initially
-- Runwrinkles (after Pulse + Nova work)
-- Legal app (undefined, comes later)
 - Mobile apps (web-first)
 - Advanced moderation (manual at small scale)
 
@@ -314,25 +619,25 @@ Colors:
 - Will need user authentication system
 - Vector database for Nova (Pinecone, Weaviate, or similar)
 - Content ingestion pipeline (YouTube API, web scraping, manual upload)
-- Knowledge graph storage (Neo4j or similar graph database)
 - RAG implementation (LangChain or custom)
-- Attribution tracking and analytics
 
 ---
 
 ## Creator Context
 
-**Who**: Dan from Codewrinkles
-- Content: .NET architecture, clean code, agentic AI, ultra-running
-- Platforms: YouTube, LinkedIn, Substack (architecttocto.substack.com)
-- Role: Startup CTO sharing journey
+**Who**: Dan, Founder of Codewrinkles
+- Content: .NET architecture, clean code, agentic AI
+- Platforms: YouTube (~31k developers), LinkedIn, Substack, Codewrinkles Pulse
+- Role: Startup CTO sharing the journey
 
-**Distribution Strategy**:
-1. Build Pulse community with existing audience
-2. Share startup journey and technical insights
-3. Build trust and credibility
-4. Launch Nova to warm audience
-5. Show attribution metrics to invite other creators
+**Brand Story** (from landing page):
+> "Codewrinkles started on YouTube with one goal: help developers grow. Codewrinkles Pulse built a community around that mission. Now, Codewrinkles Nova takes it to the next level - an AI coach that actually knows your journey."
+
+**Current Focus**:
+1. ✅ Pulse community is live
+2. 🟣 Nova Alpha accepting applications
+3. Hand-picking 50 developers for Alpha
+4. Founder-led personal outreach for early users
 
 ---
 
@@ -347,8 +652,6 @@ Colors:
 ### Nova
 - Chat sessions per user
 - Learning paths generated
-- Attribution link clicks (traffic to creator content)
-- Creator sign-ups (after multi-creator launch)
 - Quality of responses (user feedback, thumbs up/down)
 
 ### Cross-App
@@ -362,28 +665,44 @@ Colors:
 ### Monetization (TBD)
 - Subscription model?
 - Usage-based pricing?
-- Revenue share with creators based on insight usage?
 - Free tier with limits?
 
 ### Scaling Challenges
-- Content ingestion at scale (hundreds of creators)
 - Vector database performance
-- Knowledge graph complexity
 - Real-time RAG response quality
 - Chunking strategy refinement
+- Content freshness and updates
 
 ### Competitive Moats
-- Multi-creator knowledge graphs (unique)
-- Attribution model (creator-friendly)
-- Self-regulating quality through vector similarity
+- Specialized for technical learning (not general-purpose)
+- Personalized learning paths with memory
 - Chronological Pulse feed (anti-algorithmic stance)
 - Unified ecosystem (not just isolated tools)
 
 ---
 
+## Current Status Summary
+
+| Product | Status | Description |
+|---------|--------|-------------|
+| Codewrinkles Pulse | ✅ LIVE | Community platform at codewrinkles.com |
+| Codewrinkles Nova | 🟣 ALPHA | AI learning coach, accepting applications |
+| YouTube | ✅ LIVE | Long-form content (~31k developers) |
+| Codewrinkles Gaudi | 💡 CONCEPT | Architecture practice with Mermaid diagrams |
+| Codewrinkles Compass | 💡 CONCEPT | Career navigation and path mapping |
+| Codewrinkles Bridge | 💡 CONCEPT | Business skills training for engineers |
+| Codewrinkles Mentor | 💡 CONCEPT | Mentorship marketplace with structured engagements |
+
+**Alpha Launch** (December 2025):
+- Accepting applications for 50 developers
+- Two paths: Apply directly OR earn via Pulse (15+ posts in 30 days)
+- Founding members receive locked-in benefits
+
+---
+
 ## Notes for Implementation
 
-- Start simple, iterate based on user feedback
+- Start simple, iterate based on Alpha user feedback
 - Quality of chunking/RAG is critical for Nova success
 - Attribution UX must be clean (too many links = ignored)
 - Pulse must feel fast and simple (no algorithmic complexity)

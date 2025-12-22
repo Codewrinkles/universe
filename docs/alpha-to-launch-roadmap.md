@@ -523,7 +523,147 @@ You know the product and users better than I do. Pick what feels most impactful.
 
 ---
 
-## Appendix: Research Sources
+## Appendix A: Payments Infrastructure (Beta Prerequisite)
+
+### Billing Schema (EF Core Entities)
+
+```
+billing.Customers
+├── Id (GUID, PK)
+├── IdentityId (GUID, FK → identity.Identities, unique)
+├── StripeCustomerId (string, unique)
+├── Email (string)
+├── Name (string?)
+├── CreatedAt (DateTimeOffset)
+└── UpdatedAt (DateTimeOffset)
+
+billing.Subscriptions
+├── Id (GUID, PK)
+├── CustomerId (GUID, FK → Customers)
+├── StripeSubscriptionId (string, unique)
+├── PlanId (string)                    -- "nova_pro_monthly", "nova_pro_yearly"
+├── Status (string)                    -- active, canceled, past_due, trialing
+├── CurrentPeriodStart (DateTimeOffset)
+├── CurrentPeriodEnd (DateTimeOffset)
+├── CancelAtPeriodEnd (bool)
+├── CreatedAt (DateTimeOffset)
+└── UpdatedAt (DateTimeOffset)
+
+billing.PaymentMethods
+├── Id (GUID, PK)
+├── CustomerId (GUID, FK → Customers)
+├── StripePaymentMethodId (string)
+├── Type (string)                      -- card, sepa_debit, etc.
+├── Last4 (string?)
+├── Brand (string?)                    -- visa, mastercard, etc.
+├── ExpiryMonth (int?)
+├── ExpiryYear (int?)
+├── IsDefault (bool)
+└── CreatedAt (DateTimeOffset)
+
+billing.Invoices
+├── Id (GUID, PK)
+├── CustomerId (GUID, FK → Customers)
+├── StripeInvoiceId (string, unique)
+├── AmountDue (decimal)
+├── AmountPaid (decimal)
+├── Currency (string)
+├── Status (string)                    -- draft, open, paid, void, uncollectible
+├── InvoiceUrl (string?)
+├── PdfUrl (string?)
+├── PeriodStart (DateTimeOffset)
+├── PeriodEnd (DateTimeOffset)
+└── CreatedAt (DateTimeOffset)
+```
+
+### Stripe Integration
+
+```
+Backend Components:
+├── StripeService                      -- API wrapper
+├── WebhookController                  -- Handle Stripe events
+├── BillingRepository                  -- Data access
+└── Endpoints
+    ├── POST /api/billing/checkout     -- Create checkout session
+    ├── POST /api/billing/portal       -- Customer portal session
+    ├── GET  /api/billing/subscription -- Current subscription
+    └── POST /api/billing/webhook      -- Stripe webhooks
+
+Webhook Events to Handle:
+├── checkout.session.completed         -- New subscription
+├── customer.subscription.created
+├── customer.subscription.updated      -- Plan changes
+├── customer.subscription.deleted      -- Cancellation
+├── invoice.paid                       -- Successful payment
+├── invoice.payment_failed             -- Failed payment
+└── customer.updated                   -- Customer info changes
+```
+
+### Gating Logic
+
+```csharp
+// Check subscription status before Nova features
+public interface ISubscriptionService
+{
+    Task<bool> HasActiveSubscriptionAsync(Guid identityId, string product);
+    Task<SubscriptionTier> GetTierAsync(Guid identityId, string product);
+}
+
+public enum SubscriptionTier
+{
+    Free,
+    Pro,
+    Lifetime
+}
+
+// In Nova endpoints
+if (await subscriptionService.GetTierAsync(identityId, "nova") == SubscriptionTier.Free)
+{
+    var count = await novaRepository.GetMonthlyConversationCountAsync(profileId);
+    if (count >= FreeTierLimits.ConversationsPerMonth)
+    {
+        return Results.Json(new { error = "upgrade_required", limit = "conversations" }, statusCode: 402);
+    }
+}
+```
+
+### Settings UI: `/settings/billing`
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Billing & Subscription                                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Current Plan                                                    │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │  Nova Pro                                    $12/month  │    │
+│  │  ✓ Unlimited conversations                              │    │
+│  │  ✓ Memory persistence                                   │    │
+│  │  ✓ Skill tracking                                       │    │
+│  │                                                         │    │
+│  │  Next billing: January 15, 2025                         │    │
+│  │                                                         │    │
+│  │  [Manage Subscription]  [Cancel]                        │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                                                                  │
+│  Payment Method                                                  │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │  💳 Visa ending in 4242          Expires 12/25          │    │
+│  │                                           [Update]      │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                                                                  │
+│  Billing History                                                 │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │  Dec 15, 2024    Nova Pro Monthly    $12.00    [PDF]    │    │
+│  │  Nov 15, 2024    Nova Pro Monthly    $12.00    [PDF]    │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Appendix B: Research Sources
 
 - [How AI Products Go-to-Market - GTM Strategist](https://knowledge.gtmstrategist.com/p/how-ai-products-go-to-market)
 - [2025 GTM Playbook for AI Startups - GTMfusion](https://www.gtmfusion.com/insights/2025-gtnm-playbook)
