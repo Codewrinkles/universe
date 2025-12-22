@@ -43,6 +43,8 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<LearnerProfile> LearnerProfiles => Set<LearnerProfile>();
     public DbSet<Memory> Memories => Set<Memory>();
     public DbSet<AlphaApplication> AlphaApplications => Set<AlphaApplication>();
+    public DbSet<ContentChunk> ContentChunks => Set<ContentChunk>();
+    public DbSet<ContentIngestionJob> ContentIngestionJobs => Set<ContentIngestionJob>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

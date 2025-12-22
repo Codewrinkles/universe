@@ -1,6 +1,7 @@
 using Azure.Identity;
 using Azure.Storage.Blobs;
 using Codewrinkles.Application.Common.Interfaces;
+using Codewrinkles.Application.Nova.Services;
 using Codewrinkles.Domain.Identity;
 using Codewrinkles.Infrastructure.Configuration;
 using Codewrinkles.Infrastructure.Email;
@@ -57,6 +58,8 @@ public static class DependencyInjection
         services.AddScoped<INovaMemoryRepository, NovaMemoryRepository>();
         services.AddScoped<IAlphaApplicationRepository, AlphaApplicationRepository>();
         services.AddScoped<INovaMetricsRepository, NovaMetricsRepository>();
+        services.AddScoped<IContentChunkRepository, ContentChunkRepository>();
+        services.AddScoped<IContentIngestionJobRepository, ContentIngestionJobRepository>();
 
         // Unit of Work
         services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -201,12 +204,9 @@ public static class DependencyInjection
                 apiKey: settings.OpenAIApiKey);
 
             // Embedding generation for memory semantic search
-            // SKEXP0010: AddOpenAIEmbeddingGenerator is experimental but recommended over deprecated ITextEmbeddingGenerationService
-#pragma warning disable SKEXP0010
             builder.AddOpenAIEmbeddingGenerator(
                 modelId: settings.EmbeddingModelId,
                 apiKey: settings.OpenAIApiKey);
-#pragma warning restore SKEXP0010
 
             return builder.Build();
         });
@@ -216,6 +216,37 @@ public static class DependencyInjection
 
         // 4. Embedding Service for memory semantic search
         services.AddScoped<IEmbeddingService, OpenAIEmbeddingService>();
+
+        // ===== Content Ingestion Services (RAG) =====
+        //
+        // Architecture: Channel (singleton queue) -> BackgroundService (singleton processor)
+        //               -> creates scope per job -> resolves scoped services
+        //
+        // Used for ingesting content for Agentic RAG (books, YouTube transcripts, docs)
+
+        // 1. Azure Document Intelligence for PDF extraction
+        var docIntelligenceSection = configuration.GetSection(AzureDocumentIntelligenceSettings.SectionName);
+        services.Configure<AzureDocumentIntelligenceSettings>(docIntelligenceSection);
+        services.AddSingleton<IPdfExtractorService, AzureDocumentIntelligencePdfExtractor>();
+
+        // 2. Content Search Service for semantic search over chunks
+        services.AddScoped<IContentSearchService, ContentSearchService>();
+
+        // 3. Channel - singleton, thread-safe queue for background processing
+        services.AddSingleton<ContentIngestionChannel>();
+
+        // 4. Content ingestion queue interface - singleton, wraps channel for handlers
+        services.AddSingleton<IContentIngestionQueue, ContentIngestionQueue>();
+
+        // 5. HttpClient for documentation scraping
+        services.AddHttpClient("DocsScraper", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30);
+            client.DefaultRequestHeaders.Add("User-Agent", "Codewrinkles/1.0 (Documentation Indexer)");
+        });
+
+        // 6. Background service for content ingestion
+        services.AddHostedService<ContentIngestionBackgroundService>();
 
         return services;
     }

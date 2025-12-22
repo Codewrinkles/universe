@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Azure.AI.DocumentIntelligence" Version="1.0.0" />
     <PackageReference Include="Azure.Identity" Version="1.17.1" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.26.0" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
@@ -33,6 +34,11 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <!-- Semantic Kernel Experimental Features used in this project:
+         - SKEXP0010: Embedding generation (AddOpenAIEmbeddingGenerator)
+         - SKEXP0050: Text chunking (TextChunker) for RAG ingestion
+         See: https://learn.microsoft.com/en-us/semantic-kernel/concepts/experimental-attribute -->
+    <NoWarn>$(NoWarn);SKEXP0010;SKEXP0050</NoWarn>
   </PropertyGroup>
 
 </Project>

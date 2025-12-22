@@ -16,6 +16,8 @@ public interface IUnitOfWork : IAsyncDisposable
     INovaRepository Nova { get; }
     INovaMemoryRepository NovaMemories { get; }
     IAlphaApplicationRepository AlphaApplications { get; }
+    IContentChunkRepository ContentChunks { get; }
+    IContentIngestionJobRepository ContentIngestionJobs { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 
