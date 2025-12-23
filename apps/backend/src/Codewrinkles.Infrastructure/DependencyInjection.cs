@@ -243,23 +243,28 @@ public static class DependencyInjection
         services.Configure<AzureDocumentIntelligenceSettings>(docIntelligenceSection);
         services.AddSingleton<IPdfExtractorService, AzureDocumentIntelligencePdfExtractor>();
 
-        // 2. Content Search Service for semantic search over chunks
+        // 2. Content Embedding Cache - Singleton that holds all embeddings in memory
+        // Eliminates DB round-trips for RAG search. Initialized at startup, refreshed after ingestion.
+        services.AddSingleton<ContentEmbeddingCache>();
+        services.AddHostedService<ContentEmbeddingCacheInitializer>();
+
+        // 3. Content Search Service for semantic search over chunks (uses cache)
         services.AddScoped<IContentSearchService, ContentSearchService>();
 
-        // 3. Channel - singleton, thread-safe queue for background processing
+        // 4. Channel - singleton, thread-safe queue for background processing
         services.AddSingleton<ContentIngestionChannel>();
 
-        // 4. Content ingestion queue interface - singleton, wraps channel for handlers
+        // 5. Content ingestion queue interface - singleton, wraps channel for handlers
         services.AddSingleton<IContentIngestionQueue, ContentIngestionQueue>();
 
-        // 5. HttpClient for documentation scraping
+        // 6. HttpClient for documentation scraping
         services.AddHttpClient("DocsScraper", client =>
         {
             client.Timeout = TimeSpan.FromSeconds(30);
             client.DefaultRequestHeaders.Add("User-Agent", "Codewrinkles/1.0 (Documentation Indexer)");
         });
 
-        // 6. Background service for content ingestion
+        // 7. Background service for content ingestion
         services.AddHostedService<ContentIngestionBackgroundService>();
 
         return services;

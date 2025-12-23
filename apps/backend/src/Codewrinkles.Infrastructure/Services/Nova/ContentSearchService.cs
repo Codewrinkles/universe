@@ -5,20 +5,20 @@ using Codewrinkles.Domain.Nova;
 namespace Codewrinkles.Infrastructure.Services.Nova;
 
 /// <summary>
-/// Implementation of content search using in-memory similarity calculation.
-/// For Alpha/Beta, this loads all embeddings and calculates similarity in memory.
+/// Implementation of content search using in-memory cached embeddings.
+/// Embeddings are loaded at startup and kept in memory for fast similarity computation.
 /// Can be migrated to Azure AI Search or SQL Server 2025 native vector when needed.
 /// </summary>
 public sealed class ContentSearchService : IContentSearchService
 {
-    private readonly IContentChunkRepository _repository;
+    private readonly ContentEmbeddingCache _cache;
     private readonly IEmbeddingService _embeddingService;
 
     public ContentSearchService(
-        IContentChunkRepository repository,
+        ContentEmbeddingCache cache,
         IEmbeddingService embeddingService)
     {
-        _repository = repository;
+        _cache = cache;
         _embeddingService = embeddingService;
     }
 
@@ -34,20 +34,34 @@ public sealed class ContentSearchService : IContentSearchService
         // Generate embedding for query
         var queryEmbedding = await _embeddingService.GetEmbeddingAsync(query, cancellationToken);
 
-        // Get all matching chunks with embeddings
-        var chunks = await _repository.GetWithEmbeddingsAsync(
-            source,
-            technology,
-            author,
-            cancellationToken);
+        // Get all chunks from cache (pre-loaded at startup, embeddings pre-deserialized)
+        var allChunks = await _cache.GetAllAsync(cancellationToken);
 
-        // Calculate similarity and filter
+        // Filter by source/technology/author if specified
+        var chunks = allChunks.AsEnumerable();
+
+        if (source.HasValue)
+        {
+            chunks = chunks.Where(c => c.Source == source.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(technology))
+        {
+            var tech = technology.ToLowerInvariant();
+            chunks = chunks.Where(c => c.Technology == tech);
+        }
+
+        if (!string.IsNullOrWhiteSpace(author))
+        {
+            chunks = chunks.Where(c => c.Author == author);
+        }
+
+        // Calculate similarity and filter (embeddings already deserialized in cache)
         var scored = new List<(ContentSearchResult Result, float Similarity)>();
 
         foreach (var chunk in chunks)
         {
-            var chunkEmbedding = _embeddingService.DeserializeEmbedding(chunk.Embedding);
-            var similarity = _embeddingService.CosineSimilarity(queryEmbedding, chunkEmbedding);
+            var similarity = _embeddingService.CosineSimilarity(queryEmbedding, chunk.Embedding);
 
             if (similarity >= minSimilarity)
             {

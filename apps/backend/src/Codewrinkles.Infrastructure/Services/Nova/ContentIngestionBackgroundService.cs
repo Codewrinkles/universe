@@ -16,15 +16,18 @@ namespace Codewrinkles.Infrastructure.Services.Nova;
 public sealed partial class ContentIngestionBackgroundService : BackgroundService
 {
     private readonly ContentIngestionChannel _channel;
+    private readonly ContentEmbeddingCache _embeddingCache;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<ContentIngestionBackgroundService> _logger;
 
     public ContentIngestionBackgroundService(
         ContentIngestionChannel channel,
+        ContentEmbeddingCache embeddingCache,
         IServiceScopeFactory scopeFactory,
         ILogger<ContentIngestionBackgroundService> logger)
     {
         _channel = channel;
+        _embeddingCache = embeddingCache;
         _scopeFactory = scopeFactory;
         _logger = logger;
     }
@@ -151,6 +154,9 @@ public sealed partial class ContentIngestionBackgroundService : BackgroundServic
             await unitOfWork.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
+            // 4. Refresh embedding cache so new chunks are available for RAG
+            await _embeddingCache.RefreshAsync(cancellationToken);
+
             _logger.LogInformation(
                 "Completed PDF ingestion for job {JobId}: {ChunkCount} chunks created",
                 jobId, chunkCount);
@@ -236,6 +242,9 @@ public sealed partial class ContentIngestionBackgroundService : BackgroundServic
             job.MarkAsCompleted(chunkCount);
             await unitOfWork.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
+
+            // Refresh embedding cache so new chunks are available for RAG
+            await _embeddingCache.RefreshAsync(cancellationToken);
 
             _logger.LogInformation(
                 "Completed transcript ingestion for job {JobId}: {ChunkCount} chunks created",
@@ -361,6 +370,9 @@ public sealed partial class ContentIngestionBackgroundService : BackgroundServic
             job.MarkAsCompleted(chunkCount);
             await unitOfWork.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
+
+            // Refresh embedding cache so new chunks are available for RAG
+            await _embeddingCache.RefreshAsync(cancellationToken);
 
             _logger.LogInformation(
                 "Completed docs scrape for job {JobId}: {ChunkCount} chunks from {PageCount} pages",
