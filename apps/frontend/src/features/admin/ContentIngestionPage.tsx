@@ -25,7 +25,7 @@ interface IngestionJob {
 }
 
 type StatusFilter = "all" | "queued" | "processing" | "completed" | "failed";
-type UploadTab = "pdf" | "transcript" | "docs";
+type UploadTab = "pdf" | "transcript" | "docs" | "article";
 
 export function ContentIngestionPage(): JSX.Element {
   const [jobs, setJobs] = useState<IngestionJob[]>([]);
@@ -53,6 +53,12 @@ export function ContentIngestionPage(): JSX.Element {
   const [docsUrl, setDocsUrl] = useState("");
   const [docsTechnology, setDocsTechnology] = useState("");
   const [docsMaxPages, setDocsMaxPages] = useState("100");
+
+  // Article form state
+  const [articleTitle, setArticleTitle] = useState("");
+  const [articleAuthor, setArticleAuthor] = useState("");
+  const [articleUrl, setArticleUrl] = useState("");
+  const [articleContent, setArticleContent] = useState("");
 
   const fetchJobs = useCallback(async (): Promise<void> => {
     try {
@@ -244,6 +250,52 @@ export function ContentIngestionPage(): JSX.Element {
     }
   };
 
+  const handleArticleUpload = async (e: React.FormEvent): Promise<void> => {
+    e.preventDefault();
+    if (!articleTitle.trim() || !articleContent.trim()) return;
+
+    try {
+      setIsUploading(true);
+      setError(null);
+
+      const token = localStorage.getItem(config.auth.accessTokenKey);
+      const response = await fetch(
+        `${config.api.baseUrl}/api/admin/nova/content/article`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: articleTitle.trim(),
+            content: articleContent,
+            author: articleAuthor.trim() || null,
+            url: articleUrl.trim() || null,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || "Failed to upload article");
+      }
+
+      // Reset form
+      setArticleTitle("");
+      setArticleAuthor("");
+      setArticleUrl("");
+      setArticleContent("");
+
+      // Refresh jobs list
+      await fetchJobs();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to upload article");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleDelete = async (id: string): Promise<void> => {
     try {
       setDeleteLoading(id);
@@ -335,7 +387,7 @@ export function ContentIngestionPage(): JSX.Element {
       {/* Upload Forms */}
       <Card className="mb-6">
         <div className="flex gap-2 mb-4 border-b border-border pb-4">
-          {(["pdf", "transcript", "docs"] as UploadTab[]).map((tab) => (
+          {(["pdf", "transcript", "docs", "article"] as UploadTab[]).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -348,6 +400,7 @@ export function ContentIngestionPage(): JSX.Element {
               {tab === "pdf" && "📚 Upload PDF"}
               {tab === "transcript" && "📺 YouTube Transcript"}
               {tab === "docs" && "📄 Scrape Docs"}
+              {tab === "article" && "📰 Add Article"}
             </button>
           ))}
         </div>
@@ -547,6 +600,67 @@ export function ContentIngestionPage(): JSX.Element {
               className="px-4 py-2 text-sm font-medium rounded-full bg-violet-600 text-white hover:bg-violet-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isUploading ? "Starting..." : "Start Scraping"}
+            </button>
+          </form>
+        )}
+
+        {/* Article Upload Form */}
+        {activeTab === "article" && (
+          <form onSubmit={(e) => void handleArticleUpload(e)} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-text-secondary mb-1">
+                Article Title
+              </label>
+              <input
+                type="text"
+                value={articleTitle}
+                onChange={(e) => setArticleTitle(e.target.value)}
+                placeholder="e.g., Understanding Clean Architecture"
+                className="w-full px-3 py-2 bg-surface-card1 border border-border rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-violet-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-text-secondary mb-1">
+                Author (optional)
+              </label>
+              <input
+                type="text"
+                value={articleAuthor}
+                onChange={(e) => setArticleAuthor(e.target.value)}
+                placeholder="e.g., John Doe"
+                className="w-full px-3 py-2 bg-surface-card1 border border-border rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-violet-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-text-secondary mb-1">
+                URL (optional)
+              </label>
+              <input
+                type="url"
+                value={articleUrl}
+                onChange={(e) => setArticleUrl(e.target.value)}
+                placeholder="https://example.com/article"
+                className="w-full px-3 py-2 bg-surface-card1 border border-border rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-violet-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-text-secondary mb-1">
+                Article Content
+              </label>
+              <textarea
+                value={articleContent}
+                onChange={(e) => setArticleContent(e.target.value)}
+                placeholder="Paste the article content here..."
+                rows={10}
+                className="w-full px-3 py-2 bg-surface-card1 border border-border rounded-lg text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-violet-500 resize-none"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={isUploading || !articleTitle.trim() || !articleContent.trim()}
+              className="px-4 py-2 text-sm font-medium rounded-full bg-violet-600 text-white hover:bg-violet-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isUploading ? "Uploading..." : "Upload Article"}
             </button>
           </form>
         )}

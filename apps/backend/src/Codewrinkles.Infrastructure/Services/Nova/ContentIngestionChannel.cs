@@ -53,3 +53,10 @@ public sealed record TranscriptIngestionMessage(
 /// </summary>
 public sealed record DocsScrapeMessage(
     Guid JobId) : ContentIngestionMessage(JobId);
+
+/// <summary>
+/// Message for article ingestion jobs.
+/// </summary>
+public sealed record ArticleIngestionMessage(
+    Guid JobId,
+    string Content) : ContentIngestionMessage(JobId);

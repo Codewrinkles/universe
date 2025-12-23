@@ -77,6 +77,9 @@ public sealed partial class ContentIngestionBackgroundService : BackgroundServic
             case DocsScrapeMessage docs:
                 await ProcessDocsScrapeAsync(docs.JobId, services, cancellationToken);
                 break;
+            case ArticleIngestionMessage article:
+                await ProcessArticleIngestionAsync(article.JobId, article.Content, services, cancellationToken);
+                break;
         }
     }
 
@@ -383,6 +386,84 @@ public sealed partial class ContentIngestionBackgroundService : BackgroundServic
             await transaction.RollbackAsync(cancellationToken);
 
             _logger.LogError(ex, "Failed to scrape docs for job {JobId}", jobId);
+
+            job.MarkAsFailed(ex.Message);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    private async Task ProcessArticleIngestionAsync(
+        Guid jobId,
+        string content,
+        IServiceProvider services,
+        CancellationToken cancellationToken)
+    {
+        var unitOfWork = services.GetRequiredService<IUnitOfWork>();
+        var embeddingService = services.GetRequiredService<IEmbeddingService>();
+
+        var job = await unitOfWork.ContentIngestionJobs.FindByIdAsync(jobId, cancellationToken);
+        if (job is null)
+        {
+            _logger.LogWarning("Job {JobId} not found", jobId);
+            return;
+        }
+
+        job.MarkAsProcessing();
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        await using var transaction = await unitOfWork.BeginTransactionAsync(
+            IsolationLevel.ReadCommitted,
+            cancellationToken);
+        try
+        {
+            // Chunk article using SK TextChunker
+            var chunks = TextChunker.SplitPlainTextParagraphs(
+                TextChunker.SplitPlainTextLines(content, maxTokensPerLine: 100),
+                maxTokensPerParagraph: 400,
+                overlapTokens: 50);
+
+            var chunkCount = 0;
+            foreach (var chunkContent in chunks)
+            {
+                if (string.IsNullOrWhiteSpace(chunkContent)) continue;
+
+                var embedding = await embeddingService.GetEmbeddingAsync(chunkContent, cancellationToken);
+                var embeddingBytes = embeddingService.SerializeEmbedding(embedding);
+                var tokenCount = EstimateTokens(chunkContent);
+
+                var chunk = ContentChunk.Create(
+                    source: ContentSource.Article,
+                    sourceIdentifier: job.SourceUrl ?? $"{job.ParentDocumentId}_{chunkCount}",
+                    title: $"{job.Title} (Part {chunkCount + 1})",
+                    content: chunkContent,
+                    embedding: embeddingBytes,
+                    tokenCount: tokenCount,
+                    author: job.Author,
+                    parentDocumentId: job.ParentDocumentId,
+                    chunkIndex: chunkCount);
+
+                unitOfWork.ContentChunks.Create(chunk);
+                chunkCount++;
+            }
+
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+
+            job.MarkAsCompleted(chunkCount);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            // Refresh embedding cache so new chunks are available for RAG
+            await _embeddingCache.RefreshAsync(cancellationToken);
+
+            _logger.LogInformation(
+                "Completed article ingestion for job {JobId}: {ChunkCount} chunks created",
+                jobId, chunkCount);
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+
+            _logger.LogError(ex, "Failed to process article for job {JobId}", jobId);
 
             job.MarkAsFailed(ex.Message);
             await unitOfWork.SaveChangesAsync(cancellationToken);

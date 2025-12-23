@@ -78,6 +78,7 @@ public sealed class ContentEmbeddingCache
                 cachedChunks.Add(new CachedChunk(
                     chunk.Id,
                     chunk.Source,
+                    chunk.SourceIdentifier,
                     chunk.Title,
                     chunk.Content,
                     chunk.Author,
@@ -128,6 +129,7 @@ public sealed class ContentEmbeddingCache
 public sealed record CachedChunk(
     Guid Id,
     ContentSource Source,
+    string SourceIdentifier,
     string Title,
     string Content,
     string? Author,

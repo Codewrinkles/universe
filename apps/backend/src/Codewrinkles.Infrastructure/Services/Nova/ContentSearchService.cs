@@ -65,9 +65,13 @@ public sealed class ContentSearchService : IContentSearchService
 
             if (similarity >= minSimilarity)
             {
+                // SourceIdentifier contains URL for articles/docs, or identifier for other sources
+                var sourceUrl = IsUrl(chunk.SourceIdentifier) ? chunk.SourceIdentifier : null;
+
                 scored.Add((new ContentSearchResult(
                     chunk.Id,
                     chunk.Source,
+                    sourceUrl,
                     chunk.Title,
                     chunk.Content,
                     chunk.Author,
@@ -82,5 +86,11 @@ public sealed class ContentSearchService : IContentSearchService
             .Take(limit)
             .Select(x => x.Result)
             .ToList();
+    }
+
+    private static bool IsUrl(string value)
+    {
+        return Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
+               (uri.Scheme == "http" || uri.Scheme == "https");
     }
 }

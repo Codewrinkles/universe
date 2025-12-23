@@ -39,4 +39,13 @@ public sealed class ContentIngestionQueue : IContentIngestionQueue
         var message = new DocsScrapeMessage(jobId);
         await _channel.WriteAsync(message, cancellationToken);
     }
+
+    public async Task QueueArticleIngestionAsync(
+        Guid jobId,
+        string content,
+        CancellationToken cancellationToken = default)
+    {
+        var message = new ArticleIngestionMessage(jobId, content);
+        await _channel.WriteAsync(message, cancellationToken);
+    }
 }

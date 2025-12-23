@@ -27,4 +27,12 @@ public interface IContentIngestionQueue
     Task QueueDocsScrapeAsync(
         Guid jobId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Queue an article for background processing.
+    /// </summary>
+    Task QueueArticleIngestionAsync(
+        Guid jobId,
+        string content,
+        CancellationToken cancellationToken = default);
 }

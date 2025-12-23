@@ -33,6 +33,7 @@ public interface IContentSearchService
 public sealed record ContentSearchResult(
     Guid ChunkId,
     ContentSource Source,
+    string? SourceUrl,
     string Title,
     string Content,
     string? Author,

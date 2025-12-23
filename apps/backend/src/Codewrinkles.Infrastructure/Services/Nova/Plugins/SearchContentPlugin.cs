@@ -78,6 +78,11 @@ public sealed class SearchContentPlugin : INovaPlugin
             var sourceLabel = GetSourceLabel(result.Source);
             entry.AppendLine($"<source type=\"{sourceLabel}\" title=\"{result.Title}\">");
 
+            if (!string.IsNullOrWhiteSpace(result.SourceUrl))
+            {
+                entry.AppendLine($"URL: {result.SourceUrl}");
+            }
+
             if (!string.IsNullOrWhiteSpace(result.Author))
             {
                 entry.AppendLine($"Author: {result.Author}");
@@ -103,6 +108,10 @@ public sealed class SearchContentPlugin : INovaPlugin
                         truncatedContent = truncatedContent[..(remainingChars - 100)] + "... [truncated]";
                     }
                     sb.AppendLine($"<source type=\"{sourceLabel}\" title=\"{result.Title}\">");
+                    if (!string.IsNullOrWhiteSpace(result.SourceUrl))
+                    {
+                        sb.AppendLine($"URL: {result.SourceUrl}");
+                    }
                     if (!string.IsNullOrWhiteSpace(result.Author))
                     {
                         sb.AppendLine($"Author: {result.Author}");

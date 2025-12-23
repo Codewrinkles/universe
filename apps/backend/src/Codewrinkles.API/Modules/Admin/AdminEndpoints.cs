@@ -55,6 +55,9 @@ public static class AdminEndpoints
         group.MapPost("/nova/content/docs", IngestDocs)
             .WithName("IngestDocs");
 
+        group.MapPost("/nova/content/article", IngestArticle)
+            .WithName("IngestArticle");
+
         group.MapDelete("/nova/content/jobs/{id:guid}", DeleteIngestionJob)
             .WithName("DeleteIngestionJob");
     }
@@ -468,6 +471,48 @@ public static class AdminEndpoints
             });
     }
 
+    private static async Task<IResult> IngestArticle(
+        [FromServices] IMediator mediator,
+        [FromBody] IngestArticleRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.Title))
+        {
+            return Results.BadRequest(new { message = "Title is required" });
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Content))
+        {
+            return Results.BadRequest(new { message = "Content is required" });
+        }
+
+        // Validate URL if provided
+        if (!string.IsNullOrWhiteSpace(request.Url))
+        {
+            if (!Uri.TryCreate(request.Url, UriKind.Absolute, out var uri) ||
+                (uri.Scheme != "http" && uri.Scheme != "https"))
+            {
+                return Results.BadRequest(new { message = "Invalid URL format" });
+            }
+        }
+
+        var command = new IngestArticleCommand(
+            Title: request.Title.Trim(),
+            Content: request.Content,
+            Author: request.Author?.Trim(),
+            Url: request.Url?.Trim());
+
+        var result = await mediator.SendAsync(command, cancellationToken);
+
+        return Results.Accepted(
+            $"/api/admin/nova/content/jobs/{result.JobId}",
+            new
+            {
+                jobId = result.JobId,
+                message = "Article ingestion started. Check job status for progress."
+            });
+    }
+
     private static async Task<IResult> DeleteIngestionJob(
         [FromServices] IMediator mediator,
         [FromRoute] Guid id,
@@ -525,4 +570,11 @@ public sealed record IngestDocsRequest(
     string HomepageUrl,
     string Technology,
     int? MaxPages
+);
+
+public sealed record IngestArticleRequest(
+    string Title,
+    string Content,
+    string? Author = null,
+    string? Url = null
 );
