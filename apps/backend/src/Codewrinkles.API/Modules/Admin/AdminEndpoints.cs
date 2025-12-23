@@ -37,6 +37,26 @@ public static class AdminEndpoints
         // User management
         group.MapGet("/users", GetAdminUsers)
             .WithName("GetAdminUsers");
+
+        // Content ingestion management
+        group.MapGet("/nova/content/jobs", GetIngestionJobs)
+            .WithName("GetIngestionJobs");
+
+        group.MapGet("/nova/content/jobs/{id:guid}", GetIngestionJob)
+            .WithName("GetIngestionJob");
+
+        group.MapPost("/nova/content/pdf", IngestPdf)
+            .WithName("IngestPdf")
+            .DisableAntiforgery();
+
+        group.MapPost("/nova/content/transcript", IngestTranscript)
+            .WithName("IngestTranscript");
+
+        group.MapPost("/nova/content/docs", IngestDocs)
+            .WithName("IngestDocs");
+
+        group.MapDelete("/nova/content/jobs/{id:guid}", DeleteIngestionJob)
+            .WithName("DeleteIngestionJob");
     }
 
     private static async Task<IResult> GetDashboardMetrics(
@@ -233,4 +253,276 @@ public static class AdminEndpoints
             })
         });
     }
+
+    private static async Task<IResult> GetIngestionJobs(
+        [FromServices] IMediator mediator,
+        [FromQuery] string? status,
+        CancellationToken cancellationToken)
+    {
+        IngestionJobStatus? statusFilter = status?.ToLowerInvariant() switch
+        {
+            "queued" => IngestionJobStatus.Queued,
+            "processing" => IngestionJobStatus.Processing,
+            "completed" => IngestionJobStatus.Completed,
+            "failed" => IngestionJobStatus.Failed,
+            _ => null
+        };
+
+        var query = new GetIngestionJobsQuery(statusFilter);
+        var result = await mediator.QueryAsync(query, cancellationToken);
+
+        return Results.Ok(new
+        {
+            jobs = result.Jobs.Select(j => new
+            {
+                id = j.Id,
+                source = j.Source.ToLowerInvariant(),
+                status = j.Status.ToLowerInvariant(),
+                title = j.Title,
+                author = j.Author,
+                technology = j.Technology,
+                sourceUrl = j.SourceUrl,
+                chunksCreated = j.ChunksCreated,
+                totalPages = j.TotalPages,
+                pagesProcessed = j.PagesProcessed,
+                errorMessage = j.ErrorMessage,
+                createdAt = j.CreatedAt,
+                startedAt = j.StartedAt,
+                completedAt = j.CompletedAt
+            })
+        });
+    }
+
+    private static async Task<IResult> GetIngestionJob(
+        [FromServices] IMediator mediator,
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
+    {
+        var query = new GetIngestionJobQuery(id);
+        var result = await mediator.QueryAsync(query, cancellationToken);
+
+        if (result.Job is null)
+        {
+            return Results.NotFound(new { message = "Ingestion job not found" });
+        }
+
+        var j = result.Job;
+        return Results.Ok(new
+        {
+            id = j.Id,
+            source = j.Source.ToLowerInvariant(),
+            status = j.Status.ToLowerInvariant(),
+            title = j.Title,
+            author = j.Author,
+            technology = j.Technology,
+            sourceUrl = j.SourceUrl,
+            chunksCreated = j.ChunksCreated,
+            totalPages = j.TotalPages,
+            pagesProcessed = j.PagesProcessed,
+            errorMessage = j.ErrorMessage,
+            createdAt = j.CreatedAt,
+            startedAt = j.StartedAt,
+            completedAt = j.CompletedAt
+        });
+    }
+
+    private static async Task<IResult> IngestPdf(
+        [FromServices] IMediator mediator,
+        [FromForm] string title,
+        [FromForm] string? contentType,
+        [FromForm] string? author,
+        [FromForm] string? technology,
+        IFormFile file,
+        CancellationToken cancellationToken)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return Results.BadRequest(new { message = "PDF file is required" });
+        }
+
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return Results.BadRequest(new { message = "Title is required" });
+        }
+
+        // Default to "book" for backwards compatibility
+        var normalizedContentType = string.IsNullOrWhiteSpace(contentType)
+            ? "book"
+            : contentType.Trim().ToLowerInvariant();
+        if (normalizedContentType == "book" && string.IsNullOrWhiteSpace(author))
+        {
+            return Results.BadRequest(new { message = "Author is required for books" });
+        }
+
+        if (normalizedContentType == "officialdocs" && string.IsNullOrWhiteSpace(technology))
+        {
+            return Results.BadRequest(new { message = "Technology is required for official documentation" });
+        }
+
+        using var memoryStream = new MemoryStream();
+        await file.CopyToAsync(memoryStream, cancellationToken);
+
+        var command = new IngestPdfCommand(
+            Title: title.Trim(),
+            PdfBytes: memoryStream.ToArray(),
+            ContentType: normalizedContentType,
+            Author: author?.Trim(),
+            Technology: technology?.Trim());
+
+        var result = await mediator.SendAsync(command, cancellationToken);
+
+        return Results.Accepted(
+            $"/api/admin/nova/content/jobs/{result.JobId}",
+            new
+            {
+                jobId = result.JobId,
+                message = "PDF ingestion started. Check job status for progress."
+            });
+    }
+
+    private static async Task<IResult> IngestTranscript(
+        [FromServices] IMediator mediator,
+        [FromBody] IngestTranscriptRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.VideoUrl))
+        {
+            return Results.BadRequest(new { message = "Video URL is required" });
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Title))
+        {
+            return Results.BadRequest(new { message = "Title is required" });
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Transcript))
+        {
+            return Results.BadRequest(new { message = "Transcript is required" });
+        }
+
+        // Extract video ID from URL
+        var videoId = ExtractYouTubeVideoId(request.VideoUrl);
+        if (string.IsNullOrEmpty(videoId))
+        {
+            return Results.BadRequest(new { message = "Invalid YouTube URL" });
+        }
+
+        var command = new IngestTranscriptCommand(
+            VideoId: videoId,
+            VideoUrl: request.VideoUrl.Trim(),
+            Title: request.Title.Trim(),
+            Transcript: request.Transcript);
+
+        var result = await mediator.SendAsync(command, cancellationToken);
+
+        return Results.Accepted(
+            $"/api/admin/nova/content/jobs/{result.JobId}",
+            new
+            {
+                jobId = result.JobId,
+                message = "Transcript ingestion started. Check job status for progress."
+            });
+    }
+
+    private static async Task<IResult> IngestDocs(
+        [FromServices] IMediator mediator,
+        [FromBody] IngestDocsRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.HomepageUrl))
+        {
+            return Results.BadRequest(new { message = "Homepage URL is required" });
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Technology))
+        {
+            return Results.BadRequest(new { message = "Technology is required" });
+        }
+
+        // Validate URL
+        if (!Uri.TryCreate(request.HomepageUrl, UriKind.Absolute, out var uri) ||
+            (uri.Scheme != "http" && uri.Scheme != "https"))
+        {
+            return Results.BadRequest(new { message = "Invalid URL format" });
+        }
+
+        var maxPages = request.MaxPages ?? 100;
+        if (maxPages < 1 || maxPages > 500)
+        {
+            return Results.BadRequest(new { message = "MaxPages must be between 1 and 500" });
+        }
+
+        var command = new IngestDocsCommand(
+            HomepageUrl: request.HomepageUrl.Trim(),
+            Technology: request.Technology.Trim(),
+            MaxPages: maxPages);
+
+        var result = await mediator.SendAsync(command, cancellationToken);
+
+        return Results.Accepted(
+            $"/api/admin/nova/content/jobs/{result.JobId}",
+            new
+            {
+                jobId = result.JobId,
+                message = "Documentation scraping started. Check job status for progress."
+            });
+    }
+
+    private static async Task<IResult> DeleteIngestionJob(
+        [FromServices] IMediator mediator,
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
+    {
+        var command = new DeleteIngestionJobCommand(id);
+        var result = await mediator.SendAsync(command, cancellationToken);
+
+        if (!result.Success)
+        {
+            if (result.Message == "Ingestion job not found")
+            {
+                return Results.NotFound(new { message = result.Message });
+            }
+            return Results.BadRequest(new { message = result.Message });
+        }
+
+        return Results.Ok(new { message = "Ingestion job and associated content deleted" });
+    }
+
+    private static string? ExtractYouTubeVideoId(string url)
+    {
+        // Handle various YouTube URL formats
+        // - https://www.youtube.com/watch?v=VIDEO_ID
+        // - https://youtu.be/VIDEO_ID
+        // - https://www.youtube.com/embed/VIDEO_ID
+
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        {
+            return null;
+        }
+
+        if (uri.Host.Contains("youtube.com"))
+        {
+            var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+            return query["v"];
+        }
+
+        if (uri.Host.Contains("youtu.be"))
+        {
+            return uri.AbsolutePath.TrimStart('/');
+        }
+
+        return null;
+    }
 }
+
+public sealed record IngestTranscriptRequest(
+    string VideoUrl,
+    string Title,
+    string Transcript
+);
+
+public sealed record IngestDocsRequest(
+    string HomepageUrl,
+    string Technology,
+    int? MaxPages
+);

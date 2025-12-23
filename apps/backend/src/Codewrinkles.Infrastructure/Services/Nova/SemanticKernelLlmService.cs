@@ -138,7 +138,10 @@ public sealed class SemanticKernelLlmService : ILlmService
         var kernelWithPlugins = CreateKernelWithPlugins(plugins);
         var executionSettings = CreateExecutionSettingsWithTools();
 
-        var response = await _chatService.GetChatMessageContentAsync(
+        // Get chat service from the kernel with plugins - required for auto function calling
+        var chatServiceWithPlugins = kernelWithPlugins.GetRequiredService<IChatCompletionService>();
+
+        var response = await chatServiceWithPlugins.GetChatMessageContentAsync(
             chatHistory,
             executionSettings,
             kernel: kernelWithPlugins,
@@ -167,45 +170,76 @@ public sealed class SemanticKernelLlmService : ILlmService
         IReadOnlyList<object> plugins,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var chatHistory = BuildChatHistory(messages);
-        var kernelWithPlugins = CreateKernelWithPlugins(plugins);
-        var executionSettings = CreateExecutionSettingsWithTools();
+        // IMPORTANT: Streaming with auto-invoke is NOT supported in Semantic Kernel.
+        // See: https://learn.microsoft.com/en-us/semantic-kernel/concepts/ai-services/chat-completion/function-calling/function-invocation
+        //
+        // When plugins are present, we use the non-streaming API which supports auto-invoke,
+        // then simulate streaming by yielding the response in chunks.
 
-        var fullContent = new StringBuilder();
-        var inputTokens = 0;
-        var outputTokens = 0;
-
-        await foreach (var chunk in _chatService.GetStreamingChatMessageContentsAsync(
-            chatHistory,
-            executionSettings,
-            kernel: kernelWithPlugins,
-            cancellationToken: cancellationToken))
+        if (plugins.Count > 0)
         {
-            var content = chunk.Content ?? string.Empty;
-            fullContent.Append(content);
+            // Use non-streaming with auto-invoke for tool calling
+            var response = await GetChatCompletionWithToolsAsync(messages, plugins, cancellationToken);
 
-            // Try to get token usage from final chunk
-            if (chunk.Metadata?.TryGetValue("Usage", out var usageObj) == true &&
-                usageObj is OpenAI.Chat.ChatTokenUsage usage)
+            // Simulate streaming by chunking the response
+            const int chunkSize = 20; // Characters per chunk for smooth streaming effect
+            var content = response.Content;
+
+            for (var i = 0; i < content.Length; i += chunkSize)
             {
-                inputTokens = usage.InputTokenCount;
-                outputTokens = usage.OutputTokenCount;
+                var chunk = content.Substring(i, Math.Min(chunkSize, content.Length - i));
+                yield return new StreamingLlmChunk(chunk, IsComplete: false);
+
+                // Small delay to simulate streaming effect
+                await Task.Delay(10, cancellationToken);
             }
 
-            // Yield content chunks
-            if (!string.IsNullOrEmpty(content))
-            {
-                yield return new StreamingLlmChunk(content, IsComplete: false);
-            }
+            // Yield final chunk with metadata
+            yield return new StreamingLlmChunk(
+                Content: string.Empty,
+                IsComplete: true,
+                InputTokens: response.InputTokens,
+                OutputTokens: response.OutputTokens,
+                ModelUsed: response.ModelUsed);
         }
+        else
+        {
+            // No plugins - use true streaming
+            var chatHistory = BuildChatHistory(messages);
+            var executionSettings = CreateExecutionSettings();
 
-        // Yield final chunk with metadata
-        yield return new StreamingLlmChunk(
-            Content: string.Empty,
-            IsComplete: true,
-            InputTokens: inputTokens,
-            OutputTokens: outputTokens,
-            ModelUsed: _settings.ModelId);
+            var fullContent = new StringBuilder();
+            var inputTokens = 0;
+            var outputTokens = 0;
+
+            await foreach (var chunk in _chatService.GetStreamingChatMessageContentsAsync(
+                chatHistory,
+                executionSettings,
+                cancellationToken: cancellationToken))
+            {
+                var content = chunk.Content ?? string.Empty;
+                fullContent.Append(content);
+
+                if (chunk.Metadata?.TryGetValue("Usage", out var usageObj) == true &&
+                    usageObj is OpenAI.Chat.ChatTokenUsage usage)
+                {
+                    inputTokens = usage.InputTokenCount;
+                    outputTokens = usage.OutputTokenCount;
+                }
+
+                if (!string.IsNullOrEmpty(content))
+                {
+                    yield return new StreamingLlmChunk(content, IsComplete: false);
+                }
+            }
+
+            yield return new StreamingLlmChunk(
+                Content: string.Empty,
+                IsComplete: true,
+                InputTokens: inputTokens,
+                OutputTokens: outputTokens,
+                ModelUsed: _settings.ModelId);
+        }
     }
 
     private Kernel CreateKernelWithPlugins(IReadOnlyList<object> plugins)
@@ -236,7 +270,8 @@ public sealed class SemanticKernelLlmService : ILlmService
         {
             MaxTokens = _settings.MaxTokens,
             Temperature = _settings.Temperature,
-            ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
+            // Use the newer FunctionChoiceBehavior API (ToolCallBehavior is deprecated)
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
         };
     }
 }

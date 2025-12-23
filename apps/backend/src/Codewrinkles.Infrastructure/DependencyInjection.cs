@@ -223,6 +223,14 @@ public static class DependencyInjection
         // Using INovaPlugin interface allows clean architecture separation
         services.AddScoped<INovaPlugin, SearchContentPlugin>();
 
+        // 6. Memory Extraction Background Processing
+        // Extracts insights from conversation sessions into memories for future context
+        // Architecture: Channel (singleton queue) -> BackgroundService (singleton processor)
+        //               -> creates scope per job -> uses IMediator to call handler
+        services.AddSingleton<MemoryExtractionChannel>();
+        services.AddSingleton<IMemoryExtractionQueue, MemoryExtractionQueue>();
+        services.AddHostedService<MemoryExtractionBackgroundService>();
+
         // ===== Content Ingestion Services (RAG) =====
         //
         // Architecture: Channel (singleton queue) -> BackgroundService (singleton processor)

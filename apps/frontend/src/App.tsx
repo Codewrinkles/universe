@@ -28,6 +28,7 @@ import { AdminPage } from "./features/admin/AdminPage";
 import { DashboardPage } from "./features/admin/DashboardPage";
 import { AlphaApplicationsPage } from "./features/admin/AlphaApplicationsPage";
 import { NovaMetricsPage } from "./features/admin/NovaMetricsPage";
+import { ContentIngestionPage } from "./features/admin/ContentIngestionPage";
 import { UsersPage } from "./features/admin/UsersPage";
 import { TermsPage, PrivacyPage } from "./features/legal";
 import { NovaLayout, NovaChatPage, NovaSettingsPage } from "./features/nova";
@@ -124,6 +125,7 @@ export function App(): JSX.Element {
             <Route index element={<Navigate to="/admin/nova/submissions" replace />} />
             <Route path="submissions" element={<AlphaApplicationsPage />} />
             <Route path="metrics" element={<NovaMetricsPage />} />
+            <Route path="content" element={<ContentIngestionPage />} />
           </Route>
           {/* Legacy route redirect */}
           <Route path="alpha" element={<Navigate to="/admin/nova/submissions" replace />} />

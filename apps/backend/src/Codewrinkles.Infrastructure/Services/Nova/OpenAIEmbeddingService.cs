@@ -1,31 +1,74 @@
 using System.Buffers.Binary;
+using System.ClientModel;
 using Codewrinkles.Application.Common.Interfaces;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 
 namespace Codewrinkles.Infrastructure.Services.Nova;
 
 /// <summary>
 /// Embedding service implementation using Microsoft Semantic Kernel with OpenAI.
+/// Includes retry logic with exponential backoff for transient errors (502, 503, etc.).
 /// </summary>
 public sealed class OpenAIEmbeddingService : IEmbeddingService
 {
-    private readonly IEmbeddingGenerator<string, Embedding<float>> _embeddingGenerator;
+    private const int MaxRetries = 10;
+    private const int InitialDelayMs = 1000; // 1 second
 
-    public OpenAIEmbeddingService(Kernel kernel)
+    private readonly IEmbeddingGenerator<string, Embedding<float>> _embeddingGenerator;
+    private readonly ILogger<OpenAIEmbeddingService> _logger;
+
+    public OpenAIEmbeddingService(Kernel kernel, ILogger<OpenAIEmbeddingService> logger)
     {
         _embeddingGenerator = kernel.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>();
+        _logger = logger;
     }
 
     public async Task<float[]> GetEmbeddingAsync(
         string text,
         CancellationToken cancellationToken = default)
     {
-        var embedding = await _embeddingGenerator.GenerateAsync(
-            text,
-            cancellationToken: cancellationToken);
+        var attempt = 0;
+        var delay = InitialDelayMs;
 
-        return embedding.Vector.ToArray();
+        while (true)
+        {
+            try
+            {
+                attempt++;
+                var embedding = await _embeddingGenerator.GenerateAsync(
+                    text,
+                    cancellationToken: cancellationToken);
+
+                return embedding.Vector.ToArray();
+            }
+            catch (ClientResultException ex) when (IsTransientError(ex) && attempt < MaxRetries)
+            {
+                _logger.LogWarning(
+                    "Transient error (attempt {Attempt}/{MaxRetries}): {Status}. Retrying in {Delay}ms...",
+                    attempt, MaxRetries, ex.Status, delay);
+
+                await Task.Delay(delay, cancellationToken);
+                delay *= 2; // Exponential backoff
+            }
+            catch (HttpRequestException ex) when (attempt < MaxRetries)
+            {
+                _logger.LogWarning(
+                    "Network error (attempt {Attempt}/{MaxRetries}): {Message}. Retrying in {Delay}ms...",
+                    attempt, MaxRetries, ex.Message, delay);
+
+                await Task.Delay(delay, cancellationToken);
+                delay *= 2;
+            }
+        }
+    }
+
+    private static bool IsTransientError(ClientResultException ex)
+    {
+        // 502 Bad Gateway, 503 Service Unavailable, 504 Gateway Timeout
+        // Also treat 429 (rate limit) as transient - wait and retry
+        return ex.Status is 429 or 502 or 503 or 504;
     }
 
     public float CosineSimilarity(float[] a, float[] b)

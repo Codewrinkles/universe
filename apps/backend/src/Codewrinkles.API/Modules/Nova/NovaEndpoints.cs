@@ -79,6 +79,7 @@ public static class NovaEndpoints
         [FromServices] IEmbeddingService embeddingService,
         [FromServices] IEnumerable<INovaPlugin> novaPlugins,
         [FromServices] IMediator mediator,
+        [FromServices] IMemoryExtractionQueue memoryExtractionQueue,
         CancellationToken cancellationToken)
     {
         const int MaxContextMessages = 20;
@@ -125,11 +126,10 @@ public static class NovaEndpoints
         }
         else
         {
-            // NEW CONVERSATION: Trigger memory extraction from previous sessions first
-            // This ensures memories from past conversations are available for context
-            await mediator.SendAsync(
-                new TriggerMemoryExtractionCommand(profileId),
-                cancellationToken);
+            // NEW CONVERSATION: Queue memory extraction from previous sessions
+            // This runs in background so the first message responds immediately
+            // Extracted memories will be available for subsequent sessions
+            await memoryExtractionQueue.QueueExtractionAsync(profileId, cancellationToken);
 
             session = ConversationSession.Create(profileId);
             unitOfWork.Nova.CreateSession(session);

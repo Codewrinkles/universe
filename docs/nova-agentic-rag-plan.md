@@ -1,7 +1,7 @@
 # Nova Agentic RAG: Technical Implementation Plan
 
 > **Purpose**: Detailed week-by-week technical plan for implementing Agentic RAG with Semantic Kernel Plugins.
-> **Last Updated**: December 22, 2025 (Week 2 completed)
+> **Last Updated**: December 22, 2025 (Week 3 completed)
 > **Prerequisites**: CLAUDE.md standards, existing Nova implementation
 
 ---
@@ -3395,19 +3395,36 @@ private const string ToolUsageInstructions = """
 
 ---
 
-### Week 3: Admin UI + API Endpoints
+### Week 3: Admin UI + API Endpoints ✅ COMPLETED
+
+**Completed:** 2025-12-22
 
 | Day | Task | Details |
 |-----|------|---------|
-| **1** | API endpoints | `POST /api/admin/content/pdf`, `POST /api/admin/content/transcript`, `POST /api/admin/content/scrape` |
-| **1** | API endpoints | `GET /api/admin/content/jobs`, `DELETE /api/admin/content/{id}` |
+| **1** | API endpoints | `POST /api/admin/nova/content/pdf`, `POST /api/admin/nova/content/transcript`, `POST /api/admin/nova/content/docs` |
+| **1** | API endpoints | `GET /api/admin/nova/content/jobs`, `GET /api/admin/nova/content/jobs/{id}`, `DELETE /api/admin/nova/content/jobs/{id}` |
 | **2** | ContentIngestionPage.tsx | Upload PDF form, upload transcript form, scrape URL form |
 | **2** | Update AdminNavigation | Add "Content" under Nova dropdown |
 | **3** | Indexed content list | Display jobs with status, chunk counts, delete action |
-| **3** | Job status polling | Auto-refresh to show scraping progress |
-| **4** | Docs scraping logic | HTML fetch → extract links → crawl → chunk |
-| **4** | HTML to Markdown | Strip nav/footer, convert to clean markdown |
-| **5** | Rate limiting + error handling | 1 req/sec, max pages limit, retry logic |
+| **3** | Job status polling | Auto-refresh every 5 seconds when jobs are active |
+| **4** | Docs scraping logic | Already implemented in Week 1: HTML fetch → extract links → crawl → chunk |
+| **4** | HTML to Markdown | Already implemented: Strip script/style/nav/footer/header, convert to clean markdown |
+| **5** | Rate limiting + error handling | Already implemented: 1 req/sec delay, max pages limit, HttpRequestException handling |
+
+**Files Created:**
+- `Codewrinkles.Application/Nova/IngestPdf.cs` - Command and handler for PDF ingestion
+- `Codewrinkles.Application/Nova/IngestTranscript.cs` - Command and handler for transcript ingestion
+- `Codewrinkles.Application/Nova/IngestDocs.cs` - Command and handler for docs scraping
+- `Codewrinkles.Application/Nova/GetIngestionJobs.cs` - Query for listing all jobs
+- `Codewrinkles.Application/Nova/GetIngestionJob.cs` - Query for single job details
+- `Codewrinkles.Application/Nova/DeleteIngestionJob.cs` - Command for deleting job and content
+- `apps/frontend/src/features/admin/ContentIngestionPage.tsx` - Admin UI page
+
+**Files Modified:**
+- `Codewrinkles.API/Modules/Admin/AdminEndpoints.cs` - Added 6 new endpoints
+- `Codewrinkles.Telemetry/SpanNames.cs` - Added ingestion span names
+- `apps/frontend/src/features/admin/AdminNavigation.tsx` - Added Content under Nova dropdown
+- `apps/frontend/src/App.tsx` - Added route for content ingestion page
 
 **System Prompt Update (Week 3):** No changes - admin UI only.
 

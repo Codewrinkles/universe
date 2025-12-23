@@ -38,7 +38,8 @@ public sealed partial class ContentIngestionBackgroundService : BackgroundServic
             try
             {
                 // Create a scope per job - ensures proper lifetime for scoped services
-                using var scope = _scopeFactory.CreateScope();
+                // Must use CreateAsyncScope() because UnitOfWork implements IAsyncDisposable
+                await using var scope = _scopeFactory.CreateAsyncScope();
 
                 await ProcessMessageAsync(message, scope.ServiceProvider, stoppingToken);
             }
@@ -125,13 +126,14 @@ public sealed partial class ContentIngestionBackgroundService : BackgroundServic
                     var tokenCount = EstimateTokens(chunkContent);
 
                     var chunk = ContentChunk.Create(
-                        source: ContentSource.Book,
+                        source: job.Source,
                         sourceIdentifier: $"{job.ParentDocumentId}_{chunkCount}",
                         title: $"{job.Title} - Page {i + 1}",
                         content: chunkContent,
                         embedding: embeddingBytes,
                         tokenCount: tokenCount,
                         author: job.Author,
+                        technology: job.Technology,
                         parentDocumentId: job.ParentDocumentId,
                         chunkIndex: chunkCount);
 
@@ -190,9 +192,19 @@ public sealed partial class ContentIngestionBackgroundService : BackgroundServic
             cancellationToken);
         try
         {
+            // Clean transcript: remove timestamps, filler words, section markers
+            var cleanedTranscript = TranscriptCleaner.Clean(transcript);
+
+            _logger.LogInformation(
+                "Cleaned transcript for job {JobId}: {OriginalLength} -> {CleanedLength} chars ({Reduction:P0} reduction)",
+                jobId,
+                transcript.Length,
+                cleanedTranscript.Length,
+                1 - (double)cleanedTranscript.Length / transcript.Length);
+
             // Chunk transcript using SK TextChunker
             var chunks = TextChunker.SplitPlainTextParagraphs(
-                TextChunker.SplitPlainTextLines(transcript, maxTokensPerLine: 100),
+                TextChunker.SplitPlainTextLines(cleanedTranscript, maxTokensPerLine: 100),
                 maxTokensPerParagraph: 400,
                 overlapTokens: 50);
 

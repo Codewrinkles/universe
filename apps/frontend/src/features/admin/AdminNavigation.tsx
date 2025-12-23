@@ -115,12 +115,18 @@ export function AdminNavigation({ onMobileClose }: AdminNavigationProps): JSX.El
                 onClick={onMobileClose}
                 isChild
               />
+              <NavItem
+                to="/admin/nova/content"
+                icon="📚"
+                label="Content"
+                onClick={onMobileClose}
+                isChild
+              />
             </div>
           )}
         </div>
 
         <NavItem to="/admin/users" icon="👥" label="Users" onClick={onMobileClose} />
-        <NavItem to="/admin/content" icon="📝" label="Content" onClick={onMobileClose} />
         <NavItem to="/admin/settings" icon="⚙️" label="Settings" onClick={onMobileClose} />
       </div>
     </nav>

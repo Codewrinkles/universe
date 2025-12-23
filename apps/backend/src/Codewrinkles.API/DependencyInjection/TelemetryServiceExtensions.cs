@@ -51,11 +51,6 @@ public static class TelemetryServiceExtensions
 
         // Add processor to enrich spans with authenticated user info
         tracing.AddProcessor<UserTelemetryProcessor>();
-
-        if (environment.IsDevelopment())
-        {
-            tracing.AddConsoleExporter();
-        }
     }
 
     private static void ConfigureMetrics(MeterProviderBuilder metrics, IHostEnvironment environment)
@@ -69,11 +64,6 @@ public static class TelemetryServiceExtensions
         foreach (var meterName in Meters.AllMeterNames)
         {
             metrics.AddMeter(meterName);
-        }
-
-        if (environment.IsDevelopment())
-        {
-            metrics.AddConsoleExporter();
         }
     }
 }

@@ -111,5 +111,11 @@ public static class SpanNames
         public const string GetAlphaApplications = "Nova.GetAlphaApplications";
         public const string AcceptAlphaApplication = "Nova.AcceptAlphaApplication";
         public const string WaitlistAlphaApplication = "Nova.WaitlistAlphaApplication";
+        public const string IngestPdf = "Nova.IngestPdf";
+        public const string IngestTranscript = "Nova.IngestTranscript";
+        public const string IngestDocs = "Nova.IngestDocs";
+        public const string GetIngestionJobs = "Nova.GetIngestionJobs";
+        public const string GetIngestionJob = "Nova.GetIngestionJob";
+        public const string DeleteIngestionJob = "Nova.DeleteIngestionJob";
     }
 }

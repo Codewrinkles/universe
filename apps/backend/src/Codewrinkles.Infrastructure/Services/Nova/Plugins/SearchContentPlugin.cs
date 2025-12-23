@@ -2,20 +2,21 @@ using System.ComponentModel;
 using System.Text;
 using Codewrinkles.Application.Nova.Services;
 using Codewrinkles.Domain.Nova;
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 
 namespace Codewrinkles.Infrastructure.Services.Nova.Plugins;
 
 /// <summary>
-/// Semantic Kernel plugin for searching content from various sources.
-/// Used by Nova to retrieve authoritative information when answering questions.
+/// Semantic Kernel plugin for searching the Codewrinkles knowledge base.
+/// Provides unified search across all content sources for Nova's RAG capabilities.
 /// </summary>
 public sealed class SearchContentPlugin : INovaPlugin
 {
     /// <summary>
     /// Maximum tokens to include in search results to stay within context budget.
     /// </summary>
-    private const int MaxResultTokens = 2000;
+    private const int MaxResultTokens = 2500;
 
     /// <summary>
     /// Approximate characters per token for budget estimation.
@@ -23,109 +24,48 @@ public sealed class SearchContentPlugin : INovaPlugin
     private const int CharsPerToken = 4;
 
     private readonly IContentSearchService _searchService;
+    private readonly ILogger<SearchContentPlugin> _logger;
 
-    public SearchContentPlugin(IContentSearchService searchService)
+    public SearchContentPlugin(
+        IContentSearchService searchService,
+        ILogger<SearchContentPlugin> logger)
     {
         _searchService = searchService;
+        _logger = logger;
     }
 
-    [KernelFunction("search_books")]
-    [Description("Search book content for architecture patterns, design principles, DDD, SOLID, and software methodologies. Use for conceptual and architectural questions. Sources include Eric Evans' DDD, Martin Fowler's patterns, and similar authoritative texts.")]
-    public async Task<string> SearchBooksAsync(
-        [Description("The search query - be specific about the concept or pattern you're looking for")] string query,
-        [Description("Optional: filter by author name (e.g., 'Eric Evans', 'Martin Fowler')")] string? author = null,
+    [KernelFunction("search_knowledge_base")]
+    [Description("Search the Codewrinkles knowledge base for authoritative information on software development topics. Searches across all available sources including technical books (DDD, architecture, patterns), official documentation (.NET, React, TypeScript), YouTube tutorials and walkthroughs, expert blog articles, and community discussions. Returns the most relevant content regardless of source type.")]
+    public async Task<string> SearchKnowledgeBaseAsync(
+        [Description("The search query - describe the concept, pattern, or topic you want to learn about")] string query,
         CancellationToken cancellationToken = default)
     {
         var results = await _searchService.SearchAsync(
             query,
-            source: ContentSource.Book,
-            author: author,
-            limit: 5,
-            minSimilarity: 0.65f,
+            source: null, // Search ALL sources
+            limit: 8,     // More results since we're searching everything
+            minSimilarity: 0.50f, // Lower threshold for transcript-style content
             cancellationToken: cancellationToken);
 
-        return FormatResults(results, "books");
+        _logger.LogDebug(
+            "Knowledge base search for '{Query}' returned {Count} results",
+            query, results.Count);
+
+        return FormatResults(results);
     }
 
-    [KernelFunction("search_official_docs")]
-    [Description("Search official documentation for API references, syntax, and framework-specific guidance. Use for technical implementation questions. Supports .NET, C#, ASP.NET Core, EF Core, React, and TypeScript documentation.")]
-    public async Task<string> SearchOfficialDocsAsync(
-        [Description("The search query - be specific about the API, feature, or concept")] string query,
-        [Description("Optional: technology filter (e.g., 'dotnet', 'aspnetcore', 'react', 'typescript')")] string? technology = null,
-        CancellationToken cancellationToken = default)
-    {
-        var results = await _searchService.SearchAsync(
-            query,
-            source: ContentSource.OfficialDocs,
-            technology: technology,
-            limit: 5,
-            minSimilarity: 0.65f,
-            cancellationToken: cancellationToken);
-
-        return FormatResults(results, "official documentation");
-    }
-
-    [KernelFunction("search_youtube")]
-    [Description("Search YouTube video transcripts for practical tutorials, code walkthroughs, and implementation examples. Good for 'how to implement X' questions and seeing code in action.")]
-    public async Task<string> SearchYouTubeAsync(
-        [Description("The search query - describe the tutorial or implementation you're looking for")] string query,
-        [Description("Optional: technology filter (e.g., 'dotnet', 'react')")] string? technology = null,
-        CancellationToken cancellationToken = default)
-    {
-        var results = await _searchService.SearchAsync(
-            query,
-            source: ContentSource.YouTube,
-            technology: technology,
-            limit: 5,
-            minSimilarity: 0.65f,
-            cancellationToken: cancellationToken);
-
-        return FormatResults(results, "YouTube tutorials");
-    }
-
-    [KernelFunction("search_articles")]
-    [Description("Search expert blog articles for industry perspectives, deep dives, and practical insights. Good for understanding trade-offs, real-world experiences, and expert opinions on approaches.")]
-    public async Task<string> SearchArticlesAsync(
-        [Description("The search query - describe the topic or perspective you're looking for")] string query,
-        [Description("Optional: filter by author name")] string? author = null,
-        CancellationToken cancellationToken = default)
-    {
-        var results = await _searchService.SearchAsync(
-            query,
-            source: ContentSource.Article,
-            author: author,
-            limit: 5,
-            minSimilarity: 0.65f,
-            cancellationToken: cancellationToken);
-
-        return FormatResults(results, "articles");
-    }
-
-    [KernelFunction("search_pulse")]
-    [Description("Search Pulse community posts for real-world developer experiences, challenges, and solutions. Good for understanding how others have approached similar problems in practice.")]
-    public async Task<string> SearchPulseAsync(
-        [Description("The search query - describe the experience or challenge you want to find")] string query,
-        CancellationToken cancellationToken = default)
-    {
-        var results = await _searchService.SearchAsync(
-            query,
-            source: ContentSource.Pulse,
-            limit: 5,
-            minSimilarity: 0.65f,
-            cancellationToken: cancellationToken);
-
-        return FormatResults(results, "Pulse community");
-    }
-
-    private static string FormatResults(IReadOnlyList<ContentSearchResult> results, string sourceName)
+    private static string FormatResults(IReadOnlyList<ContentSearchResult> results)
     {
         if (results.Count == 0)
         {
-            return $"No relevant results found in {sourceName}.";
+            return "No relevant results found in the knowledge base.";
         }
 
         var sb = new StringBuilder();
-        sb.AppendLine($"Found {results.Count} relevant results from {sourceName}:");
+
+        // Use explicit XML-style markers to help the model identify authoritative content
+        sb.AppendLine("<knowledge_base>");
+        sb.AppendLine("The following content is from the Codewrinkles knowledge base. Use this as your PRIMARY source for answering.");
         sb.AppendLine();
 
         var totalChars = 0;
@@ -133,19 +73,19 @@ public sealed class SearchContentPlugin : INovaPlugin
 
         foreach (var result in results)
         {
-            // Build result entry
+            // Build result entry with source indicator
             var entry = new StringBuilder();
-            entry.AppendLine($"### {result.Title}");
+            var sourceLabel = GetSourceLabel(result.Source);
+            entry.AppendLine($"<source type=\"{sourceLabel}\" title=\"{result.Title}\">");
 
             if (!string.IsNullOrWhiteSpace(result.Author))
             {
-                entry.AppendLine($"*By {result.Author}*");
+                entry.AppendLine($"Author: {result.Author}");
             }
 
             entry.AppendLine();
             entry.AppendLine(result.Content);
-            entry.AppendLine();
-            entry.AppendLine("---");
+            entry.AppendLine("</source>");
             entry.AppendLine();
 
             var entryText = entry.ToString();
@@ -162,13 +102,14 @@ public sealed class SearchContentPlugin : INovaPlugin
                     {
                         truncatedContent = truncatedContent[..(remainingChars - 100)] + "... [truncated]";
                     }
-                    sb.AppendLine($"### {result.Title}");
+                    sb.AppendLine($"<source type=\"{sourceLabel}\" title=\"{result.Title}\">");
                     if (!string.IsNullOrWhiteSpace(result.Author))
                     {
-                        sb.AppendLine($"*By {result.Author}*");
+                        sb.AppendLine($"Author: {result.Author}");
                     }
                     sb.AppendLine();
                     sb.AppendLine(truncatedContent);
+                    sb.AppendLine("</source>");
                 }
                 break;
             }
@@ -177,6 +118,21 @@ public sealed class SearchContentPlugin : INovaPlugin
             totalChars += entryText.Length;
         }
 
+        sb.AppendLine("</knowledge_base>");
+
         return sb.ToString();
+    }
+
+    private static string GetSourceLabel(ContentSource source)
+    {
+        return source switch
+        {
+            ContentSource.Book => "Book",
+            ContentSource.OfficialDocs => "Docs",
+            ContentSource.YouTube => "YouTube",
+            ContentSource.Article => "Article",
+            ContentSource.Pulse => "Community",
+            _ => "Source"
+        };
     }
 }
