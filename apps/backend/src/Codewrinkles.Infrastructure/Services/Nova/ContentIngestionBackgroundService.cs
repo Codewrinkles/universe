@@ -491,15 +491,17 @@ public sealed partial class ContentIngestionBackgroundService : BackgroundServic
     private static IEnumerable<string> ExtractInternalLinks(string html, Uri baseUri)
     {
         var matches = HrefRegex().Matches(html);
+        var docsRoot = GetDocumentationRootPath(baseUri);
 
         foreach (Match match in matches)
         {
             var href = match.Groups[1].Value;
             if (Uri.TryCreate(baseUri, href, out var absoluteUri))
             {
-                // Only internal links under the same path
+                // Only internal links under the same documentation root
+                // e.g., /docs/intro/ -> root is /docs/, so /docs/getting-started/ is allowed
                 if (absoluteUri.Host == baseUri.Host &&
-                    absoluteUri.AbsolutePath.StartsWith(baseUri.AbsolutePath))
+                    absoluteUri.AbsolutePath.StartsWith(docsRoot, StringComparison.OrdinalIgnoreCase))
                 {
                     // Remove fragment and query
                     var cleanUrl = $"{absoluteUri.Scheme}://{absoluteUri.Host}{absoluteUri.AbsolutePath}";
@@ -507,6 +509,31 @@ public sealed partial class ContentIngestionBackgroundService : BackgroundServic
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Extracts the documentation root path from a URL.
+    /// For example: /docs/intro/ -> /docs/
+    ///              /documentation/getting-started/install/ -> /documentation/
+    /// </summary>
+    private static string GetDocumentationRootPath(Uri uri)
+    {
+        var path = uri.AbsolutePath;
+        if (string.IsNullOrEmpty(path) || path == "/")
+        {
+            return "/";
+        }
+
+        // Split path into segments, filter out empty ones
+        var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Length == 0)
+        {
+            return "/";
+        }
+
+        // Return the first segment as the documentation root
+        // e.g., ["docs", "intro"] -> "/docs/"
+        return $"/{segments[0]}/";
     }
 
     private static string? ExtractPageTitle(string html)
