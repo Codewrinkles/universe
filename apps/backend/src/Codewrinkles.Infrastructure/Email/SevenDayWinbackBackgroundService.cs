@@ -30,7 +30,7 @@ public sealed class SevenDayWinbackBackgroundService : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation(
-            "7-day winback background service started. Scheduled: {Hour}:30 UTC",
+            "7-day winback background service started. Scheduled: {Hour}:00 UTC",
             _settings.ReengagementHourUtc);
 
         while (!stoppingToken.IsCancellationRequested)
@@ -61,10 +61,10 @@ public sealed class SevenDayWinbackBackgroundService : BackgroundService
 
     internal DateTimeOffset CalculateNextRunTime(DateTimeOffset now)
     {
-        // Runs at configured hour + 30 minutes (staggered from 24h service)
+        // Runs at configured hour (first service of the day)
         var todayAtTime = new DateTimeOffset(
             now.Year, now.Month, now.Day,
-            _settings.ReengagementHourUtc, 30, 0,
+            _settings.ReengagementHourUtc, 0, 0,
             TimeSpan.Zero);
 
         return now >= todayAtTime
@@ -98,17 +98,34 @@ public sealed class SevenDayWinbackBackgroundService : BackgroundService
                 "Found {Count} 7-day winback candidates",
                 candidates.Count);
 
+            var novaEmails = 0;
+            var codewrinklesEmails = 0;
+
             foreach (var candidate in candidates)
             {
-                await emailQueue.QueueSevenDayWinbackEmailAsync(
-                    candidate.Email,
-                    candidate.Name,
-                    stoppingToken);
+                if (candidate.HasNovaAccess)
+                {
+                    await emailQueue.QueueSevenDayNovaWinbackEmailAsync(
+                        candidate.Email,
+                        candidate.Name,
+                        stoppingToken);
+                    novaEmails++;
+                }
+                else
+                {
+                    await emailQueue.QueueSevenDayCodewrinklesWinbackEmailAsync(
+                        candidate.Email,
+                        candidate.Name,
+                        stoppingToken);
+                    codewrinklesEmails++;
+                }
             }
 
             _logger.LogInformation(
-                "Queued {Count} 7-day winback emails",
-                candidates.Count);
+                "Queued {Total} 7-day winback emails ({Nova} Nova, {Codewrinkles} Codewrinkles)",
+                novaEmails + codewrinklesEmails,
+                novaEmails,
+                codewrinklesEmails);
         }
         catch (Exception ex)
         {

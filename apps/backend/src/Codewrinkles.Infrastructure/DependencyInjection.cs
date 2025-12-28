@@ -169,7 +169,6 @@ public static class DependencyInjection
 
         // 8. Background services - singletons that use IServiceScopeFactory
         services.AddHostedService<EmailSenderBackgroundService>();
-        services.AddHostedService<ReengagementBackgroundService>();
         services.AddHostedService<SevenDayWinbackBackgroundService>();
         services.AddHostedService<ThirtyDayWinbackBackgroundService>();
         services.AddHostedService<PulseAlphaGrantBackgroundService>();

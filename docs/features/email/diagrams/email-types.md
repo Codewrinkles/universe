@@ -4,58 +4,58 @@
 flowchart LR
     subgraph Transactional["Transactional Emails"]
         W[Welcome Email]
-    end
-
-    subgraph ReEngagement["Re-engagement Emails (24-48h)"]
-        N[Notification Reminder]
-        F[Feed Update]
+        AA[Alpha Acceptance]
+        AW[Alpha Waitlist]
+        PAE[Pulse Alpha Earned]
     end
 
     subgraph Winback["Winback Emails"]
-        W7[7-Day Winback]
-        W30[30-Day Winback]
+        subgraph Nova["Nova Users"]
+            N7[7-Day Nova]
+            N30[30-Day Nova]
+        end
+        subgraph CW["Non-Nova Users"]
+            C7[7-Day Codewrinkles]
+            C30[30-Day Codewrinkles]
+        end
     end
 
     style W fill:#20C1AC,color:#000
-    style N fill:#35D6C0,color:#000
-    style F fill:#35D6C0,color:#000
-    style W7 fill:#2AA89A,color:#000
-    style W30 fill:#2AA89A,color:#000
+    style AA fill:#8B5CF6,color:#fff
+    style AW fill:#A78BFA,color:#000
+    style PAE fill:#8B5CF6,color:#fff
+    style N7 fill:#8B5CF6,color:#fff
+    style N30 fill:#8B5CF6,color:#fff
+    style C7 fill:#20C1AC,color:#000
+    style C30 fill:#20C1AC,color:#000
 ```
 
 ## Email Details
 
-### Welcome Email
-- **Trigger**: Immediately after registration
-- **Subject**: "Welcome to Pulse!"
-- **CTA**: "Start Exploring" → `/social`
-- **Filter**: None (all new users)
+### Transactional Emails
 
-### Notification Reminder
-- **Trigger**: Daily job, 24-48h inactive
-- **Subject**: "You have X unread notifications on Pulse"
-- **CTA**: "See What You Missed" → `/social/notifications`
-- **Filter**: Must have unread notifications
+| Email | Subject | CTA | Destination |
+|-------|---------|-----|-------------|
+| Welcome | "Welcome to Codewrinkles!" | "Start Exploring" | `/pulse` |
+| Alpha Acceptance | "You're In! Welcome to Nova Alpha" | "Redeem Your Code" | `/nova/redeem` |
+| Alpha Waitlist | "You're on the Nova Waitlist" | "Explore Pulse" | `/pulse` |
+| Pulse Alpha Earned | "You Earned Nova Alpha Access!" | "Start Using Nova" | `/nova` |
 
-### Feed Update
-- **Trigger**: Daily job, 24-48h inactive
-- **Subject**: "Your feed has X new pulses"
-- **CTA**: "See Your Feed" → `/social`
-- **Filter**: No notifications, but has new pulses from follows
+### Winback Emails (Nova Users)
 
-### 7-Day Winback
-- **Trigger**: Daily job, 6-7 days inactive
-- **Subject**: "We miss you on Pulse!"
-- **CTA**: "Come Back to Pulse" → `/pulse`
-- **Filter**: None (all users in window)
+| Email | Trigger | Subject | Key Content | CTA |
+|-------|---------|---------|-------------|-----|
+| 7-Day Nova | 6-7 days inactive | "We miss you on Nova!" | Nova remembers your journey | "Continue with Nova" → `/nova` |
+| 30-Day Nova | 29-30 days inactive | "Important: Your Nova Alpha access" | Access warning for Alpha | "Return to Nova" → `/nova` |
 
-### 30-Day Winback
-- **Trigger**: Daily job, 29-30 days inactive
-- **Subject**: "It's been a while - come back to Pulse!"
-- **CTA**: "Rejoin the Conversation" → `/pulse`
-- **Filter**: None (all users in window)
+### Winback Emails (Non-Nova Users)
 
-## Email Flow per Type
+| Email | Trigger | Subject | Key Content | CTA |
+|-------|---------|---------|-------------|-----|
+| 7-Day Codewrinkles | 6-7 days inactive | "We miss you on Codewrinkles!" | What you're missing (Pulse + Nova) | "Come Back to Codewrinkles" → `/` |
+| 30-Day Codewrinkles | 29-30 days inactive | "Come back and discover Codewrinkles" | What you're missing + Alpha CTA | "Rejoin Codewrinkles" → `/` |
+
+## Email Flow
 
 ```mermaid
 sequenceDiagram
@@ -65,10 +65,14 @@ sequenceDiagram
     participant S as EmailSender
     participant API as Resend
 
-    T->>R: Get candidates
-    R-->>T: List of users
-    loop For each user
-        T->>Q: Queue email (type, data)
+    T->>R: Get candidates (includes HasNovaAccess)
+    R-->>T: List of WinbackCandidate
+    loop For each candidate
+        alt Has Nova Access
+            T->>Q: Queue Nova winback email
+        else No Nova Access
+            T->>Q: Queue Codewrinkles winback email
+        end
     end
 
     Note over S,API: Background processing
@@ -79,3 +83,7 @@ sequenceDiagram
         S->>S: Wait 600ms (rate limit)
     end
 ```
+
+---
+
+*Last updated: 2025-12-28*

@@ -29,10 +29,9 @@ public sealed class ThirtyDayWinbackBackgroundService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var targetHour = (_settings.ReengagementHourUtc + 1) % 24;
         _logger.LogInformation(
-            "30-day winback background service started. Scheduled: {Hour}:00 UTC",
-            targetHour);
+            "30-day winback background service started. Scheduled: {Hour}:30 UTC",
+            _settings.ReengagementHourUtc);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -62,22 +61,11 @@ public sealed class ThirtyDayWinbackBackgroundService : BackgroundService
 
     internal DateTimeOffset CalculateNextRunTime(DateTimeOffset now)
     {
-        // Runs 1 hour after base hour (staggered from 7-day service)
-        // Handle edge case: if base hour is 23, target hour is 0 of next day
-        var baseHour = _settings.ReengagementHourUtc;
-        var targetHour = (baseHour + 1) % 24;
-        var crossesMidnight = baseHour == 23;
-
+        // Runs at configured hour + 30 minutes (staggered from 7-day service)
         var todayAtTime = new DateTimeOffset(
             now.Year, now.Month, now.Day,
-            targetHour, 0, 0,
+            _settings.ReengagementHourUtc, 30, 0,
             TimeSpan.Zero);
-
-        // If base hour is 23, the +1 hour crosses midnight into the next day
-        if (crossesMidnight)
-        {
-            todayAtTime = todayAtTime.AddDays(1);
-        }
 
         return now >= todayAtTime
             ? todayAtTime.AddDays(1)
@@ -110,17 +98,34 @@ public sealed class ThirtyDayWinbackBackgroundService : BackgroundService
                 "Found {Count} 30-day winback candidates",
                 candidates.Count);
 
+            var novaEmails = 0;
+            var codewrinklesEmails = 0;
+
             foreach (var candidate in candidates)
             {
-                await emailQueue.QueueThirtyDayWinbackEmailAsync(
-                    candidate.Email,
-                    candidate.Name,
-                    stoppingToken);
+                if (candidate.HasNovaAccess)
+                {
+                    await emailQueue.QueueThirtyDayNovaWinbackEmailAsync(
+                        candidate.Email,
+                        candidate.Name,
+                        stoppingToken);
+                    novaEmails++;
+                }
+                else
+                {
+                    await emailQueue.QueueThirtyDayCodewrinklesWinbackEmailAsync(
+                        candidate.Email,
+                        candidate.Name,
+                        stoppingToken);
+                    codewrinklesEmails++;
+                }
             }
 
             _logger.LogInformation(
-                "Queued {Count} 30-day winback emails",
-                candidates.Count);
+                "Queued {Total} 30-day winback emails ({Nova} Nova, {Codewrinkles} Codewrinkles)",
+                novaEmails + codewrinklesEmails,
+                novaEmails,
+                codewrinklesEmails);
         }
         catch (Exception ex)
         {

@@ -3,65 +3,55 @@
 ```mermaid
 flowchart TB
     subgraph Config["Configuration"]
-        Hour["ReengagementHourUtc<br/>(default: 8)"]
+        Hour["ReengagementHourUtc<br/>(default: 4)"]
     end
 
     subgraph Schedule["Daily Schedule (Example: Hour = 4)"]
         T1["4:00 AM UTC"]
         T2["4:30 AM UTC"]
-        T3["5:00 AM UTC"]
     end
 
     subgraph Services["Background Services"]
-        S1[ReengagementBackgroundService]
-        S2[SevenDayWinbackBackgroundService]
-        S3[ThirtyDayWinbackBackgroundService]
+        S1[SevenDayWinbackBackgroundService]
+        S2[ThirtyDayWinbackBackgroundService]
     end
 
     Hour --> T1
     Hour --> T2
-    Hour --> T3
 
     T1 --> S1
     T2 --> S2
-    T3 --> S3
 
-    S1 -->|"24-48h inactive"| Q1[Queue emails]
-    S2 -->|"6-7 days inactive"| Q2[Queue emails]
-    S3 -->|"29-30 days inactive"| Q3[Queue emails]
+    S1 -->|"6-7 days inactive"| Q1[Queue Nova or Codewrinkles emails]
+    S2 -->|"29-30 days inactive"| Q2[Queue Nova or Codewrinkles emails]
 ```
 
 ## Schedule Pattern
 
 | Service | Time Offset | Example (Hour=4) |
 |---------|-------------|------------------|
-| ReengagementBackgroundService | `hour:00` | 4:00 AM UTC |
-| SevenDayWinbackBackgroundService | `hour:30` | 4:30 AM UTC |
-| ThirtyDayWinbackBackgroundService | `hour+1:00` | 5:00 AM UTC |
+| SevenDayWinbackBackgroundService | `hour:00` | 4:00 AM UTC |
+| ThirtyDayWinbackBackgroundService | `hour:30` | 4:30 AM UTC |
 
 ## Why Staggered?
 
 ```mermaid
 sequenceDiagram
-    participant R as Reengagement
     participant S as 7-Day Winback
     participant T as 30-Day Winback
     participant Q as EmailQueue
     participant ES as EmailSender
     participant API as Resend (2 req/sec)
 
-    Note over R,API: 4:00 AM UTC
-    R->>Q: Queue N emails
+    Note over S,API: 4:00 AM UTC
+    S->>Q: Queue N emails (Nova + Codewrinkles)
     Note over ES,API: Processing with 600ms delay
 
-    Note over S,API: 4:30 AM UTC (previous batch likely done)
-    S->>Q: Queue N emails
-
-    Note over T,API: 5:00 AM UTC (previous batch likely done)
-    T->>Q: Queue N emails
+    Note over T,API: 4:30 AM UTC (previous batch likely done)
+    T->>Q: Queue N emails (Nova + Codewrinkles)
 ```
 
-The 30-minute gaps ensure:
+The 30-minute gap ensures:
 - Previous batch has time to process
 - Resend rate limit (2 req/sec) is respected
 - No bursts that could trigger throttling
@@ -82,3 +72,7 @@ flowchart TD
     Wait --> Run[Execute job]
     Run --> GetNow
 ```
+
+---
+
+*Last updated: 2025-12-28*

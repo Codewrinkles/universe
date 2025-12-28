@@ -27,57 +27,49 @@ public sealed class EmailQueue : IEmailQueue
         await _channel.WriteAsync(message, cancellationToken);
     }
 
-    public async ValueTask QueueNotificationReminderEmailAsync(
+    public async ValueTask QueueSevenDayNovaWinbackEmailAsync(
         string toEmail,
         string userName,
-        int unreadNotificationCount,
         CancellationToken cancellationToken = default)
     {
-        var subject = $"You have {unreadNotificationCount} unread notification{(unreadNotificationCount == 1 ? "" : "s")} on Pulse";
-        var htmlBody = EmailTemplates.BuildNotificationReminderEmail(
-            userName,
-            unreadNotificationCount,
-            _settings.BaseUrl);
+        var subject = "We miss you on Nova!";
+        var htmlBody = EmailTemplates.BuildSevenDayNovaWinbackEmail(userName, _settings.BaseUrl);
 
         var message = new QueuedEmail(toEmail, userName, subject, htmlBody);
         await _channel.WriteAsync(message, cancellationToken);
     }
 
-    public async ValueTask QueueFeedUpdateEmailAsync(
+    public async ValueTask QueueThirtyDayNovaWinbackEmailAsync(
         string toEmail,
         string userName,
-        int newPulsesCount,
         CancellationToken cancellationToken = default)
     {
-        var subject = $"Your feed has {newPulsesCount} new pulse{(newPulsesCount == 1 ? "" : "s")}";
-        var htmlBody = EmailTemplates.BuildFeedUpdateEmail(
-            userName,
-            newPulsesCount,
-            _settings.BaseUrl);
+        var subject = "Important: Your Nova Alpha access";
+        var htmlBody = EmailTemplates.BuildThirtyDayNovaWinbackEmail(userName, _settings.BaseUrl);
 
         var message = new QueuedEmail(toEmail, userName, subject, htmlBody);
         await _channel.WriteAsync(message, cancellationToken);
     }
 
-    public async ValueTask QueueSevenDayWinbackEmailAsync(
+    public async ValueTask QueueSevenDayCodewrinklesWinbackEmailAsync(
         string toEmail,
         string userName,
         CancellationToken cancellationToken = default)
     {
-        var subject = "We miss you on Pulse!";
-        var htmlBody = EmailTemplates.BuildSevenDayWinbackEmail(userName, _settings.BaseUrl);
+        var subject = "We miss you on Codewrinkles!";
+        var htmlBody = EmailTemplates.BuildSevenDayCodewrinklesWinbackEmail(userName, _settings.BaseUrl);
 
         var message = new QueuedEmail(toEmail, userName, subject, htmlBody);
         await _channel.WriteAsync(message, cancellationToken);
     }
 
-    public async ValueTask QueueThirtyDayWinbackEmailAsync(
+    public async ValueTask QueueThirtyDayCodewrinklesWinbackEmailAsync(
         string toEmail,
         string userName,
         CancellationToken cancellationToken = default)
     {
-        var subject = "It's been a while...";
-        var htmlBody = EmailTemplates.BuildThirtyDayWinbackEmail(userName, _settings.BaseUrl);
+        var subject = "Come back and discover Codewrinkles";
+        var htmlBody = EmailTemplates.BuildThirtyDayCodewrinklesWinbackEmail(userName, _settings.BaseUrl);
 
         var message = new QueuedEmail(toEmail, userName, subject, htmlBody);
         await _channel.WriteAsync(message, cancellationToken);
@@ -89,7 +81,7 @@ public sealed class EmailQueue : IEmailQueue
         string inviteCode,
         CancellationToken cancellationToken = default)
     {
-        var subject = "You're In! Welcome to Nova Alpha 🎉";
+        var subject = "You're In! Welcome to Nova Alpha";
         var htmlBody = EmailTemplates.BuildAlphaAcceptanceEmail(userName, inviteCode, _settings.BaseUrl);
 
         var message = new QueuedEmail(toEmail, userName, subject, htmlBody);
@@ -114,7 +106,7 @@ public sealed class EmailQueue : IEmailQueue
         int pulseCount,
         CancellationToken cancellationToken = default)
     {
-        var subject = "You Earned Nova Alpha Access! 🏆";
+        var subject = "You Earned Nova Alpha Access!";
         var htmlBody = EmailTemplates.BuildPulseAlphaEarnedEmail(userName, pulseCount, _settings.BaseUrl);
 
         var message = new QueuedEmail(toEmail, userName, subject, htmlBody);
