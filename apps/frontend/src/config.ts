@@ -46,6 +46,7 @@ export const config = {
       novaSessions: `${API_BASE_URL}/api/nova/sessions`,
       novaSession: (sessionId: string) => `${API_BASE_URL}/api/nova/sessions/${sessionId}`,
       novaProfile: `${API_BASE_URL}/api/nova/profile`,
+      novaSummarizeForPulse: `${API_BASE_URL}/api/nova/summarize-for-pulse`,
     },
   },
   auth: {

@@ -44,6 +44,10 @@ public static class NovaEndpoints
         // Memory extraction endpoint (for testing/manual trigger)
         group.MapPost("memories/extract", TriggerMemoryExtraction)
             .WithName("NovaTriggerMemoryExtraction");
+
+        // Share to Pulse - summarize Nova response
+        group.MapPost("summarize-for-pulse", SummarizeForPulse)
+            .WithName("NovaSummarizeForPulse");
     }
 
     private static async Task<IResult> SendMessage(
@@ -481,6 +485,23 @@ public static class NovaEndpoints
         });
     }
 
+    private static async Task<IResult> SummarizeForPulse(
+        HttpContext httpContext,
+        [FromBody] SummarizeForPulseRequest request,
+        [FromServices] IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var profileId = httpContext.GetCurrentProfileId();
+
+        var command = new SummarizeForPulseCommand(
+            ProfileId: profileId,
+            Content: request.Content);
+
+        var result = await mediator.SendAsync(command, cancellationToken);
+
+        return Results.Ok(new SummarizeForPulseResponse(result.Summary));
+    }
+
     // Memory retrieval constants for streaming
     private const int RecentMemoriesCount = 5;
     private const int HighImportanceThreshold = 4;
@@ -638,3 +659,7 @@ public sealed record UpdateLearnerProfileRequest(
     string? LearningStyle,
     string? PreferredPace
 );
+
+public sealed record SummarizeForPulseRequest(string Content);
+
+public sealed record SummarizeForPulseResponse(string Summary);

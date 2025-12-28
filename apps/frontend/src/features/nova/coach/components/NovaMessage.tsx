@@ -1,5 +1,7 @@
+import { useState } from "react";
 import type { Message } from "../../types";
 import { MarkdownContent } from "../../../../components/ui/MarkdownContent";
+import { ShareToPulseModal } from "./ShareToPulseModal";
 
 interface NovaMessageProps {
   message: Message;
@@ -15,6 +17,8 @@ interface NovaMessageProps {
  * - Relative timestamp
  */
 export function NovaMessage({ message }: NovaMessageProps): JSX.Element {
+  const [showShareModal, setShowShareModal] = useState(false);
+
   const handleCopy = (): void => {
     void navigator.clipboard.writeText(message.content);
   };
@@ -64,11 +68,28 @@ export function NovaMessage({ message }: NovaMessageProps): JSX.Element {
             </svg>
             Copy
           </button>
+          <button
+            type="button"
+            onClick={() => setShowShareModal(true)}
+            className="flex items-center gap-1 text-[11px] text-text-tertiary hover:text-violet-400 transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            </svg>
+            Share
+          </button>
           <span className="text-[11px] text-text-tertiary">
             {formatTime(message.createdAt)}
           </span>
         </div>
       </div>
+
+      {/* Share to Pulse Modal */}
+      <ShareToPulseModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        novaContent={message.content}
+      />
     </div>
   );
 }

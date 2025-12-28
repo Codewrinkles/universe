@@ -433,7 +433,7 @@ public sealed partial class ContentIngestionBackgroundService : BackgroundServic
 
                 var chunk = ContentChunk.Create(
                     source: ContentSource.Article,
-                    sourceIdentifier: job.SourceUrl ?? $"{job.ParentDocumentId}_{chunkCount}",
+                    sourceIdentifier: $"{job.SourceUrl ?? job.ParentDocumentId}_{chunkCount}",
                     title: $"{job.Title} (Part {chunkCount + 1})",
                     content: chunkContent,
                     embedding: embeddingBytes,
